@@ -17,7 +17,8 @@
     "probe": "tsx scripts/probe.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "smoke": "bash scripts/smoke.sh"
+    "smoke": "bash scripts/smoke.sh",
+    "start:replay": "SAMPLE_MODE=true PORT=8788 tsx src/api.ts"
   },
   "dependencies": {
     "@duckdb/node-api": "^2.0.0-r.1",

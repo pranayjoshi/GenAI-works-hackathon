@@ -87,7 +87,8 @@ function rec() {
   if (!recDb) {
     fs.mkdirSync(path.dirname(config.paths.recordings), { recursive: true });
     recDb = new Database(config.paths.recordings);
-    recDb.pragma('journal_mode = WAL');
+    recDb.pragma('busy_timeout = 10000');
+    try { recDb.pragma('journal_mode = WAL'); } catch { /* another process holds it; keep its mode */ }
     recDb.exec('CREATE TABLE IF NOT EXISTS llm (key TEXT PRIMARY KEY, role TEXT, provider TEXT, model TEXT, served_by TEXT, text TEXT, tokens_in INT, tokens_out INT, created TEXT)');
   }
   return recDb;
@@ -252,12 +253,13 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
     return { ...raw, data, ok, repaired };
   };
 
-  if (config.sampleMode) {
-    const row = rec().prepare('SELECT * FROM llm WHERE key = ?').get(key) as any;
-    if (!row) {
-      trace({ ts: new Date().toISOString(), tag, role: o.role, provider: 'replay', model: '-', served_by: 'replay-miss', ms: 0, tokens_in: 0, tokens_out: 0, ok: false, repaired: false, error: 'not recorded' });
-      throw new Error(`SAMPLE_MODE: no recording for this ${o.role} call. Run once with a provider to record it.`);
-    }
+  const replayRow = config.sampleMode ? (rec().prepare('SELECT * FROM llm WHERE key = ?').get(key) as any) : undefined;
+  if (config.sampleMode && !replayRow && config.sampleStrict) {
+    trace({ ts: new Date().toISOString(), tag, role: o.role, provider: 'replay', model: '-', served_by: 'replay-miss', ms: 0, tokens_in: 0, tokens_out: 0, ok: false, repaired: false, error: 'not recorded' });
+    throw new Error(`SAMPLE_MODE: no recording for this ${o.role} call. Run once with a provider to record it.`);
+  }
+  if (replayRow) {
+    const row = replayRow;
     if (o.role === 'crowd' && config.replayCrowdMs > 0) await sleep(config.replayCrowdMs);
     const r = finish({ text: row.text, tokens_in: row.tokens_in, tokens_out: row.tokens_out, served_by: row.served_by, model: row.model, provider: 'replay' }, false);
     trace({ ts: new Date().toISOString(), tag, role: o.role, provider: 'replay', model: row.model, served_by: `replay(${row.served_by})`, ms: 0, tokens_in: row.tokens_in, tokens_out: row.tokens_out, ok: r.ok, repaired: false });
@@ -290,7 +292,9 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
   }
 
   if (config.record) {
-    rec().prepare('INSERT OR REPLACE INTO llm VALUES (?,?,?,?,?,?,?,?,?)').run(key, o.role, raw.provider, raw.model, raw.served_by, raw.text, tokensIn, tokensOut, new Date().toISOString());
+    try {
+      rec().prepare('INSERT OR REPLACE INTO llm VALUES (?,?,?,?,?,?,?,?,?)').run(key, o.role, raw.provider, raw.model, raw.served_by, raw.text, tokensIn, tokensOut, new Date().toISOString());
+    } catch (e) { console.warn(`[llm] recording skipped: ${(e as Error).message}`); }
   }
   trace({ ts: new Date().toISOString(), tag, role: o.role, provider: raw.provider, model: raw.model, served_by: raw.served_by, ms: Date.now() - t0, tokens_in: tokensIn, tokens_out: tokensOut, ok: result.ok, repaired: result.repaired });
   return { ...result, tokens_in: tokensIn, tokens_out: tokensOut };

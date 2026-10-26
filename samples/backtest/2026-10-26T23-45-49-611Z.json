@@ -1,7 +1,7 @@
 {
- "partial": true,
+ "partial": false,
  "started": "2026-10-26T23:45:49.611Z",
- "finished": null,
+ "finished": "2026-10-26T23:49:21.007Z",
  "config": {
   "slice": "dev",
   "n_tests": 2,
@@ -42,18 +42,129 @@
   "dev_n": 20
  },
  "scores": {
-  "crowd": null,
-  "single_reason": null,
-  "single_crowd": null,
+  "crowd": {
+   "correct": 0,
+   "n": 2,
+   "rate": 0,
+   "ci": [
+    0,
+    0.6576280471103807
+   ]
+  },
+  "single_reason": {
+   "correct": 1,
+   "n": 2,
+   "rate": 0.5,
+   "ci": [
+    0.09452865480086611,
+    0.905471345199134
+   ]
+  },
+  "single_crowd": {
+   "correct": 0,
+   "n": 2,
+   "rate": 0,
+   "ci": [
+    0,
+    0.6576280471103807
+   ]
+  },
   "coin": {
    "rate": 0.5
   }
  },
  "mcnemar": {
-  "crowd_vs_single_reason": null,
-  "crowd_vs_single_crowd": null
+  "crowd_vs_single_reason": {
+   "b": 0,
+   "c": 1,
+   "p": 1
+  },
+  "crowd_vs_single_crowd": {
+   "b": 0,
+   "c": 0,
+   "p": 1
+  }
  },
- "tests": [],
- "served_by": {},
- "wall_ms": 470
+ "tests": [
+  {
+   "test_id": "52de678a472ead469b000003",
+   "created_at": "2014-01-21 12:28:27",
+   "a": {
+    "headline": "For An Industry Founded On Beauty, The World Of Modeling Is Pretty Ugly",
+    "ctr": 0.02318840579710145,
+    "impressions": 2415
+   },
+   "b": {
+    "headline": "A News Team Follows Potential Models For One Week. My Face Is Now Stuck In Disgust Mode.",
+    "ctr": 0.03930492345883326,
+    "impressions": 2417
+   },
+   "real_winner": "B",
+   "run_id": "bt-261026234549-01-000003",
+   "single_crowd": {
+    "pick": "A",
+    "correct": 0,
+    "reason": "Headline A uses a strong, intriguing contrast ('Pretty Ugly') that sparks curiosity and emotional engagement, which typically drives higher click-through rates on social media. Headline B is more personal and potentially off-putting, which may reduce shares or clicks due to discomfort or lack of broad appeal.",
+    "failed": false
+   },
+   "single_reason": {
+    "pick": "B",
+    "correct": 1,
+    "reason": "Headline B uses vivid, emotionally charged language ('My Face Is Now Stuck In Disgust Mode') that creates immediate curiosity and a sense of personal reaction, which is more likely to drive clicks from a general US audience on Facebook compared to the more abstract and less emotionally engaging phrasing in A.",
+    "failed": false
+   },
+   "crowd": {
+    "a_tap": 0.6111,
+    "b_tap": 0.5556,
+    "a_n": 18,
+    "b_n": 18,
+    "a_taps": 11,
+    "b_taps": 10,
+    "pick": "A",
+    "correct": 0
+   }
+  },
+  {
+   "test_id": "54530d565bc2317d29000033",
+   "created_at": "2014-10-31 04:17:26",
+   "a": {
+    "headline": "Kids Who Love Art Are Better At Everything",
+    "ctr": 0.004666011787819254,
+    "impressions": 4072
+   },
+   "b": {
+    "headline": "Cutting Art Will Rot Your Child's Brains. No, Really. It's Science!",
+    "ctr": 0.001955512099731117,
+    "impressions": 4091
+   },
+   "real_winner": "A",
+   "run_id": "bt-261026234549-02-000033",
+   "single_reason": {
+    "pick": "B",
+    "correct": 0,
+    "reason": "Headline B uses a stronger emotional trigger (fear of harm) and a sensational claim ('Rot Your Child's Brains') that is more likely to provoke curiosity and clicks among a general US audience on Facebook, compared to the more vague and positive tone of A.",
+    "failed": false
+   },
+   "single_crowd": {
+    "pick": "B",
+    "correct": 0,
+    "reason": "Headline B uses fear-based language and a sensational claim about brain development, which is more likely to provoke curiosity and clicks among a general US audience on Facebook. Headline A is vague and lacks urgency or emotional impact.",
+    "failed": false
+   },
+   "crowd": {
+    "a_tap": 0.4211,
+    "b_tap": 0.5789,
+    "a_n": 19,
+    "b_n": 19,
+    "a_taps": 8,
+    "b_taps": 11,
+    "pick": "B",
+    "correct": 0
+   }
+  }
+ ],
+ "served_by": {
+  "ollama-local:nemotron-3-nano:4b": 24
+ },
+ "wall_ms": 211396
 }

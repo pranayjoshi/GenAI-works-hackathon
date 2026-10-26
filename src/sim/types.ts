@@ -16,6 +16,7 @@ export interface FeedItem {
 
 export interface RunSpec {
   run_id: string;
+  crowd_seed: string;         // derived from the inputs, so identical inputs rebuild the identical crowd (and replay)
   business: string;
   handle: string;
   place: string;

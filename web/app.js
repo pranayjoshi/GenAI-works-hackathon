@@ -520,7 +520,7 @@ function runView(id, view) {
     h('div.grid', { style: { gridTemplateColumns: 'minmax(0,1.5fr) minmax(0,1fr)', marginTop: '16px' }, class: 'splitrow' }, ui.chart, h('div.stack', ui.inject, ui.nemo)),
     h('div.section-title', h('h2', 'Live feeds'), h('span.muted', 'newest first; most people scroll past')), ui.feeds,
     ui.verdict, ui.report, ui.tools);
-  const style = h('style', '@media (max-width:1100px){.splitrow{grid-template-columns:1fr !important}}'); document.head.append(style);
+  const style = h('style', '@media (max-width:1100px){.splitrow{grid-template-columns:minmax(0,1fr) !important}}'); document.head.append(style);
 
   /* ---- head / phases / banner */
   function renderHead() {

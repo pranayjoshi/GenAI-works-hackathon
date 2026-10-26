@@ -79,8 +79,9 @@ export function specFromInput(inp: RunInput, run_id = newRunId(inp.business)): R
   const rounds = Math.min(32, Math.max(6, inp.rounds ?? 24));
   const seeds = Math.max(1, Math.min(3, inp.seeds ?? 2));
   const local = !config.nvidia.apiKey && !config.nightshift.token;
+  const crowd_seed = sha(JSON.stringify([inp.business, inp.zip, inp.postA, inp.postB, inp.crowdSize ?? 600, rounds, inp.coreAgeBands ?? null, inp.coreShare ?? null, inp.useCustomers ?? true]), 12);
   return {
-    run_id, business: inp.business, handle, place: inp.place || `ZIP ${inp.zip}`, zip: inp.zip, geoId: geoIdForZip(inp.zip), goal: inp.goal,
+    run_id, crowd_seed, business: inp.business, handle, place: inp.place || `ZIP ${inp.zip}`, zip: inp.zip, geoId: geoIdForZip(inp.zip), goal: inp.goal,
     posts: [
       { variant: 'A', text: inp.postA, business: inp.business, handle, image: inp.imageA },
       { variant: 'B', text: inp.postB, business: inp.business, handle, image: inp.imageB },
@@ -139,7 +140,7 @@ export async function buildCrowd(spec: RunSpec, inp: { postA: string; postB: str
   if (spec.coreAgeBands?.length) proposal.core.age_bands = spec.coreAgeBands as any;
   onStatus('sampling', 'Sampling people from Census and Pew rows');
   const { personas: raw, report } = await sampleCrowd({
-    geoId: spec.geoId, zip: spec.zip, n: spec.crowdSize, seed: spec.run_id, coreAgeBands: proposal.core.age_bands,
+    geoId: spec.geoId, zip: spec.zip, n: spec.crowdSize, seed: spec.crowd_seed ?? spec.run_id, coreAgeBands: proposal.core.age_bands,
     coreName: proposal.core.name, spilloverName: proposal.spillover.name, coreShare: spec.coreShare, useCustomers: spec.useCustomers, platform: spec.platform,
   });
   onStatus('voices', 'Writing one-line voices (numbers first, model second)', 0);
@@ -178,7 +179,7 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   st.fairness = [];
   for (const seed of spec.seeds) {
     phase(st, 'running', `Seed ${seed} of ${spec.seeds.length}: forking twin worlds`);
-    const rng = new Rng(`${spec.run_id}:seed:${seed}`);
+    const rng = new Rng(`${spec.crowd_seed ?? spec.run_id}:seed:${seed}`);
     const graph = buildGraph(st.personas, rng.fork('graph'));
     const schedule = buildSchedule(st.personas, rng.fork('schedule'), spec.rounds, spec.startHour, spec.hourStep);
     const base = buildBase(seed, st.personas, graph, schedule, startMs);

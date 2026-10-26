@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "dryrun", "runtimeExecutable": "npm", "runtimeArgs": ["start"], "port": 8787 },
+    { "name": "dryrun-replay", "runtimeExecutable": "npm", "runtimeArgs": ["run", "start:replay"], "port": 8788 }
+  ]
+}

@@ -322,3 +322,4 @@ pre.sql { background: var(--bg); border: 1px solid var(--line); border-radius: 1
   .kv { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1700px) { html { font-size: 17px; } .view { max-width: 1560px; } }
+.grid > *, .compare > *, .feeds > *, .stack > * { min-width: 0; }
