@@ -1,0 +1,25 @@
+platform,dimension,band,pct_us_adults_ever_use,source_url,survey,note
+instagram,age,18-29,79,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+instagram,age,30-49,64,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+instagram,age,50-64,41,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+instagram,age,65+,21,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+instagram,gender,men,45,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+instagram,gender,women,56,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+tiktok,age,18-29,65,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+tiktok,age,30-49,45,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+tiktok,age,50-64,31,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+tiktok,age,65+,11,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+tiktok,gender,men,31,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+tiktok,gender,women,43,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+x,age,18-29,31,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+x,age,30-49,20,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+x,age,50-64,17,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+x,age,65+,7,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+x,gender,men,23,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+x,gender,women,14,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+reddit,age,18-29,40,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+reddit,age,30-49,35,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+reddit,age,50-64,18,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+reddit,age,65+,6,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+reddit,gender,men,27,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use
+reddit,gender,women,23,https://www.pewresearch.org/internet/fact-sheet/social-media/,"Pew Social Media Fact Sheet (survey Jan 30-Jun 18 2026, n=5511)",ever use

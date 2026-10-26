@@ -1,0 +1,29 @@
+param,dimension,band,dist,a,b,label,note
+price_sensitivity,income,<$25k,beta,6,2,MODELED PRIOR,higher sensitivity at lower household income
+price_sensitivity,income,$25-50k,beta,5,3,MODELED PRIOR,
+price_sensitivity,income,$50-75k,beta,4,4,MODELED PRIOR,
+price_sensitivity,income,$75-100k,beta,3,4,MODELED PRIOR,
+price_sensitivity,income,$100-150k,beta,2.5,5,MODELED PRIOR,
+price_sensitivity,income,$150k+,beta,2,6,MODELED PRIOR,
+skepticism,age,18-24,beta,5,3,MODELED PRIOR,ad skepticism toward sponsored posts
+skepticism,age,25-34,beta,5,3,MODELED PRIOR,
+skepticism,age,35-44,beta,4.5,3,MODELED PRIOR,
+skepticism,age,45-54,beta,4,3,MODELED PRIOR,
+skepticism,age,55-64,beta,4,3.5,MODELED PRIOR,
+skepticism,age,65+,beta,4,3.5,MODELED PRIOR,
+susceptibility,all,all,beta,2,5,MODELED PRIOR,max fraction a stance moves toward a new reaction per decision
+speak_p,age,18-24,beta,1.6,7,MODELED PRIOR,propensity to comment or share publicly
+speak_p,age,25-34,beta,1.5,7.5,MODELED PRIOR,
+speak_p,age,35-44,beta,1.3,8,MODELED PRIOR,
+speak_p,age,45-54,beta,1.2,8.5,MODELED PRIOR,
+speak_p,age,55-64,beta,1.1,9,MODELED PRIOR,
+speak_p,age,65+,beta,1,9,MODELED PRIOR,
+daily_minutes,age,18-24,lognormal,4.0,0.5,ASSUMED,median ~55 min/day for Instagram users; Pew publishes no Instagram daily-minutes figure
+daily_minutes,age,25-34,lognormal,3.8,0.5,ASSUMED,median ~45
+daily_minutes,age,35-44,lognormal,3.5,0.55,ASSUMED,median ~33
+daily_minutes,age,45-54,lognormal,3.3,0.55,ASSUMED,median ~27
+daily_minutes,age,55-64,lognormal,3.1,0.6,ASSUMED,median ~22
+daily_minutes,age,65+,lognormal,2.9,0.6,ASSUMED,median ~18
+influence,all,all,lognormal,5.3,1.1,ASSUMED,followers; long tail (median ~200)
+customer_share,role,core,rate,0.30,0,ASSUMED,share of core personas who are existing customers when a customer list is loaded
+customer_share,role,spillover,rate,0.06,0,ASSUMED,

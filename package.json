@@ -1,0 +1,38 @@
+{
+  "name": "dry-run",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dry Run: A/B test an ad on twin crowds of AI people sampled from real audience data.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/api.ts",
+    "start": "tsx src/api.ts",
+    "data": "tsx scripts/fetch-data.ts",
+    "run:ab": "tsx scripts/run-ab.ts",
+    "backtest": "tsx scripts/backtest.ts",
+    "probe": "tsx scripts/probe.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "smoke": "bash scripts/smoke.sh"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "^2.0.0-r.1",
+    "@fastify/static": "^7.0.4",
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^18.0.9",
+    "fastify": "^4.29.1",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.25.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^20.19.43",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}

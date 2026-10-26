@@ -1,6 +1,8 @@
-.env
-.venv/
-__pycache__/
-*.pyc
 node_modules/
+.env
 .DS_Store
+runs/*
+!runs/.gitkeep
+data/raw/
+data/cache/
+*.log
