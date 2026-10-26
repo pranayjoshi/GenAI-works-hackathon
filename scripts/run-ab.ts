@@ -9,6 +9,8 @@ const input: RunInput = {
   crowdSize: Number(flag('crowd', '120')),
   rounds: Number(flag('rounds', '12')),
   seeds: Number(flag('seeds', '1')),
+  // --event "7|Bean There across the street just posted 30% off all lattes today"
+  events: args.flatMap((a, i) => (a === '--event' ? [args[i + 1]] : [])).map((e) => { const [r, ...t] = e.split('|'); return { round: Number(r), text: t.join('|'), target: 'all' as const }; }),
 };
 const t0 = Date.now();
 const st = startRun(input);
