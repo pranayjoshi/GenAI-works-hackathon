@@ -34,6 +34,7 @@ export interface RunSpec {
   useCustomers: boolean;
   events: InjectedEvent[];
   mode: 'ab' | 'backtest';
+  platform?: string;          // Pew platform for channel weighting (default instagram)
   parent_run?: string;
 }
 

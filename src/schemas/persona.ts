@@ -22,7 +22,7 @@ export const Persona = z.object({
   zip: z.string(),
   income_band: z.enum(INCOME_BANDS),
   education: z.enum(EDUCATION),
-  channel: z.literal('instagram'),
+  channel: z.string(),
   daily_minutes: z.number(),
   segment: z.string(),
   role: z.enum(['core', 'spillover']),

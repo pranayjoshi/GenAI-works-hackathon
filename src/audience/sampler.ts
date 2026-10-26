@@ -20,6 +20,7 @@ export interface SampleSpec {
   coreShare?: number;     // user override; default = natural share clamped to [0.5, 0.7]
   useCustomers: boolean;
   idPrefix?: string;
+  platform?: string;      // Pew platform used for channel weighting (default instagram)
 }
 
 export interface SampleReport {
@@ -70,7 +71,8 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
   const qAge = await q('ACS B01001 sex by age', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' ORDER BY column_id`);
   const qInc = await q('ACS B19037 householder age x income', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B19037' ORDER BY column_id`);
   const qEdu = await q('ACS B15003 education 25+', `SELECT column_id, column_name, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B15003' ORDER BY column_id`);
-  const qPew = await q('Pew Instagram use', `SELECT dimension, band, pct_us_adults_ever_use AS pct FROM pew.platform_use WHERE platform = 'instagram'`);
+  const platform = (spec.platform ?? 'instagram').replace(/[^a-z]/g, '');
+  const qPew = await q(`Pew ${platform} use`, `SELECT dimension, band, pct_us_adults_ever_use AS pct FROM pew.platform_use WHERE platform = '${platform}'`);
   const qPri = await q('Behaviour priors', `SELECT param, dimension, band, dist, a, b, label FROM priors.behaviour`);
   // Cross-source join: Census population by Pew age band x Pew Instagram rate = Instagram users in this geography.
   const qJoin = await q('Audience size: Census x Pew join', `
@@ -82,7 +84,7 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
       FROM ages GROUP BY 1
     )
     SELECT b.band, b.adults, p.pct_us_adults_ever_use AS instagram_pct, ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS instagram_users
-    FROM banded b JOIN pew.platform_use p ON p.platform = 'instagram' AND p.dimension = 'age' AND p.band = b.band
+    FROM banded b JOIN pew.platform_use p ON p.platform = '${platform}' AND p.dimension = 'age' AND p.band = b.band
     WHERE b.band IS NOT NULL ORDER BY b.band`);
 
   // ---- parse ACS
@@ -178,7 +180,7 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
       { field: 'age, gender', source: 'census.acs B01001 (ACS 5-year, live REST)', query_id: qAge.query_id, ref: cell.label },
       { field: 'income_band', source: 'census.acs B19037 (householder age x income)', query_id: qInc.query_id, ref: inc.label },
       { field: 'education', source: 'census.acs B15003', query_id: qEdu.query_id, ref: edu.label },
-      { field: 'channel', source: 'pew.platform_use (Instagram, by age and gender)', query_id: qPew.query_id, ref: `instagram age ${pewAgeBand(age)} x gender ${cell.sex}` },
+      { field: 'channel', source: `pew.platform_use (${platform}, by age and gender)`, query_id: qPew.query_id, ref: `${platform} age ${pewAgeBand(age)} x gender ${cell.sex}` },
       { field: 'segment share', source: 'Census x Pew join', query_id: qJoin.query_id, ref: `core share ${round(target, 2)} (natural ${round(natural, 2)})` },
       { field: 'behaviour', source: 'priors.behaviour (MODELED PRIOR)', query_id: qPri.query_id, ref: `price:${inc.band} skepticism:${band} speak:${band}` },
     ];
@@ -195,7 +197,7 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
 
     personas.push({
       id, age, age_band: band, gender: cell.sex, zip: spec.zip, income_band: inc.band, education: eduCat,
-      channel: 'instagram', daily_minutes: Math.round(minutes), segment: isCore ? spec.coreName : spec.spilloverName, role,
+      channel: platform, daily_minutes: Math.round(minutes), segment: isCore ? spec.coreName : spec.spilloverName, role,
       customer,
       price_sensitivity: round(drawPrior(prior('price_sensitivity', 'income', inc.band), 0.5), 2),
       skepticism: round(drawPrior(prior('skepticism', 'age', band), 0.6), 2),

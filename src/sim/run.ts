@@ -140,7 +140,7 @@ export async function buildCrowd(spec: RunSpec, inp: { postA: string; postB: str
   onStatus('sampling', 'Sampling people from Census and Pew rows');
   const { personas: raw, report } = await sampleCrowd({
     geoId: spec.geoId, zip: spec.zip, n: spec.crowdSize, seed: spec.run_id, coreAgeBands: proposal.core.age_bands,
-    coreName: proposal.core.name, spilloverName: proposal.spillover.name, coreShare: spec.coreShare, useCustomers: spec.useCustomers,
+    coreName: proposal.core.name, spilloverName: proposal.spillover.name, coreShare: spec.coreShare, useCustomers: spec.useCustomers, platform: spec.platform,
   });
   onStatus('voices', 'Writing one-line voices (numbers first, model second)', 0);
   const ctx = `${spec.business} in ${spec.place}. Core: ${proposal.core.name}. ${proposal.interests.length ? `Interests: ${proposal.interests.join(', ')}.` : ''}`;
