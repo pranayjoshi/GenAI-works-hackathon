@@ -23,14 +23,14 @@ export interface ActionRecord {
   would_visit: boolean;
   reason: string;
   text: string;
+  unsaid: string;       // what they would have said but kept private (speak gate)
   memory_ids: string[];
   repaired: boolean;
 }
 
 /** What the crowd model returns for one batch. Kept small so a 4B model can fill it. */
 export const CrowdDecision = z.object({
-  id: z.string().describe('person id, e.g. p0042'),
-  item: z.string().describe('item id from the feed'),
+  key: z.string().describe('the KEY printed next to the feed item, e.g. p0042/ad'),
   action: z.enum(ACTIONS),
   feeling: z.number().int().min(-2).max(2).describe('-2 strongly negative ... +2 strongly positive'),
   would_visit: z.boolean(),

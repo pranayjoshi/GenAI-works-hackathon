@@ -66,6 +66,7 @@ export const config = {
     baseUrl: env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
     models: LOCAL,
     concurrency: num('OLLAMA_CONCURRENCY', 3),
+    thinking: env('OLLAMA_THINKING', 'false') === 'true',
   },
   zetaris: {
     baseUrl: env('ZETARIS_BASE_URL'), // e.g. http://localhost:3000/api/proxy or https://<host>/api/v1.0

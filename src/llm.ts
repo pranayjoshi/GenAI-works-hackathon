@@ -160,7 +160,8 @@ async function openAiCompat(p: 'nightshift' | 'nvidia', o: ChatOpts<unknown>, js
 
 async function ollama(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
   const model = config.ollama.models[o.role];
-  const thinking = o.thinking ?? THINKING[o.role];
+  // A laptop-sized local model is too slow to think on every call; hosted roles keep THINKING as planned.
+  const thinking = config.ollama.thinking && (o.thinking ?? THINKING[o.role]);
   const body: Record<string, unknown> = {
     model,
     stream: false,
