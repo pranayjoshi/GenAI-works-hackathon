@@ -22,7 +22,7 @@ export class AgentMemory {
   remember(round: number, text: string, tags: string[], keepId?: string): string {
     this.setHour(round);
     const rec = this.hmem.add({ content: text, type: 'personal', tags, confidence: 0.9, source: `world:${this.worldId}`, provenance: { origin: 'model_response', learnedAt: this.now, label: `${this.worldId}:${this.agentId}`, refs: tags } });
-    const line = { id: keepId ?? rec.id, hour: round, text, tags };
+    const line = { id: keepId ?? `${this.agentId}.${rec.id}`, hour: round, text, tags };
     this.lines.push(line);
     this.byHmemId.set(rec.id, line);
     return line.id;

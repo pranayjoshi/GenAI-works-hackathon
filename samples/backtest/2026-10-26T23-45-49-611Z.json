@@ -1,0 +1,59 @@
+{
+ "partial": true,
+ "started": "2026-10-26T23:45:49.611Z",
+ "finished": null,
+ "config": {
+  "slice": "dev",
+  "n_tests": 2,
+  "crowd_size": 20,
+  "rounds": 4,
+  "seeds": [
+   1
+  ],
+  "platform": "facebook",
+  "baselines_only": false,
+  "headline_only": true,
+  "models": {
+   "crowd_hosted": "nvidia/nemotron-3.5-lightning-30b-a3b",
+   "reason_hosted": "nvidia/nemotron-3-super-120b-a12b",
+   "crowd_local": "nemotron-3-nano:4b",
+   "reason_local": "nemotron-3-nano:4b"
+  }
+ },
+ "selection": {
+  "query_ids": [
+   "q_a960a85b_1"
+  ],
+  "excluded_window": {
+   "from": "2013-06-25",
+   "to": "2014-01-10",
+   "reason": "archive randomization caveat (no `problem` column in the exploratory file)"
+  },
+  "filters": {
+   "min_impressions": 1000,
+   "min_rel_gap": 0.3,
+   "same_eyecatcher_and_lede": true,
+   "headline_must_differ": true,
+   "one_pair_per_test": "group with most total impressions",
+   "order": "md5(clickability_test_id)",
+   "dev_n": 20
+  },
+  "qualifying": 1722,
+  "dev_n": 20
+ },
+ "scores": {
+  "crowd": null,
+  "single_reason": null,
+  "single_crowd": null,
+  "coin": {
+   "rate": 0.5
+  }
+ },
+ "mcnemar": {
+  "crowd_vs_single_reason": null,
+  "crowd_vs_single_crowd": null
+ },
+ "tests": [],
+ "served_by": {},
+ "wall_ms": 470
+}

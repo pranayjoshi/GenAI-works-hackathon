@@ -258,6 +258,7 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
       trace({ ts: new Date().toISOString(), tag, role: o.role, provider: 'replay', model: '-', served_by: 'replay-miss', ms: 0, tokens_in: 0, tokens_out: 0, ok: false, repaired: false, error: 'not recorded' });
       throw new Error(`SAMPLE_MODE: no recording for this ${o.role} call. Run once with a provider to record it.`);
     }
+    if (o.role === 'crowd' && config.replayCrowdMs > 0) await sleep(config.replayCrowdMs);
     const r = finish({ text: row.text, tokens_in: row.tokens_in, tokens_out: row.tokens_out, served_by: row.served_by, model: row.model, provider: 'replay' }, false);
     trace({ ts: new Date().toISOString(), tag, role: o.role, provider: 'replay', model: row.model, served_by: `replay(${row.served_by})`, ms: 0, tokens_in: row.tokens_in, tokens_out: row.tokens_out, ok: r.ok, repaired: false });
     return r;

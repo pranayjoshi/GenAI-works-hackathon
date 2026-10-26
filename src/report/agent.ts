@@ -54,6 +54,7 @@ Rules:
 - Use only numbers that appear in the tool results or the verdict. Every claim lists the query_id(s) it came from.
 - Quotes are chosen by action_id from the reaction samples; pick ones whose reason clearly shows the theme.
 - This is a simulation of AI personas sampled from Census and Pew data, not real customers. Do not say "customers said"; say "simulated people" or "the crowd".
+- Write rates as percentages with one decimal (0.1234 -> 12.3%). Never invent prices, products or offers; only the ones in the two versions exist.
 - Plain, specific language. No hype.`;
   const toolText = tools.map((t) => `### ${t.tool} ${JSON.stringify(t.args)} query_id=${t.query_id}\n${compact(t.rows)}`).join('\n\n');
   const user = `Business: ${st.spec.business}. Goal: ${st.spec.goal}.
@@ -89,6 +90,18 @@ ${toolText}`;
       for (const n of nums) if (![...pool, ...extra].some((x) => Math.abs(x * 100 - n) < 0.6 || Math.abs(x - n) < 0.6)) issues.push(`Number ${n}% in "${c.text}" is not in its cited results`);
     }
     for (const th of [...rep.objections, ...rep.likes]) for (const id of th.action_ids) if (!recById.has(id)) issues.push(`Quote ${id} is not an action in this run`);
+    // prices and offers must exist in the posts; headline percentages must match the verdict
+    const postText = st.spec.posts.map((p) => p.text).join(' ');
+    for (const field of [rep.summary, rep.recommendation, rep.tipping_note, ...rep.claims.map((c) => c.text)]) {
+      for (const m of field.match(/\$\d+(\.\d+)?/g) ?? []) if (!postText.includes(m)) issues.push(`Price ${m} does not appear in either version: "${field.slice(0, 80)}"`);
+    }
+    for (const field of [rep.summary, rep.recommendation]) {
+      for (const m of field.match(/\d+(\.\d+)?%/g) ?? []) {
+        const n = parseFloat(m);
+        const ok = [v.pooled.a, v.pooled.b, v.pooled.ci_half, Math.abs(v.pooled.diff), ...Object.values(v.secondary).flatMap((s) => [s.a, s.b]), ...v.segments.flatMap((s) => [s.a, s.b])].some((x) => Math.abs(x * 100 - n) < 0.6) || postText.includes(m);
+        if (!ok) issues.push(`Number ${m} in the summary or recommendation is not in the results`);
+      }
+    }
     return issues;
   };
   let issues = codeIssues(report);
@@ -115,6 +128,10 @@ ${toolText}`;
   }
   // drop claims that still fail the code checks rather than show them
   report.claims = report.claims.filter((c) => !issues.some((i) => i.includes(`"${c.text}"`)));
+  if (issues.some((i) => i.includes('summary or recommendation') || (i.startsWith('Price') && (i.includes(report!.summary.slice(0, 60)) || i.includes(report!.recommendation.slice(0, 60)))))) {
+    report.summary = v.headline;
+    report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C before spending.';
+  }
   for (const th of [...report.objections, ...report.likes]) th.action_ids = th.action_ids.filter((id) => recById.has(id));
 
   const quotes: ReportBundle['quotes'] = {};

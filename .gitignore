@@ -4,5 +4,4 @@ node_modules/
 runs/*
 !runs/.gitkeep
 data/raw/
-data/cache/
 *.log

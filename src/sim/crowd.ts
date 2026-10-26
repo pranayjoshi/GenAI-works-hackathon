@@ -49,7 +49,7 @@ How to decide:
 - Memories are things this person already saw or did; stay consistent with them (seeing the same ad again often annoys people).
 - feeling: -2 strongly negative, 0 indifferent, +2 strongly positive about ${business} after seeing the item.
 - would_visit: true only if this person would realistically go to or buy from ${business} this week.
-- reason: private, first person, about the post's actual wording, under 20 words. Never quote the person's numbers.
+- reason: private, first person, about the post's actual wording, under 14 words. Never quote the person's numbers.
 - text: for comment or share, a short real Instagram comment or caption in this person's own style; otherwise "".
 - People differ: vary wording, length and tone. Do not reuse phrases across people.`;
 

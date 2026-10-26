@@ -221,9 +221,10 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
     st.usage = traceStats(spec.run_id);
   }
   st.status = 'done';
+  st.phase = 'done';
+  persist(st);
   phase(st, 'done', st.verdict.headline);
   push(st, { type: 'done', run_id: spec.run_id });
-  persist(st);
 }
 
 export function injectEvent(st: RunState, ev: { round: number; text: string; target?: 'all' | 'core' | 'spillover' }): InjectedEvent {
@@ -307,9 +308,12 @@ export async function loadRun(id: string): Promise<RunState | undefined> {
     summaries: meta.summaries ?? [], verdict: meta.verdict, tipping: meta.tipping, validity: meta.validity, fairness: meta.fairness, report: meta.report,
     usage: meta.usage, timing: meta.timing, memories, bus: new Bus(), recent: [], abort: new AbortController(),
   };
-  if (st.status !== 'done' && st.status !== 'error') { st.status = 'error'; st.error = 'Run was interrupted (server restarted).'; }
+  if (st.status !== 'done' && st.status !== 'error') {
+    if (st.verdict) st.status = 'done';
+    else { st.status = 'error'; st.error = 'Run was interrupted (server restarted).'; }
+  }
   runs.set(id, st);
-  if (st.status === 'done' && st.spec.mode === 'ab' && fs.existsSync(path.join(runDir(id), 'actions.csv'))) {
+  if (st.spec.mode === 'ab' && fs.existsSync(path.join(runDir(id), 'actions.csv'))) {
     const t = tableIds(st);
     await registerCsv(t.actions, path.join(runDir(id), 'actions.csv'));
     await registerCsv(t.personas, path.join(runDir(id), 'personas.csv'));

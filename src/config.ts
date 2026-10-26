@@ -47,6 +47,7 @@ export const config = {
   port: num('PORT', 8787),
   sampleMode: env('SAMPLE_MODE', 'false') === 'true',
   record: env('RECORD', 'true') !== 'false',
+  replayCrowdMs: num('REPLAY_CROWD_MS', 450),   // pacing per crowd call in SAMPLE_MODE so replays look live
   providers: (env('PROVIDERS', 'nightshift,nvidia,ollama').split(',').map((s) => s.trim()).filter(Boolean)) as ProviderName[],
   nightshift: {
     baseUrl: env('NIGHTSHIFT_BASE_URL', 'http://127.0.0.1:8088/v1'),
