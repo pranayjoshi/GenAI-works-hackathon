@@ -7,3 +7,4 @@ data/raw/
 *.log
 *.sqlite-shm
 *.sqlite-wal
+data/cache/census_all.json
