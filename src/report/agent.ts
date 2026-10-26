@@ -126,6 +126,17 @@ ${toolText}`;
       } catch { /* keep first report with notes */ }
     }
   }
+  // quality floor: a summary or recommendation too thin to act on is replaced with text built from the verdict
+  const segNote = v.segments.filter((x) => x.clear).slice(0, 2).map((x) => `${x.key.replace(':', ' ')} prefers ${x.prefers}`).join('; ');
+  if (report.summary.trim().length < 60 || !/\b(A|B|C|version)\b/i.test(report.summary)) {
+    report.summary = `${v.headline}${segNote ? ` Clear segment splits: ${segNote}.` : ''}`;
+    issues.push('Summary was too thin; replaced with the computed verdict.');
+  }
+  if (report.recommendation.trim().length < 30) {
+    report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C on the same crowd before spending.';
+    issues.push('Recommendation was too thin; replaced with a rule-based one.');
+  }
+  report.claims = report.claims.filter((c) => c.text.trim().length >= 25);
   // drop claims that still fail the code checks rather than show them
   report.claims = report.claims.filter((c) => !issues.some((i) => i.includes(`"${c.text}"`)));
   if (issues.some((i) => i.includes('summary or recommendation') || (i.startsWith('Price') && (i.includes(report!.summary.slice(0, 60)) || i.includes(report!.recommendation.slice(0, 60)))))) {
