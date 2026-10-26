@@ -323,3 +323,4 @@ pre.sql { background: var(--bg); border: 1px solid var(--line); border-radius: 1
 }
 @media (min-width: 1700px) { html { font-size: 17px; } .view { max-width: 1560px; } }
 .grid > *, .compare > *, .feeds > *, .stack > * { min-width: 0; }
+.grid > .card, .compare > .card { margin-top: 0; }

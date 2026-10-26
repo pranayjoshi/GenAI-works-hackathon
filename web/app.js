@@ -45,6 +45,13 @@ const pct = (x, d = 1) => (x == null || Number.isNaN(x) ? '-' : `${(x * 100).toF
 const num = (x, d = 2) => (x == null || Number.isNaN(x) ? '-' : Number(x).toFixed(d));
 const fmtInt = (x) => (x == null ? '-' : Number(x).toLocaleString());
 const hourStr = (hr) => `${String(hr).padStart(2, '0')}:00`;
+/** Action records and memories store the round index in `hour`; turn it into a clock time for the current run. */
+function roundTime(r) {
+  const sp = typeof RUN !== 'undefined' && RUN?.S?.spec;
+  if (!sp) return `round ${r + 1}`;
+  const t = sp.startHour + r * sp.hourStep;
+  return `D${Math.floor(t / 24) + 1} ${hourStr(t % 24)}`;
+}
 const spin = () => h('span.spinner');
 const sleepMs = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -183,9 +190,9 @@ async function openAgent(agentId, opts = {}) {
   }
   function renderMem() {
     const wd = data.worlds[world] || { memories: [], actions: [] };
-    mount(memBox, wd.memories?.length ? wd.memories.map((m) => h('div.mem', { 'data-mem': m.id }, h('span.hr', hourStr(m.hour)), m.text)) : h('div.muted', 'No memories in this world: they never saw the post.'));
+    mount(memBox, wd.memories?.length ? wd.memories.map((m) => h('div.mem', { 'data-mem': m.id }, h('span.hr', roundTime(m.hour)), m.text)) : h('div.muted', 'No memories in this world: they never saw the post.'));
     mount(actBox, wd.actions?.length ? wd.actions.map((a) => h('div.mem', { 'data-action': a.id },
-      h('div.row', { style: { gap: '8px' } }, h('span.hr', hourStr(a.hour)), actPill(a.action), h('span.chip.mono', a.id)),
+      h('div.row', { style: { gap: '8px' } }, h('span.hr', roundTime(a.hour)), actPill(a.action), h('span.chip.mono', a.id)),
       a.text ? h('div', { style: { marginTop: '4px' } }, `"${a.text}"`) : null,
       a.reason ? h('div.thought', `thought: ${a.reason}`) : null,
       a.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), a.unsaid) : null)) : h('div.muted', 'No actions in this world.'));
@@ -205,7 +212,7 @@ async function openAgent(agentId, opts = {}) {
         t.res && t.res.invalid_citations?.length ? h('div', { style: { marginTop: '6px' } }, h('span.chip.bad', `Warning: ${t.res.invalid_citations.length} citation(s) did not match its memory (${t.res.invalid_citations.join(', ')})`)) : null,
         t.res && t.res.citations?.length ? h('div.cites', t.res.citations.map((c) => h('div.cite', {
           title: c.action_id ? 'Show the linked action' : 'Memory line', onclick: () => { if (c.action_id) focusAction(c.action_id); },
-        }, h('span.hr', hourStr(c.hour)), c.text, c.action_id ? h('span.chip.qid', { style: { marginLeft: '8px' } }, `action ${c.action_id}`) : null))) : null,
+        }, h('span.hr', roundTime(c.hour)), c.text, c.action_id ? h('span.chip.qid', { style: { marginLeft: '8px' } }, `action ${c.action_id}`) : null))) : null,
         t.res ? h('div.muted', { style: { fontSize: '11px', marginTop: '6px' } }, `served by ${t.res.served_by}`) : null))));
     chatLog.lastChild?.scrollIntoView({ block: 'nearest' });
   }
@@ -539,6 +546,9 @@ function runView(id, view) {
               f.identical ? `Base log hash ${keys.join(' = ')} ✓ ` : `Base logs differ for seed ${f.seed} ✗ `, h('span.mono', String(hash).slice(0, 8)));
           }) : h('span.chip', { title: 'Shown once the twin worlds have forked' }, 'Twin-world check pending'),
           h('span.chip#stream-chip', { title: 'Server-sent events connection' }, 'stream: connecting'))),
+      h('div.row', { style: { gap: '8px' } }, S.replay ? [h('span.chip.on', `Replaying round ${Math.max(0, S.replayLim + 1)} of ${S.spec.rounds}`), h('button.btn.sm', { onclick: () => stopReplay(true) }, 'Stop')]
+        : (S.status === 'done' || S.status === 'error') && (S.spec && Object.keys(S.rec).length) ? h('button.btn.sm.primary', { title: 'Re-play the stored actions round by round', onclick: startReplay }, '\u25B6 Replay') : null,
+        h('select', { style: { width: 'auto', padding: '4px 8px' }, title: 'Replay speed', onchange: (e) => { S.speed = Number(e.target.value); } }, [[0.5, '0.5x'], [1, '1x'], [2, '2x']].map(([v, l]) => h('option', { value: v, selected: v === S.speed }, l)))),
       sp && sp.seeds.length > 1 ? h('div.chips', sp.seeds.map((sd) => h('button.chip' + (sd === S.seed ? '.on' : ''), { onclick: () => { S.seed = sd; renderHead(); buildWorlds(); drawChart(); } }, `Seed ${sd}`))) : null);
     setStream(ui._stream);
   }
@@ -637,7 +647,7 @@ function runView(id, view) {
           actPill(r.action),
           r.item_kind === 'share' && r.via ? h('span.chip', { style: { fontSize: '11px', padding: '0 7px' } }, `via ${r.via}`) : null,
           r.item_kind === 'event' ? h('span.chip', { style: { fontSize: '11px', padding: '0 7px' } }, 'reacting to news') : null,
-          h('span.hr', hourStr(r.hour))),
+          h('span.hr', roundTime(r.hour))),
         r.text ? h('div.said', r.text) : null,
         r.reason ? h('div.thought', `thought: ${r.reason}`) : null,
         r.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), r.unsaid) : null));
@@ -671,7 +681,7 @@ function runView(id, view) {
     const W_ = 760, H_ = 250, m = { l: 44, r: 16, t: 14, b: 40 };
     const series = ws.map((wid, i) => {
       const tl = S.timeline[wid] || {};
-      return { v: vs[i], pts: Object.values(tl).filter((c) => c.deciders > 0).map((c) => ({ r: c.round, y: c.intent / c.deciders, c })).sort((a, b) => a.r - b.r) };
+      return { v: vs[i], pts: Object.values(tl).filter((c) => c.deciders > 0 && c.round <= (S.replayLim ?? 1e9)).map((c) => ({ r: c.round, y: c.intent / c.deciders, c })).sort((a, b) => a.r - b.r) };
     });
     const maxY = Math.min(1, Math.max(0.2, Math.ceil(Math.max(0, ...series.flatMap((x) => x.pts.map((p) => p.y))) * 10 + 1) / 10));
     const n = Math.max(2, sp.rounds);
@@ -681,7 +691,7 @@ function runView(id, view) {
     for (let i = 0; i <= 4; i++) { const y = (maxY / 4) * i; svg.append(s('line', { x1: m.l, x2: W_ - m.r, y1: Y(y), y2: Y(y), stroke: 'var(--line)', 'stroke-width': 1 }), s('text', { x: m.l - 8, y: Y(y) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)' }, pct(y, 0))); }
     const step = Math.max(1, Math.round(n / 6));
     for (let r = 0; r < n; r += step) svg.append(s('text', { x: X(r), y: H_ - m.b + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)' }, `r${r + 1}`), s('text', { x: X(r), y: H_ - m.b + 30, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--faint)' }, hourOfRound(r).replace('Day ', 'D')));
-    for (const ev of S.events) {
+    for (const ev of S.events.filter((e) => e.round <= (S.replayLim ?? 1e9))) {
       svg.append(s('line', { x1: X(ev.round), x2: X(ev.round), y1: m.t, y2: H_ - m.b, stroke: 'var(--bad)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3' }),
         s('path', { d: `M${X(ev.round) - 5},${m.t} h10 l-5,8 z`, fill: 'var(--bad)' }, s('title', {}, `Injected at round ${ev.round + 1} (${ev.target}): ${ev.text}`)));
     }
@@ -775,7 +785,7 @@ function runView(id, view) {
         const merged = [...list.filter((r) => !S.recIds.has(r.id)), ...have].sort((a, b) => seq(a) - seq(b)).slice(-FEED_CAP);
         list.forEach((r) => S.recIds.add(r.id)); S.rec[wid] = merged;
       }
-      worldIds().forEach(redrawFeed);
+      worldIds().forEach(redrawFeed); renderHead();
     } catch (e) { /* feeds fill from the live stream instead */ }
   }
   function renderAll() {
@@ -784,6 +794,46 @@ function runView(id, view) {
   }
   async function refetch() {
     try { applySnap(await api(`/api/runs/${id}`)); renderAll(); worldIds().forEach(updateCounters); } catch { /* keep what we have */ }
+  }
+
+  /* ---- replay (finished runs): re-animate stored actions through the same card + counter + chart code */
+  let rTimer = null;
+  const hoursOf = (r) => ((S.spec.startHour + r * S.spec.hourStep) % 24);
+  async function startReplay() {
+    if (S.replay) return;
+    let all;
+    try { all = await api(`/api/runs/${id}/actions?limit=200000`); } catch (e) { return fail(e); }
+    const ws = worldIds();
+    const byRound = {};   // round -> [records of this seed]
+    for (const wid of ws) {
+      for (const rec of all.filter((x) => x.world_id === wid)) {
+        const r = Math.min(S.spec.rounds - 1, Math.max(0, rec.hour));   // record.hour is the round index
+        (byRound[r] || (byRound[r] = [])).push(rec);
+      }
+    }
+    S.saved = { counters: { ...S.counters }, rec: S.rec, recIds: S.recIds };
+    S.rec = {}; S.recIds = new Set(); for (const wid of ws) delete S.counters[wid];
+    S.replay = true; S.replayLim = -1; S.speed = S.speed || 1;
+    ws.forEach((wid) => { redrawFeed(wid); updateCounters(wid); }); drawChart(); renderHead();
+    let r = -1;
+    const step = () => {
+      r++;
+      if (r >= S.spec.rounds) return stopReplay(false);
+      S.replayLim = r;
+      for (const rec of byRound[r] || []) addAction(rec, true);
+      for (const wid of ws) { const c = S.timeline[wid]?.[r]; if (c) { S.counters[wid] = c; updateCounters(wid); } }
+      for (const ev of S.events.filter((e) => e.round === r)) toast(`Event injected: ${ev.text}`);
+      drawChart(); renderHead();
+      rTimer = setTimeout(step, 1200 / S.speed);
+    };
+    step();
+  }
+  function stopReplay(abort) {
+    clearTimeout(rTimer); rTimer = null;
+    if (!S.replay) return;
+    S.replay = false; S.replayLim = null;
+    if (abort || true) { S.counters = S.saved.counters; S.rec = S.saved.rec; S.recIds = S.saved.recIds; }
+    worldIds().forEach((wid) => { updateCounters(wid); redrawFeed(wid); }); drawChart(); renderHead();
   }
 
   /* ---- stream */
@@ -878,7 +928,7 @@ function runView(id, view) {
         h('div.tbl-wrap', h('table', h('thead', h('tr', h('th', 'Segment'), h('th.num', `${va} %`), h('th.num', `${vb} %`), h('th', ''), h('th.num', 'n (A / B)'), h('th', 'Prefers'))), h('tbody', segRows)))),
       S.tipping ? h('div.grid.two', { style: { marginTop: '16px' } }, Object.entries(S.tipping).filter(([w]) => true).map(([wid, t]) => h('div.card',
         h('div.card-head', h('h3', `Tipping point, ${wid}`), h('span.sub', 'the share that reached the most people')),
-        t ? h('div', h('div.row', avatar(t.record.agent_id), h('div', h('b', t.record.agent_id), h('div.muted', `shared at ${hourStr(t.record.hour)}`))),
+        t ? h('div', h('div.row', avatar(t.record.agent_id), h('div', h('b', t.record.agent_id), h('div.muted', `shared at ${roundTime(t.record.hour)}`))),
           h('div.said', { style: { margin: '10px 0' } }, t.record.text ? `"${t.record.text}"` : '(shared without a caption)'),
           h('span.chip.' + (t.reached > 0 ? 'good' : ''), `reached ${t.reached} people`), ' ', h('span.chip.mono', t.record.id))
           : h('div.muted', 'Nobody shared the post in this world, so there was no cascade.')))) : null,
@@ -898,7 +948,7 @@ function runView(id, view) {
       const q = b.quotes?.[id];
       if (!q) return h('div.quote', h('span.chip.qid', id), h('div.muted', 'Action no longer available.'));
       return h('div.quote', { title: 'Open this person and ask them why', onclick: () => openAgent(q.agent_id, { world: q.world_id }) },
-        h('div.src', variantChip(q.variant), h('b', q.agent_id), h('span', `world ${q.world_id}`), h('span.mono', hourStr(q.hour)), actPill(q.action), h('span.chip.qid', `action ${id}`)),
+        h('div.src', variantChip(q.variant), h('b', q.agent_id), h('span', `world ${q.world_id}`), h('span.mono', roundTime(q.hour)), actPill(q.action), h('span.chip.qid', `action ${id}`)),
         q.text ? h('div.q', `"${q.text}"`) : null,
         q.reason ? h('div.thought', `thought: ${q.reason}`) : null,
         q.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), q.unsaid) : null);
@@ -957,7 +1007,7 @@ function runView(id, view) {
         mount(out, r.summary ? h('div.banner.info', h('b', 'Pattern: '), r.summary) : null,
           r.answers.length ? h('div.grid.two', r.answers.map((a) => h('div.card', h('div.row.spread', h('div.row', avatar(a.agent_id), h('div', h('b', a.agent_id), h('div.muted', `${a.persona.age}, ${a.persona.role}, world ${a.world_id}`))), a.saw_it === false ? h('span.chip.warn', "didn't see it") : null),
             h('p', { style: { margin: '10px 0' } }, `"${a.answer}"`),
-            a.citations?.length ? h('div.cites', a.citations.map((c) => h('div.cite', { onclick: () => openAgent(a.agent_id, { world: a.world_id }) }, h('span.hr', hourStr(c.hour)), c.text, c.action_id ? h('span.chip.qid', { style: { marginLeft: '8px' } }, `action ${c.action_id}`) : null))) : null,
+            a.citations?.length ? h('div.cites', a.citations.map((c) => h('div.cite', { onclick: () => openAgent(a.agent_id, { world: a.world_id }) }, h('span.hr', roundTime(c.hour)), c.text, c.action_id ? h('span.chip.qid', { style: { marginLeft: '8px' } }, `action ${c.action_id}`) : null))) : null,
             a.invalid_citations?.length ? h('span.chip.bad', `${a.invalid_citations.length} unmatched citation(s)`) : null,
             h('div.muted', { style: { fontSize: '11px', marginTop: '6px' } }, `served by ${a.served_by}`)))) : h('div.empty', 'Nobody in that segment decided on the post.'));
       } catch (e) { mount(out, h('div.banner.bad', e.message)); }
@@ -1012,7 +1062,7 @@ function runView(id, view) {
     mount(toolBox, h('p.muted', 'The Rewriter aims at the objections of the segments that preferred the other version, an honesty check keeps the price and offer visible, and you can edit before testing.'), btn, out);
   }
 
-  return () => { closed = true; if (es) es.close(); style.remove(); if (nemoTimer) clearTimeout(nemoTimer); };
+  return () => { closed = true; clearTimeout(rTimer); if (es) es.close(); style.remove(); if (nemoTimer) clearTimeout(nemoTimer); };
 }
 
 /* ============================================================ boot */
