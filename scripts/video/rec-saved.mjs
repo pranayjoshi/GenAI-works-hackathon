@@ -45,30 +45,27 @@ const CLIPS = {
     r.mark('persona');
     await sleep(2500);
     await sleep(500);
-    await r.click(p.locator('.dz-tab', { hasText: 'Receipts' }), { after: 1200 });
+    await r.click(p.locator('.dz-tab:visible', { hasText: 'Receipts' }), { after: 1200 });
     r.mark('receipts');
     await sleep(3500);
     r.mark('end');
   },
   async worlds(r, p) {
     await r.start(stage('worlds')); await settle(p);
-    await p.getByRole('button', { name: 'Seed 2', exact: true }).click(); await sleep(1500);
+    await p.getByRole('button', { name: 'Seed 2', exact: true }).click().catch(() => {}); await sleep(1500);
     r.mark('start');
     await sleep(800);
     await r.moveTo(p.locator('span.chip.good').filter({ hasText: 'twins identical' }).first(), { ms: 900 }).catch(() => {});
     await sleep(2200);
     await r.moveTo(p.locator('span.chip.good').filter({ hasText: 'twins identical' }).nth(1), { ms: 700 }).catch(() => {});
-    await sleep(1800);
+    await sleep(1600);
     await r.scrollToEl(p.locator('.wx-card').first(), { offset: 330, ms: 1400 });
     await sleep(1800);
-    const who = p.locator('.wx-card:not(.scroll) .who').first();
-    await r.click(who, { after: 1800 });
+    await r.click(p.locator('.wx-card:not(.scroll) .who').first(), { after: 1500 });
     r.mark('drawer');
-    await sleep(1200);
-    await r.click(p.locator('.dz-tab', { hasText: 'Timeline' }), { after: 1200 });
+    await r.click(p.locator('.dz-tab:visible', { hasText: 'Timeline' }), { after: 1200 });
     r.mark('timeline');
-    const mem = p.locator('.dz-mem').first();
-    if (await mem.count()) await r.moveTo(mem, { ms: 800 }).catch(() => {});
+    await r.moveTo(p.locator('.dz-mem:visible').first(), { ms: 800 }).catch(() => {});
     await sleep(4500);
     r.mark('end');
   },
@@ -130,9 +127,20 @@ const CLIPS = {
     await r.type(p.getByLabel('Search people'), who, { delay: 70 });
     await sleep(700);
     await r.click(p.locator(`.ak-tile[data-id="${who}"]`), { after: 1500 });
-    const wbtn = p.locator('.dz-world').filter({ hasText: world });
-    if (await wbtn.count()) await r.click(wbtn.first(), { after: 700 });
-    await r.click(p.locator('.dz-tab', { hasText: 'Interview' }), { after: 700 });
+    if (process.env.ASK_TWIN) {   // same person, both worlds: what they thought of A, then of B
+      await r.click(p.locator('.dz-tab:visible', { hasText: 'Timeline' }), { after: 900 });
+      await r.click(p.locator('.dz-world:visible').filter({ hasText: 's1:A' }).first(), { after: 600 });
+      r.mark('twin_a');
+      await r.moveTo(p.locator('.dz-tl-item:visible').last(), { ms: 700 }).catch(() => {});
+      await sleep(3200);
+      await r.click(p.locator('.dz-world:visible').filter({ hasText: 's1:B' }).first(), { after: 600 });
+      r.mark('twin_b');
+      await r.moveTo(p.locator('.dz-tl-item:visible').last(), { ms: 700 }).catch(() => {});
+      await sleep(3200);
+    }
+    await r.click(p.locator('.dz-tab:visible', { hasText: 'Interview' }), { after: 700 });
+    const wbtn = p.locator('.dz-world:visible').filter({ hasText: world });
+    if (await wbtn.count() && !(await wbtn.first().evaluate((e) => e.classList.contains('on')))) await r.click(wbtn.first(), { after: 700 });
     await r.type(p.getByLabel('Question for ' + who), q, { delay: 22 });
     await sleep(300);
     r.mark('asked');
@@ -165,17 +173,23 @@ const CLIPS = {
     await sleep(1800);
     await r.moveTo(p.getByText('local Instagram users').first(), { ms: 900 }).catch(() => {});
     await sleep(1800);
-    await r.scrollToEl(p.getByText('Reasons').first(), { offset: 160, ms: 1400 }).catch(() => {});
+    await r.scrollToEl(p.getByText('Reasons', { exact: true }).first(), { offset: 160, ms: 1400 }).catch(() => {});
     await sleep(3500);
     r.mark('versionc');
-    const c = p.getByText(/Version C/).first();
-    await r.scrollToEl(c, { offset: 160, ms: 1400 }).catch(() => {});
-    await sleep(4000);
+    const c = p.getByText('A bolder version, drafted from the objections').first();
+    await r.scrollToEl(c, { offset: 140, ms: 1400 }).catch(() => {});
+    await sleep(1200);
+    await r.moveTo(p.getByText(/Honesty check/).first(), { ms: 900 }).catch(() => {});
+    await sleep(2500);
+    const sim = p.getByText(/Simulate version C against A/).first();
+    await r.scrollToEl(sim, { offset: 300, ms: 1400 }).catch(() => {});
+    r.mark('c_result');
+    await sleep(3500);
     r.mark('to_c');
     await p.goto(new URL(stage('verdict', RUN_C), p.url()).href); await settle(p);
     r.mark('c_verdict');
     await sleep(1500);
-    await r.moveTo(p.locator('h1, h2').filter({ hasText: /C/ }).first(), { ms: 900 }).catch(() => {});
+    await r.moveTo(p.getByText(/Version C/).first(), { ms: 900 }).catch(() => {});
     await sleep(5000);
     r.mark('end');
   },
@@ -200,8 +214,15 @@ const CLIPS = {
     const box = p.locator('*', { has: act }).filter({ has: p.getByRole('button', { name: 'Approve' }) }).last();
     await r.click(box.getByRole('button', { name: 'Approve' }).first(), { after: 300 });
     r.mark('approved');
-    await p.getByText(/nothing sent/i).first().waitFor({ timeout: 60000 }).catch(() => {});
-    await sleep(5000);
+    await p.getByText(/nothing was sent|not sent to Meta/i).first().waitFor({ timeout: 60000 }).catch(() => {});
+    await sleep(900);
+    await r.scrollToEl(p.getByText(/nothing was sent/i).first(), { offset: 520, ms: 1200 }).catch(() => {});
+    r.mark('result');
+    await sleep(3500);
+    await r.scrollToEl(p.getByText(/would look in people.s feeds/).first(), { offset: 120, ms: 1500 }).catch(() => {});
+    r.mark('cards');
+    await r.moveTo(p.getByText(/nothing sent/i).first(), { ms: 900 }).catch(() => {});
+    await sleep(3500);
     r.mark('end');
   },
 };

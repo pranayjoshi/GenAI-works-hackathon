@@ -15,6 +15,7 @@
   .limits .kicker { color: var(--warn); font-size: 21px; grid-row: span 3; }
   .limits span { color: #d6d8e6; font-size: 31px; }
   .repo { font-family: var(--mono); font-size: 42px; color: var(--accent-text); animation: up .9s 1.7s var(--ease) both; padding: 14px 28px; border-radius: 14px; background: rgba(143,123,255,.1); border: 1px solid rgba(143,123,255,.4); }
+  .credit { position: absolute; left: 0; right: 0; bottom: 40px; text-align: center; font-family: var(--mono); font-size: 18px; color: var(--faint); animation: fade .9s 2.2s both; }
   .ring { position: absolute; left: 50%; top: 50%; }
   .ring i { position: absolute; width: 1700px; height: 1700px; border-radius: 50%; border: 2px solid rgba(143,123,255,.22); animation: ring 4.5s ease-out infinite both; }
   .ring i:nth-child(2) { animation-delay: 1.5s; } .ring i:nth-child(3) { animation-delay: 3s; }
@@ -31,4 +32,6 @@
     <span>Ripple rehearses a test; it does not predict real behaviour.</span></div>
   <div class="repo">github.com/pranayjoshi/GenAI-works-hackathon</div>
 </div>
+<div class="credit" id="credit"></div>
+<script>document.getElementById('credit').textContent = new URLSearchParams(location.search).get('credit') || '';</script>
 </body></html>

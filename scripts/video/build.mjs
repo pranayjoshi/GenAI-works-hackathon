@@ -11,7 +11,7 @@ import { ROOT, MEDIA, SCENES, playwright, ff, probeDuration } from './lib/util.m
 import { renderScene } from './render-scene.mjs';
 
 const T = TRANSITION;
-const VO_DELAY = 0.35;          // voice starts a beat after the cut lands
+const VO_DELAY = 0.3;           // voice starts a beat after the cut lands
 const BUILD = path.join(MEDIA, 'build');
 fs.mkdirSync(BUILD, { recursive: true });
 fs.mkdirSync(path.join(MEDIA, 'scenes'), { recursive: true });
@@ -21,6 +21,7 @@ const CMD = `python3 -c "import json;[print(r['agent_name'],'->',r.get('target_a
 const traceOut = execFileSync('sh', ['-c', CMD], { cwd: ROOT }).toString().split('\n').filter(Boolean);
 fs.writeFileSync(path.join(MEDIA, 'scenes/proof-data.js'), `window.TRACE_CMD=${JSON.stringify(CMD)};window.TRACE_LINES=${JSON.stringify(traceOut)};`);
 
+const USED_ELEVEN = (() => { try { return Object.values(JSON.parse(fs.readFileSync(path.join(MEDIA, 'vo/backends.json'), 'utf8'))).some((b) => b.startsWith('elevenlabs')); } catch { return false; } })();
 const durs = JSON.parse(fs.readFileSync(path.join(MEDIA, 'vo/durations.json'), 'utf8'));
 const segs = SEGMENTS.filter((s) => !s.pending && durs[s.id] != null);
 segs.forEach((s, i) => {
@@ -61,7 +62,8 @@ async function segVideo(s) {
   const out = path.join(BUILD, `seg_${s.id}.mp4`);
   let base;
   if (s.src.scene) {
-    const q = s.src.query || '';
+    let q = s.src.query || '';
+    if (s.src.scene === 'close' && USED_ELEVEN) q += (q ? '&' : '') + 'credit=' + encodeURIComponent('Voiceover: ElevenLabs');
     const htmlPath = path.join(SCENES, s.src.scene + '.html');
     const key = crypto.createHash('md5').update([s.L, q, fs.readFileSync(htmlPath), fs.readFileSync(path.join(SCENES, 'base.css')), s.src.scene === 'proof' ? traceOut.join() : ''].join('|')).digest('hex').slice(0, 10);
     base = path.join(MEDIA, 'scenes', `${s.id}_${key}.mp4`);
