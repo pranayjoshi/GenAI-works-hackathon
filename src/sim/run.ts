@@ -260,6 +260,8 @@ export function persist(st: RunState) {
     CREATE TABLE IF NOT EXISTS personas (id TEXT PRIMARY KEY, json TEXT);
     CREATE TABLE IF NOT EXISTS actions (id TEXT PRIMARY KEY, run_id TEXT, agent_id TEXT, world_id TEXT, variant TEXT, seed INT, hour INT, item_id TEXT, item_kind TEXT, via TEXT, action TEXT, stance REAL, feeling INT, would_visit INT, reason TEXT, text TEXT, unsaid TEXT, memory_ids TEXT, repaired INT, checks TEXT);
     CREATE TABLE IF NOT EXISTS memories (world_id TEXT, agent_id TEXT, id TEXT, hour INT, text TEXT, tags TEXT, PRIMARY KEY (world_id, id));`);
+  // runs saved before the guard existed have no checks column
+  if (!(db.prepare('PRAGMA table_info(actions)').all() as { name: string }[]).some((c) => c.name === 'checks')) db.exec('ALTER TABLE actions ADD COLUMN checks TEXT');
   const meta = {
     spec: st.spec, status: st.status, phase: st.phase, error: st.error, created: st.created, proposal: st.proposal, sampleReport: st.sampleReport,
     summaries: st.summaries, verdict: st.verdict, tipping: st.tipping, validity: st.validity, fairness: st.fairness, report: st.report, usage: st.usage, timing: st.timing,
@@ -277,6 +279,18 @@ export function persist(st: RunState) {
   });
   tx();
   db.close();
+  // plain-JSON files next to the action log so a run can be inspected without SQLite (BUILD_PLAN §9)
+  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(st.spec, null, 2));
+  if (st.verdict || st.status === 'done' || st.status === 'error') {
+    const recs = allRecords(st);
+    fs.writeFileSync(path.join(dir, 'summary.json'), JSON.stringify({
+      run_id: st.spec.run_id, status: st.status, error: st.error, created: st.created,
+      crowd: st.personas.length, rounds: st.spec.rounds, seeds: st.spec.seeds, events: st.spec.events,
+      decisions: recs.filter((r) => r.item_kind !== 'event').length,
+      verdict: st.verdict, summaries: st.summaries, tipping: st.tipping, validity: st.validity, fairness: st.fairness,
+      usage: st.usage, timing: st.timing, report: st.report ? { summary: (st.report as any).summary, recommendation: (st.report as any).recommendation } : null,
+    }, null, 2));
+  }
 }
 
 const csvCell = (v: unknown) => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };

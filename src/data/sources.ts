@@ -85,17 +85,24 @@ export async function ensureCensus(geoIds: string[]) {
     for (const g of censusGeos) all.push(...(JSON.parse(fs.readFileSync(path.join(CACHE, `census_${g}.json`), 'utf8')) as CensusRow[]));
     const combined = path.join(CACHE, 'census_all.json');
     fs.writeFileSync(combined, JSON.stringify(all));
-    await registerJsonRows('census.acs', combined);
+    if (engineName() === 'zetaris' && config.zetaris.fileRoot && all.length) {
+      // CSV copy so Zetaris can serve census.acs as a Lightning file-store table (same rows, same columns)
+      const cols = Object.keys(all[0]);
+      const cell = (v: unknown) => { const t = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+      const csv = path.join(CACHE, 'census_all.csv');
+      fs.writeFileSync(csv, [cols.join(','), ...all.map((r) => cols.map((c) => cell((r as unknown as Record<string, unknown>)[c])).join(','))].join('\n') + '\n');
+      await registerCsv('census.acs', csv); // also the local view, over the same rows
+    } else await registerJsonRows('census.acs', combined);
   }
   return meta;
 }
 
 export async function sourceSummary() {
-  const out: { table: string; kind: string; rows: number | string; label: string }[] = [];
+  const out: { table: string; kind: string; rows: number | string; label: string; engine?: string }[] = [];
   const probe = async (table: string, kind: string, label: string) => {
     try {
       const r = await query(`SELECT COUNT(*) AS n FROM ${table}`, `count ${table}`);
-      out.push({ table, kind, rows: Number(r.rows[0]?.n ?? 0), label });
+      out.push({ table, kind, rows: Number(r.rows[0]?.n ?? 0), label, engine: r.engine });
     } catch { out.push({ table, kind, rows: 'not registered', label }); }
   };
   await probe('census.acs', 'REST (Census Reporter, ACS 5-year)', 'real public data');

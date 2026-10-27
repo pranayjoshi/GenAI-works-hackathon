@@ -19,7 +19,7 @@ import { sha } from '../util/core.js';
 
 export type Row = Record<string, unknown>;
 export interface QueryResult { query_id: string; engine: 'zetaris' | 'local-duckdb'; rows: Row[]; ms: number }
-export interface QueryLogEntry { query_id: string; label: string; sql: string; engine: string; row_count: number; ms: number; ts: string; sample: Row[] }
+export interface QueryLogEntry { query_id: string; label: string; sql: string; engine: string; row_count: number; ms: number; ts: string; sample: Row[]; note?: string }
 
 const queryLog = new Map<string, QueryLogEntry>();
 const logPath = path.join(config.paths.runs, 'queries.jsonl');
@@ -62,71 +62,91 @@ function normalise(v: unknown): unknown {
 }
 
 // ------------------------------------------------------------------ Zetaris engine
+// Follows the published Zetaris API spec (api.saas.enterprise.zetaris.com/redoc, OpenAPI 3.1):
+//   GET    /api/v1.0/auth/login                (basic auth -> idToken)
+//   POST   /api/v1.0/query/sql/start           {select, pageLimit<=100} -> {records, pageNumber, totalPages, totalCount, queryToken}
+//   GET    /api/v1.0/query/sql/page?queryToken&pageLimit&pageNumber -> {records, ...}
+//   DELETE /api/v1.0/query/sql/close/{queryToken}
+// Every call carries X-Request-ID (uuid) and X-Org-ID. Query calls want an API token as the bearer;
+// with only a username and password we log in and use the idToken.
+const PAGE = 100;
 let zToken: string | null = null;
-async function zetarisHeaders(): Promise<Record<string, string>> {
+const zUrl = (p: string) => `${config.zetaris.baseUrl.replace(/\/+$/, '').replace(/\/api\/v1\.0$/, '')}${p}`;
+function zHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return { 'x-request-id': crypto.randomUUID(), 'x-org-id': config.zetaris.orgId, ...extra };
+}
+async function zAuth(): Promise<Record<string, string>> {
   const z = config.zetaris;
   if (!zToken) {
     if (z.apiKey) zToken = z.apiKey;
     else {
-      const res = await fetch(`${z.baseUrl}/auth/login`, {
-        headers: { authorization: `Basic ${Buffer.from(`${z.user}:${z.password}`).toString('base64')}` },
-      });
-      if (!res.ok) throw new Error(`Zetaris login HTTP ${res.status}`);
-      zToken = ((await res.json()) as any).idToken;
+      const res = await fetch(zUrl('/api/v1.0/auth/login'), { headers: zHeaders({ authorization: `Basic ${Buffer.from(`${z.user}:${z.password}`).toString('base64')}` }) });
+      if (!res.ok) throw new ZetarisDown(`login HTTP ${res.status}`);
+      zToken = ((await res.json()) as { idToken: string }).idToken;
     }
   }
-  return {
-    authorization: `Bearer ${zToken}`,
-    'x-org-id': z.orgId,
-    'x-request-id': crypto.randomUUID(),
-    'content-type': 'application/json',
-  };
+  return zHeaders({ authorization: `Bearer ${zToken}`, 'content-type': 'application/json' });
 }
-async function zetarisQuery(sql: string): Promise<Row[]> {
+
+/** Auth or network failure: stop sending queries to Zetaris for the rest of the process. */
+class ZetarisDown extends Error {}
+
+async function zFetch(p: string, init: RequestInit = {}): Promise<Response> {
+  let res: Response;
+  try { res = await fetch(zUrl(p), { ...init, headers: await zAuth(), signal: AbortSignal.timeout(60_000) }); }
+  catch (e) { throw e instanceof ZetarisDown ? e : new ZetarisDown(`network: ${(e as Error).message}`); }
+  if (res.status === 401 || res.status === 403) throw new ZetarisDown(`HTTP ${res.status} on ${p}`);
+  return res;
+}
+
+export async function zetarisQuery(sql: string): Promise<Row[]> {
   const z = config.zetaris;
-  const open = await fetch(`${z.baseUrl}${z.openPath}`, { method: 'POST', headers: await zetarisHeaders(), body: JSON.stringify({ select: sql, pageLimit: 100 }) });
-  if (!open.ok) throw new Error(`Zetaris open HTTP ${open.status}: ${(await open.text()).slice(0, 200)}`);
-  const first = (await open.json()) as any;
-  const rows: Row[] = [...(first.rows ?? first.data ?? [])];
-  let token = first.queryToken;
-  while (token && rows.length < 200_000) {
-    const page = await fetch(`${z.baseUrl}${z.pagePath}`, { method: 'POST', headers: await zetarisHeaders(), body: JSON.stringify({ queryToken: token, pageLimit: 100 }) });
-    if (!page.ok) break;
-    const j = (await page.json()) as any;
-    const batch = j.rows ?? j.data ?? [];
-    rows.push(...batch);
-    token = batch.length ? j.queryToken ?? token : null;
+  const open = await zFetch(z.openPath, { method: 'POST', body: JSON.stringify({ select: sql, pageLimit: PAGE }) });
+  if (!open.ok) throw new Error(`Zetaris start HTTP ${open.status}: ${(await open.text()).slice(0, 200)}`);
+  const first = (await open.json()) as { records?: Row[]; pageNumber: number; totalPages: number; totalCount: number; queryToken: string };
+  const rows: Row[] = [...(first.records ?? [])];
+  try {
+    for (let n = first.pageNumber + 1; n < first.pageNumber + first.totalPages && rows.length < first.totalCount && rows.length < 200_000; n++) {
+      const q = new URLSearchParams({ queryToken: first.queryToken, pageLimit: String(PAGE), pageNumber: String(n) });
+      const page = await zFetch(`${z.pagePath}?${q}`);
+      if (!page.ok) throw new Error(`Zetaris page ${n} HTTP ${page.status}`);
+      const recs = ((await page.json()) as { records?: Row[] }).records ?? [];
+      if (!recs.length) break;
+      rows.push(...recs);
+    }
+  } finally {
+    await zFetch(`${z.closePath}/${encodeURIComponent(first.queryToken)}`, { method: 'DELETE' }).catch(() => {});
   }
-  if (first.queryToken) await fetch(`${z.baseUrl}${z.closePath}`, { method: 'POST', headers: await zetarisHeaders(), body: JSON.stringify({ queryToken: first.queryToken }) }).catch(() => {});
   return rows;
-}
-async function zetarisExec(statement: string) {
-  const z = config.zetaris;
-  const res = await fetch(`${z.baseUrl}${z.openPath}`, { method: 'POST', headers: await zetarisHeaders(), body: JSON.stringify({ select: statement, pageLimit: 1 }) });
-  if (!res.ok) throw new Error(`Zetaris exec HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
 }
 
 let zetarisDown = false;
+/** Tables registered on Zetaris. A query goes to Zetaris only when every table it names is one of these. */
+const zetarisTables = new Set<string>();
 export function engineName(): 'zetaris' | 'local-duckdb' {
   return zetarisConfigured() && !zetarisDown ? 'zetaris' : 'local-duckdb';
 }
+const tablesIn = (sql: string) => [...sql.matchAll(/\b(census|pew|priors|biz|upworthy|sim)\.(\w+)/gi)].map((m) => `${m[1]}.${m[2]}`.toLowerCase());
 
 // ------------------------------------------------------------------ public API
 let qCounter = 0;
 export async function query(sql: string, label = 'query'): Promise<QueryResult> {
   const t0 = Date.now();
   const query_id = `q_${sha(sql, 8)}_${(++qCounter).toString(36)}`;
-  let rows: Row[];
-  let engine = engineName();
-  if (engine === 'zetaris') {
-    try { rows = await zetarisQuery(sql); } catch (e) {
-      zetarisDown = true; engine = 'local-duckdb';
-      console.warn(`[federation] Zetaris failed (${(e as Error).message}); using local DuckDB`);
-      rows = await localQuery(sql);
+  let rows: Row[] | null = null;
+  let engine: QueryResult['engine'] = 'local-duckdb';
+  let note: string | undefined;
+  const names = tablesIn(sql);
+  if (engineName() === 'zetaris' && names.length && names.every((t) => zetarisTables.has(t))) {
+    try { rows = await zetarisQuery(sql); engine = 'zetaris'; } catch (e) {
+      if (e instanceof ZetarisDown) zetarisDown = true;
+      note = `zetaris failed (${(e as Error).message.slice(0, 160)}); answered by local DuckDB`;
+      console.warn(`[federation] ${label}: ${note}`);
     }
-  } else rows = await localQuery(sql);
+  }
+  if (!rows) rows = await localQuery(sql);
   const ms = Date.now() - t0;
-  logQuery({ query_id, label, sql: sql.trim(), engine, row_count: rows.length, ms, ts: new Date().toISOString(), sample: rows.slice(0, 20) });
+  logQuery({ query_id, label, sql: sql.trim(), engine, row_count: rows.length, ms, ts: new Date().toISOString(), sample: rows.slice(0, 20), ...(note ? { note } : {}) });
   return { query_id, engine, rows, ms };
 }
 
@@ -136,18 +156,33 @@ async function localQuery(sql: string): Promise<Row[]> {
   return r.getRowObjects().map((o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, normalise(v)])));
 }
 
-/** Register a CSV file in place as <schema>.<table>. */
+/**
+ * Register a CSV file in place as <schema>.<table>. Always registered in local DuckDB. Also registered on
+ * Zetaris as a Lightning file-store table when ZETARIS_FILE_ROOT says where Zetaris sees this project's files
+ * (a hosted instance cannot read paths on this laptop, so without it the table stays local and is labelled so).
+ */
 export async function registerCsv(table: string, file: string, opts: { lightningDb?: string } = {}) {
   const abs = path.resolve(file);
-  if (engineName() === 'zetaris') {
+  if (engineName() === 'zetaris' && config.zetaris.fileRoot) {
     const [db, t] = table.split('.');
+    const zdb = opts.lightningDb ?? db;
+    const zpath = `${config.zetaris.fileRoot.replace(/\/+$/, '')}/${path.relative(process.cwd(), abs).split(path.sep).join('/')}`;
     try {
-      await zetarisExec(`CREATE LIGHTNING DATABASE IF NOT EXISTS ${opts.lightningDb ?? db.toUpperCase()} DESCRIBE BY "Dry Run ${db}" OPTIONS ()`).catch(() => {});
-      await zetarisExec(`CREATE LIGHTNING FILESTORE TABLE ${t} FROM ${opts.lightningDb ?? db.toUpperCase()} FORMAT CSV OPTIONS (path "${abs}", header "true", inferSchema "true")`);
-    } catch (e) { zetarisDown = true; console.warn(`[federation] Zetaris register failed: ${(e as Error).message}`); }
+      await zetarisQuery(`CREATE LIGHTNING DATABASE IF NOT EXISTS ${zdb} DESCRIBE BY "Dry Run ${db}" OPTIONS ()`).catch(() => [] as Row[]);
+      await zetarisQuery(`CREATE LIGHTNING FILESTORE TABLE IF NOT EXISTS ${t} FROM ${zdb} FORMAT CSV OPTIONS (PATH "${zpath}", HEADER "true", INFERSCHEMA "true")`);
+      zetarisTables.add(table.toLowerCase());
+    } catch (e) {
+      if (e instanceof ZetarisDown) zetarisDown = true;
+      console.warn(`[federation] Zetaris register ${table} failed: ${(e as Error).message}`);
+    }
   }
   const c = await local();
   await c.run(`CREATE OR REPLACE VIEW ${table} AS SELECT * FROM read_csv_auto('${abs.replace(/'/g, "''")}', header=true)`);
+}
+
+/** Which engine would answer a query over these tables (for the sources panel). */
+export function tableEngine(table: string): 'zetaris' | 'local-duckdb' {
+  return engineName() === 'zetaris' && zetarisTables.has(table.toLowerCase()) ? 'zetaris' : 'local-duckdb';
 }
 
 /** Register a JSON array file (e.g. a cached REST response flattened to rows) as <schema>.<table>. */

@@ -72,19 +72,20 @@ export const config = {
     thinking: env('OLLAMA_THINKING', 'false') === 'true',
   },
   zetaris: {
-    baseUrl: env('ZETARIS_BASE_URL'), // e.g. http://localhost:3000/api/proxy or https://<host>/api/v1.0
+    baseUrl: env('ZETARIS_BASE_URL'), // e.g. https://api.saas.enterprise.zetaris.com or a local Docker host
     user: env('ZETARIS_USER'),
     password: env('ZETARIS_PASSWORD'),
     apiKey: env('ZETARIS_API_KEY'),
     orgId: env('ZETARIS_ORG_ID'),
-    openPath: env('ZETARIS_OPEN_PATH', '/sql/open'),
-    pagePath: env('ZETARIS_PAGE_PATH', '/sql/page'),
-    closePath: env('ZETARIS_CLOSE_PATH', '/sql/close'),
+    openPath: env('ZETARIS_OPEN_PATH', '/api/v1.0/query/sql/start'),
+    pagePath: env('ZETARIS_PAGE_PATH', '/api/v1.0/query/sql/page'),
+    closePath: env('ZETARIS_CLOSE_PATH', '/api/v1.0/query/sql/close'),
+    fileRoot: env('ZETARIS_FILE_ROOT'), // where Zetaris sees this project's files, e.g. /data/dryrun in a Docker volume
   },
   censusReporter: env('CENSUS_REPORTER_URL', 'https://api.censusreporter.org/1.0'),
   paths: {
     data: path.join(process.cwd(), 'data'),
-    runs: path.join(process.cwd(), 'runs'),
+    runs: env('RUNS_DIR', path.join(process.cwd(), 'runs')),
     samples: path.join(process.cwd(), 'samples'),
     recordings: path.join(process.cwd(), 'samples', 'recordings.sqlite'),
   },
