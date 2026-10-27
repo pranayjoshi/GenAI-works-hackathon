@@ -6,7 +6,9 @@ Each section says what the sponsor tech does, why the feature needs it, and wher
 
 **Integration.** The federation layer (`src/data/federation.ts`, `src/data/sources.ts`) speaks the Zetaris Lightning REST API: login, start query, page, close. It follows the published OpenAPI spec and is checked against a fake server built from that spec (`tests/zetaris-contract.test.ts`). It also runs against the local hackathon bundle (Zetaris 2.4.3). `scripts/zetaris-mount.sh` mounts the project into the bundle's containers. `scripts/zetaris-register.sh` creates database `dryrun` through the driver's `lightning-sql` CLI, with five Lightning file-store tables: `census_acs`, `pew_platform_use`, `priors_behaviour`, `biz_customers`, `upworthy_tests`. The app rewrites logical names (for example `pew.platform_use` to `dryrun.pew_platform_use`) before it sends a query. The REST API returns text, so the client turns numeric strings back into numbers.
 
-**What the queries do.** They build the audience: ACS tables for age, gender, income and education in the ZIP, the Census x Pew join that gives the number of Instagram users the business can reach, behaviour priors, and the customer list. In the 20-person hosted test, all 7 audience-building queries ran on Zetaris. Every persona field carries the query id, and the DataAgent trace line records `engine` and `row_count`.
+**What the queries do.** They build the audience: ACS tables for age, gender, income and education in the ZIP, the Census x Pew join that gives the number of Instagram users the business can reach, behaviour priors, and the customer list. In the headline run (`runs/20261027-south-congress-coffe-1458`, 600 people) all 7 audience-building queries ran on Zetaris (`sampleReport.queries` in its `actions.sqlite`, each with `engine: zetaris`); the same was seen in the 20-person hosted test. Four sources are federated per run (Census ACS via Census Reporter, Pew Instagram use by age, modeled behaviour priors, the synthetic customer list), plus the Upworthy archive for the backtest; the UI shows them in a Data sources panel (Crowd stage) and on the New test screen.
+
+**A bug we hit and fixed.** The Census x Pew audience join first returned 10,206 on Zetaris, because Spark read `\d` in a SQL string as `d` and every age fell into 65+. Using `[0-9]+` fixes it on both engines (commit e47d5af). The run's audience was recomputed with `scripts/fix-audience.ts` and is 27,006. The crowd sampling was unaffected. Every persona field carries the query id, and the DataAgent trace line records `engine` and `row_count`.
 
 **What stays on DuckDB, and why.** Per-run `sim.*` tables (the action log the report agent queries) stay on in-process DuckDB, and the UI labels the engine. They are created fresh for each run, and the REST API only runs SELECT, so registering them would need the CLI step per run. A query goes to Zetaris only if every table it names is registered there. If Zetaris rejects a query, that query falls back to DuckDB and the log records why. An auth or network failure moves the rest of the process to DuckDB, so a run does not die on it.
 
@@ -28,22 +30,22 @@ Three vendored reference engines (`engines/`, upstream github.com/Meterless/Mete
 
 **Connection.** Nightshift is the first provider in `PROVIDERS=nightshift,nvidia,ollama`. The client calls `NIGHTSHIFT_BASE_URL` (default `http://127.0.0.1:8088/v1`), an OpenAI-compatible endpoint, with a bearer runtime token and the header `meterless-app: dryrun` (`src/llm.ts`). The token comes from `NIGHTSHIFT_TOKEN`, or from Nightshift's `proxy-token` file. A hosted chat call (Nightshift or direct NVIDIA) times out after 180 s; a local Ollama call after 300 s (`src/llm.ts`). On HTTP 429, 5xx, timeout or connection failure the call moves down the chain: Nightshift, then direct NVIDIA (`NVIDIA_API_KEY`, `NVIDIA_RPM` rate cap), then local Ollama `nemotron-3-nano:4b`. Every call logs `served_by`, tokens and time in `runs/trace.jsonl`, and the agent trace's ModelRouter line carries the same.
 
-**Seen on 27 Oct (20-person hosted run).** Nightshift served the crowd and voice role (`nvidia/nemotron-3.5-lightning-30b-a3b`) and the report review role (`nvidia/nemotron-3-ultra-550b-a55b`). It currently excludes the Super VL model (`model_excluded`), so the reason and interview role (`nvidia/nemotron-3.5-super-vl-120b-a12b`) was served by direct NVIDIA. The Version C vs A run on the 600 people (`runs/20261027-south-congress-coffe-344c`) ran on hosted Lightning through Nightshift in 11.7 minutes. In run `20261027-south-congress-coffe-28ba` (20 people, 3 rounds) the trace shows 12 crowd calls and 1 voice call served by `nightshift:nvidia/nemotron-3.5-lightning-30b-a3b`, 2 review calls by `nightshift:nvidia/nemotron-3-ultra-550b-a55b`, and 4 reasoning calls by direct NVIDIA; all 7 audience-building SQL queries were answered by `zetaris`.
+**Seen on 27 Oct, headline run (`runs/20261027-south-congress-coffe-1458`, 600 people, 2 seeds, 12 rounds, about 13 minutes).** `usage` in its `summary.json`: the crowd role made 394 calls and the voice role 24, all `served_by: nightshift:nvidia/nemotron-3.5-lightning-30b-a3b`. The reason role (`nvidia/nemotron-3.5-super-vl-120b-a12b`) made 2 calls, served by direct NVIDIA, because Nightshift excludes the Super VL model today (`model_excluded`). Version C against A on the same 600 people (`runs/20261027-south-congress-coffe-13b7`) ran 284 crowd calls on Lightning via Nightshift. The report-review role (`nvidia/nemotron-3-ultra-550b-a55b`) made no calls in the headline run's `usage`; we saw it served through Nightshift in the 20-person hosted run (`output_examples/hosted/example_1_live.trace.jsonl`: 2 review calls). Earlier runs (`e52a`, local Nano 4B, 3.3 hours; `344c`, Version C on Lightning) are context only.
 
 ## NVIDIA Nemotron, by role
 
-| Role | Hosted model | Where it contributes | Served by (27 Oct hosted test) |
+| Role | Hosted model | Where it contributes | Served by (27 Oct, headline run unless noted) |
 |---|---|---|---|
-| crowd, voice | `nvidia/nemotron-3.5-lightning-30b-a3b` (thinking off) | Each person's action, feeling, intent and private reason; one-line voices | Nightshift |
-| reason, interview, rewriter | `nvidia/nemotron-3.5-super-vl-120b-a12b` | Audience segments, report writer, Ask-why, Version C draft | Direct NVIDIA (Nightshift excludes it today) |
-| review | `nvidia/nemotron-3-ultra-550b-a55b` | Report critic, honesty check | Nightshift |
-| all roles, last fallback | `nemotron-3-nano:4b` via Ollama | Whole product offline | Used for the 600-person demo run and the backtest |
+| crowd, voice | `nvidia/nemotron-3.5-lightning-30b-a3b` (thinking off) | Each person's action, feeling, intent and private reason; one-line voices | Nightshift (394 crowd + 24 voice calls) |
+| reason, interview, rewriter | `nvidia/nemotron-3.5-super-vl-120b-a12b` | Audience segments, report writer, Ask-why, Version C draft | Direct NVIDIA, 2 calls (Nightshift excludes it today) |
+| review | `nvidia/nemotron-3-ultra-550b-a55b` | Report critic, honesty check | Nightshift (seen in the 20-person hosted run) |
+| all roles, last fallback | `nemotron-3-nano:4b` via Ollama | Whole product offline | Used for the earlier 600-person run (`e52a`) and the backtest |
 
 Model ids are in `src/config.ts` and can be overridden by `MODEL_*` and `OLLAMA_MODEL_*` variables.
 
 ## What is unique
 
-- The agent answers "is a real test worth paying for?" with a power calculation on the measured gap and the reachable audience, and can decide not to spend. The 600-person run ended with "keep A, don't pay".
+- The agent answers "is a real test worth paying for?" with a power calculation on the measured gap and the reachable audience, and can decide not to spend. The headline run ended with "keep A, don't pay": a real test would need 14,637 people per version, 108% of the 27,006 local Instagram users.
 - Twin worlds from one hash-verified base log, so only the post differs.
 - Per-person memory that interviews must cite.
 - A named-agent trace with `served_by` per call, so which sponsor path answered is visible.

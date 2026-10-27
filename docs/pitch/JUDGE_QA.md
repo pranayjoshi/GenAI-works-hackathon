@@ -10,40 +10,46 @@ No. It estimates whether two posts can be told apart on a simulated crowd, and r
 It is at chance: 22.5 of 50 (45.0%, CI 32.1 to 58.7), on the local 4B model. Single prompts scored 24 and 25. We trust the decision because it does not rely on picking winners. It uses the measured gap, its interval and the real audience size.
 
 ## 4. Is the crowd real people's data?
-No. It is 600 simulated people. Their traits are sampled from Census ACS rows and Pew rates. The customer list is synthetic.
+No. It is 600 simulated people. Their traits are sampled from Census ACS rows (via Census Reporter) and Pew Instagram-use rates by age. Behaviour priors are modeled and labelled. The customer list is synthetic. Four sources are federated through Zetaris per run, and the UI shows them in a Data sources panel.
 
 ## 5. What did the café run find?
-Too close to call. A 29.6% vs B 26.7%, inside plus or minus 5.5 points. A led in both seeds, but neither seed was significant on a paired test.
+Same latte, same $6.50, no discount; only the wording differs. A (product-first) 24.8% vs B (story-first) 23.4%, inside plus or minus 5.1 points: too close to call. A was ahead in 2 of 2 seeds. The segment splits (customers 51.1% A vs 45.9% B, 116 people; income $50-75k 18.9% A vs 28.8% B, 66 people) are not clear results. Run `20261027-south-congress-coffe-1458`. An earlier 600-person run on the local 4B model (`e52a`, 3.3 hours, a different post pair: full price vs a discount) was also too close to call; it is context only.
 
-## 6. Did the competitor's post cause the gap?
-We don't know. A and B were tied before it in both seeds (35.3 vs 35.6, 37.2 vs 37.2) and the gap opened after. We have no run without the event, so we say when it opened, not why.
+## 6. Did the competitor's post cause the drop?
+We don't know. Before the round-8 post A led slightly (seed 1: 27.6% vs 25.2%; seed 2: 31.8% vs 29.6%). Intent fell in both worlds after it. We have no run without the event for this pair, so we say when it happened, not why. (Version C's check, run 13b7, had no event; that is why its A rate, 29.0%, differs from the parent run's 24.8%.)
 
 ## 7. How is "don't pay for the test" calculated?
-A power calculation on the simulated gap: 3,828 people per version, 7,656 in total, at 5% two-sided and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. Capped at 20% (2,700 per version), a test detects about 3.5 points.
+A power calculation on the simulated gap: 14,637 people per version, 29,274 in total, at 5% two-sided and 80% power. There are about 27,006 Instagram users in 78704 (Census x Pew join), so that test would need 108% of them. Capped at 20% (2,700 per version), a test detects about 3.4 points.
 
 ## 8. Why would the agent's Version C be any better?
-We don't claim it is. It was drafted from the quoted price objections and passed the honesty check. Simulating C against A on the same 600 people is one click in the UI. It ran on hosted Nemotron 3.5 Lightning through Nightshift in 11.7 minutes. C moved intent by +1.1 points (14.6% vs 13.5%), short of the 3.5-point bar, so the decision is: keep A and don't pay for a real test of C.
+We don't claim it is. Nemotron Super drafted it and the Ultra honesty check is part of the drafting step (`src/report/rewriter.ts`). It reads: "Oat Milk Honey Latte, $6.50. Local wildflower honey. Slow mornings, done right. New on the menu at South Congress Coffee." We simulated it against A on the same 600 people (run `20261027-south-congress-coffe-13b7`, hosted Lightning via Nightshift): A 29.0% vs C 30.1% (±5.5), +1.0 point, short of the 3.6-point bar. So: keep A, don't pay for a real test of C.
 
 ## 9. What stops the agent spending money?
 Cancelling a pointless test and drafting a new version need no approval. Anything that spends or publishes waits for the owner. Approval creates one campaign with two ad sets (one per version, identical targeting, a fixed daily budget) and one ad each, all paused. It is not Meta's split-test study object. The code refuses any other status (`src/actions/meta.ts`). Without credentials it shows the requests and sends nothing. Live launch is optional: a live attempt in our sandbox currently fails at ad creative ("Select a Facebook Page"), so the demo shows the preview.
 
 ## 10. How do you keep simulated people from making things up?
-A rule-based guard screened every decision. It fired on 731 of 4,146 (17.6%), for example withholding reasons that invented a price. Report claims must cite query ids and a critic rejects the rest. Interviews answer only from memory lines.
+A rule-based guard screened every decision. In the headline run it flagged 199 of 3,328 (for example 40 reasons that invented a price). Report claims must cite query ids and a critic rejects the rest. Interviews answer only from memory lines, and the focus group has an anti-repeat guard so seats do not copy each other.
 
 ## 11. The simulated people share one model. Isn't that a problem?
 Yes. Their views are less varied than a real crowd's. The Census-sampled traits add variety, but the underlying model is shared. We treat results as a check on whether posts differ at all, not as a market.
 
 ## 12. Where do Nemotron, Nightshift and Zetaris fit?
-The 600-person demo run used local Nemotron 3 Nano 4B and DuckDB. In the 20-person hosted test, Nightshift served the crowd and voice (Nemotron 3.5 Lightning) and the report review (Nemotron 3 Ultra). Nightshift currently excludes Super VL, so the reasoning and interview role fell back to direct NVIDIA. All 7 audience-building queries in that test ran on Zetaris 2.4.3; per-run `sim.*` tables stay on DuckDB, labelled. `served_by` is logged per call. See docs/SPONSOR_TECH.md.
+Four models, four jobs. In the headline run, Nightshift served the crowd (394 calls) and voices (24 calls) on Nemotron 3.5 Lightning. Reasoning (2 calls) ran on Nemotron 3.5 Super through direct NVIDIA, because Nightshift excludes Super VL today. Nemotron 3 Ultra is the critic and honesty check; we saw it served through Nightshift in the 20-person hosted trace (`output_examples/hosted/`). Nemotron 3 Nano 4B runs the whole product locally; it ran the earlier 600-person run. All 7 audience-building queries of the headline run ran on Zetaris 2.4.3; per-run `sim.*` tables stay on DuckDB, labelled. See docs/SPONSOR_TECH.md.
 
 ## 13. Intent isn't a visit. What does the metric mean?
 Right. It is stated intent to visit in a simulation. Clicks are not visits either. The launch plan names the real metric and stop rules for the test worth running.
 
 ## 14. Can I reproduce it?
-Yes, three ways (README quick start). Sample mode needs no credentials: it replays recorded answers when the prompt matches, and otherwise uses an offline rule-based persona model, labelled `offline-model`. `npm run smoke` replays a recorded 40-person café run with no provider. The 600-person run is kept as its saved action log, because its call recordings were damaged by concurrent writers.
+Yes, three ways (README quick start). Sample mode needs no credentials: it replays recorded answers when the prompt matches, and otherwise uses an offline rule-based persona model, labelled `offline-model`. `npm run smoke` replays a recorded 40-person café run with no provider. The 600-person runs are kept as their saved action logs (`runs/<id>/`).
 
 ## 15. What are the limits?
 Agents share one model. The backtest uses 2013 to 2015 news headlines, not small-business posts. Clicks are not visits. The customer CSV is synthetic. Data: Census ACS, Pew Research Center, Upworthy Research Archive (CC BY 4.0).
 
 ## 16. What is pre-existing?
 `engines/` is the vendored Meterless reference code (upstream commit 1742dec, 19 Oct, Apache-2.0, unchanged). The repository's initial commit is 24 Oct.
+
+## 17. Did anything go wrong in the headline run?
+One thing, and we fixed it. The audience-size join first returned 10,206 Instagram users on Zetaris, because Spark read `\d` in a SQL string as `d`, so every age fell into the 65+ band. We changed it to `[0-9]+` (commit e47d5af, works on both engines) and recomputed this run's audience with `scripts/fix-audience.ts`. The correct figure is 27,006. The crowd sampling used other queries and was unaffected, but the "108%" and "3.4 points" figures depend on the corrected audience.
+
+## 18. Does Ripple make the ads?
+It renders an Instagram-style ad mockup and banner per version (`src/actions/creative.ts`). The Meta launch is approval-gated: one campaign, two PAUSED ad sets, identical targeting, a fixed daily budget. In preview mode it shows the exact requests and sends nothing.
