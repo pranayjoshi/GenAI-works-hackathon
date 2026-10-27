@@ -2,7 +2,7 @@
   "name": "ripple",
   "version": "0.1.0",
   "private": true,
-  "description": "Ripple: A/B test an ad on twin crowds of AI people sampled from real audience data.",
+  "description": "An agent that simulates public reaction to anything you post (ads, tweets, LinkedIn comments, announcements) on an audience built from real Census and Pew data, then explains who reacts, who doesn't, and why, with evidence for every reason.",
   "type": "module",
   "license": "Apache-2.0",
   "engines": {

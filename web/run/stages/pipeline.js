@@ -97,7 +97,10 @@ export default {
     const summary = h('div.pl-summary');
     const replayBtn = h('button.btn.sm.pl-replay', { type: 'button', onclick: () => replayFlow() }, 'Replay flow');
     const head = h('div.pl-head',
-      h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Sources at the top, the verdict at the bottom; each row reads left to right.')),
+      h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Build the audience → Simulate → Investigate → Explain → Recommend (gated). Sources at the top, the verdict at the bottom.'),
+        h('div.pl-traits', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' } },
+          ...[['Uses tools', 'SQL against its own run log'], ['Critiques itself', 'code critic, model critic, honesty check'], ['Asks permission', 'free, reversible steps run; spending or publishing waits for you']]
+            .map(([b, t]) => h('span.chip', { title: t }, h('b', b), ': ', t)))),
       h('div.pl-head-r', summary, replayBtn));
     const legend = h('div.pl-legend', h('span', h('i.lg.done'), 'done'), h('span', h('i.lg.now'), 'working now'), h('span', h('i.lg.future'), 'waiting'), h('span', h('i.lg.side'), 'Ask why (after the verdict)'), h('span.lg-pk', h('i.lg.pk'), 'one glowing packet = one model call'));
     stageBox.append(legend);

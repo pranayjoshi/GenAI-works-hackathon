@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/images/hero.jpg" alt="Ripple: rehearse your A/B test before you pay for it. Two versions of a café's Instagram post, product-first and story-first." width="100%">
+  <img src="docs/images/hero.jpg" alt="Ripple simulates how the public will react to what you post, and shows you why." width="100%">
 </p>
 
 <h1 align="center">Ripple</h1>
 
 <p align="center">
-  <b>Test your post on a simulated crowd before you spend a dollar.</b><br>
-  Twin-world A/B tests on simulated people sampled from Census, World Bank and Pew data. Ripple is the A/B test: it runs it on a simulated crowd for $0 of ad spend and tells you which version to launch.
+  <b>Ripple simulates how the public will react to what you post, and shows you why.</b><br>
+  An agent that simulates public reaction to anything you post (ads, tweets, LinkedIn comments, announcements) on an audience built from real Census and Pew data, then explains who reacts, who doesn't, and why, with evidence for every reason.
 </p>
 
 <p align="center">
@@ -33,7 +33,18 @@
 
 ---
 
-Ripple A/B tests an ad, post, image or campaign on a simulated crowd sampled from the audience it targets, on Instagram, Facebook, TikTok, YouTube, X or Reddit, in any US ZIP or any country. Two identical crowds see version A and version B. You watch both feeds fill live, then get a verdict such as: "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version." A version only "wins" when the 95% interval excludes zero and every seed agrees. You also get who preferred which version and why in their own words, a version C, and a decision. A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend. Launching is one paused campaign, ad set and ad for the chosen version, approval-gated; without Meta keys Ripple shows the exact requests and sends nothing.
+Ripple simulates how the public will react to anything you post, and explains why. It works for any public-facing content: ads, social posts, tweets, LinkedIn comments, announcements, product copy, statements. You give it your draft (or drafts). It builds a synthetic audience from real US Census and Pew data (the general public, or a specific demographic), simulates a day of that audience seeing the content (memory, competition, social spread), and reports the sentiment: who responded, who stayed silent, how each group felt, and the evidence behind each reason.
+
+It answers by investigating across several sources: Census and Pew data, the simulated run's own event log (queried with SQL), and its own critics. Every claim in the explanation cites the evidence it came from.
+
+When you give it two drafts, it also says which one wins in the simulation and why: for a fair measurement each draft is shown to an identical copy of the same audience (on Instagram, Facebook, TikTok, YouTube, X or Reddit, in any US ZIP or any country), and the verdict reads like: "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version." A version only "wins" when the 95% interval excludes zero and every seed agrees. You also get who preferred which version and why in their own words, a version C, and a decision. A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend. Launching is one paused campaign, ad set and ad for the chosen version, approval-gated; without Meta keys Ripple shows the exact requests and sends nothing.
+
+**The agent loop:** Build the audience → Simulate → Investigate → Explain → Recommend (gated)
+
+**Why it's an agent, not a pipeline:**
+- **It uses tools.** It investigates by running SQL against its own run log and the federated Census and Pew data, and cites the query behind every number.
+- **It critiques and revises itself.** A code critic checks every number against its query, a model critic (Nemotron Ultra) reviews the explanation and sends it back, and an honesty check rejects any rewrite that invents claims.
+- **It has a permission model.** Free, reversible actions proceed on their own; anything that spends money or publishes waits for the owner, and is created paused.
 
 > [!IMPORTANT]
 > Ripple is not a prediction of real customer behaviour, and on our backtest it did not beat chance (see [Results](#-results-so-far)). Its value is the uncertainty it measures and the spend decision built on it.
@@ -155,6 +166,8 @@ Screens from the saved copy-only demo run `20261027-south-congress-coffe-1458` (
 </table>
 
 ## 🧠 How it works
+
+**Build the audience → Simulate → Investigate → Explain → Recommend (gated).** The audience comes from data, the simulation produces an event log, the agent investigates that log with SQL, explains with cited evidence, and recommends; anything that spends or publishes is gated on the owner.
 
 ```mermaid
 flowchart LR
