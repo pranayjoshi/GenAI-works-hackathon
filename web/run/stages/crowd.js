@@ -7,6 +7,7 @@ import { h, s, mount, clear, pct, fmtInt, cssVar, AGE_BANDS, INCOME_BANDS } from
 import { openAgent, openQuery } from '../../core/ui.js';
 import { countUp, reduced, EASE } from '../../core/motion.js';
 import { createStage } from '../../core/three-kit.js';
+import { sourcesPanel } from '../../core/sources.js';
 
 /* ------------------------------------------------------------------ helpers */
 const fin = (v) => (v == null || v === '' || !Number.isFinite(+v) ? null : +v);
@@ -561,7 +562,8 @@ export default {
     makePanel('copula', 'Customer copula', '');
     makePanel('queries', 'Queries behind it', 'Open the SQL and rows');
 
-    const root = h('div.cw-root', hero, panels.stats.el, panels.age.el, panels.income.el, panels.copula.el, panels.queries.el);
+    const srcPanel = sourcesPanel();
+    const root = h('div.cw-root', hero, panels.stats.el, panels.age.el, panels.income.el, panels.copula.el, panels.queries.el, srcPanel.el);
     el.append(root);
 
     /* ---- expand / collapse a panel (FLIP on the box) */
@@ -795,7 +797,7 @@ export default {
       renderStats(ps, sr);
       renderDist('age', 'Age', ps, keysFor(ps, 'age_band', AGE_BANDS, Object.keys(sr.marginals?.age || {})), 'age_band', sr.marginals?.age);
       renderDist('income', 'Household income', ps, keysFor(ps, 'income_band', INCOME_BANDS, Object.keys(sr.marginals?.income || {})), 'income_band', sr.marginals?.income);
-      renderCopula(ps, sr); renderQueries(ps, sr);
+      renderCopula(ps, sr); renderQueries(ps, sr); srcPanel.update(sr.queries ? sr : null);
     }
     const sync = () => { if (destroyed) return; syncPanels(); syncHero(); };
 

@@ -239,6 +239,9 @@ app.setErrorHandler((err, _req, reply) => {
 const start = async () => {
   await registerSources().catch((e) => console.warn('[sources]', e.message));
   for (const id of listRunsOnDisk().slice(0, 20)) await loadRun(id).catch(() => undefined);
+  // register census.acs from the most recent run's ZIP (cached rows, no network when cached) so the Data sources panels can show it, then warm the summary
+  const lastRun = listRunsOnDisk().map((id) => { try { return (runs.get(id) as any)?.spec?.zip as string | undefined; } catch { return undefined; } }).find(Boolean);
+  (lastRun ? ensureCensus([geoIdForZip(lastRun)]).catch(() => undefined) : Promise.resolve()).then(() => sourceSummary()).catch(() => {});
   await app.listen({ port: config.port, host: process.env.HOST || '127.0.0.1' });
   const st = await providerStatus();
   console.log(`Dry Run on http://localhost:${config.port}  (sample mode: ${config.sampleMode})`);

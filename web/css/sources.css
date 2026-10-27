@@ -1,0 +1,46 @@
+/* data sources: setup strip + Crowd stage panel. All selectors prefixed src-. */
+.src-strip { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 16px; margin-bottom: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+.src-strip-lead { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.src-strip-lead span { color: var(--accent-text); font-size: 12px; }
+.src-strip-items { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 0; }
+.src-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--glass); font-size: 12px; }
+.src-pill small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.src-pill .chip { padding: 1px 8px; font-size: 11px; }
+.src-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.src-pill .dot.zet { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+.src-pill .dot.loc { background: var(--warn); }
+
+.src-panel { grid-column: 1 / -1; padding: 18px 20px; min-width: 0; }
+.src-panel .cw-ph { margin-bottom: 14px; }
+.src-body { display: grid; gap: 16px; }
+.src-flow { display: flex; align-items: stretch; gap: 10px; }
+.src-node { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; justify-content: center; padding: 11px 14px; border: 1px solid var(--line-2); border-radius: var(--radius-sm); background: var(--panel-2); }
+.src-node b { font-family: var(--display); font-size: 15px; }
+.src-node small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.src-node.zet { border-color: color-mix(in srgb, var(--accent-2) 55%, transparent); background: color-mix(in srgb, var(--accent-2) 10%, var(--panel-2)); box-shadow: 0 0 24px color-mix(in srgb, var(--accent-2) 18%, transparent); }
+.src-node.zet b { color: var(--accent-2); }
+.src-node.crowd { border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: var(--accent-soft); }
+.src-arrow { display: flex; align-items: center; color: var(--faint); flex: none; }
+.src-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.src-card { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--glass); min-width: 0; }
+.src-card.on { border-color: color-mix(in srgb, var(--accent-2) 30%, var(--line)); }
+.src-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.src-card h4 { margin: 0; font-family: var(--display); font-size: 16px; line-height: 1.2; }
+.src-origin { font-size: 12px; color: var(--accent-text); }
+.src-card p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); flex: 1; }
+.src-card footer { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.src-tbl { font-family: var(--mono); font-size: 12px; color: var(--text); }
+.src-rows b { color: var(--text); font-variant-numeric: tabular-nums; }
+.src-note { font-style: italic; }
+.src-qs { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.src-eng i { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.src-eng.zet { background: var(--c-soft); color: var(--c); border-color: transparent; }
+.src-eng.zet i { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+.src-eng.off i { background: var(--faint); }
+.src-join { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 18px; border: 1px dashed color-mix(in srgb, var(--accent) 50%, transparent); border-radius: var(--radius-sm); background: var(--accent-soft); }
+.src-join-eq { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 15px; }
+.src-join-out b { font-family: var(--display); font-size: 22px; color: var(--accent-text); }
+.src-join-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.src-join-q { display: inline-flex; gap: 8px; align-items: center; }
+@media (min-width: 1700px) { .src-panel { padding: 22px 26px; } .src-card h4 { font-size: 18px; } .src-card p { font-size: 14px; } .src-node b { font-size: 17px; } .src-node small, .src-origin, .src-card footer { margin-top: auto; font-size: 13px; } .src-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .src-flow { flex-direction: column; } .src-arrow { transform: rotate(90deg); justify-content: center; } }

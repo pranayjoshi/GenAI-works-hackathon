@@ -83,6 +83,7 @@ export async function registerSources(opts: { customers?: string | null } = {}) 
     if (fs.existsSync(up)) await registerCsv('upworthy.tests', up);
     registered = true;
   }
+  summaryCache = null;
   const customers = opts.customers === undefined ? path.join(SRC, 'biz_customers_cafe.csv') : opts.customers;
   if (customers) await registerCsv('biz.customers', customers);
 }
@@ -98,6 +99,7 @@ export async function ensureCensus(geoIds: string[]) {
     if (!censusGeos.has(g)) { censusGeos.add(g); changed = true; }
   }
   if (changed) {
+    summaryCache = null;
     // one table over every cached geography response
     const all: CensusRow[] = [];
     for (const g of censusGeos) all.push(...(JSON.parse(fs.readFileSync(geoFiles.get(g) ?? path.join(CACHE, `census_${g}.json`), 'utf8')) as CensusRow[]));
@@ -115,7 +117,18 @@ export async function ensureCensus(geoIds: string[]) {
   return meta;
 }
 
+let summaryCache: { at: number; value: Awaited<ReturnType<typeof computeSummary>> } | null = null;
+let summaryInflight: Promise<void> | null = null;
+/** The five COUNT probes are Zetaris round trips (seconds) and the UI panels poll them: serve the last result at once
+ *  and refresh in the background once it is 30s old (the first call, or after registration changes, waits). */
 export async function sourceSummary() {
+  const refresh = () => (summaryInflight ??= computeSummary().then((value) => { summaryCache = { at: Date.now(), value }; }).finally(() => { summaryInflight = null; }));
+  if (!summaryCache) { await refresh(); return summaryCache!.value; }
+  if (Date.now() - summaryCache.at > 30_000) refresh().catch(() => {});
+  return summaryCache.value;
+}
+
+async function computeSummary() {
   const out: { table: string; kind: string; rows: number | string; label: string; engine?: string }[] = [];
   const probe = async (table: string, kind: string, label: string) => {
     try {

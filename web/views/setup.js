@@ -5,6 +5,7 @@ import { h, s, mount, spin, fmtInt, sleepMs, AGE_BANDS, cssVar } from '../core/d
 import { api, fail } from '../core/api.js';
 import { toast, qidChip } from '../core/ui.js';
 import { reduced, EASE, stagger, tilt, magnetic, countUp } from '../core/motion.js';
+import { sourcesStrip } from '../core/sources.js';
 import { createStage, dotTexture } from '../core/three-kit.js';
 
 const setupState = {
@@ -645,7 +646,7 @@ export default function mountSetup(view) {
     if (e.key === 'Enter' && e.target.matches('input[type=text]') && cur < STEPS.length - 1) { e.preventDefault(); go(cur + 1); }
   });
 
-  view.append(h('div.view-page.su-page', hero, shell));
+  view.append(h('div.view-page.su-page', hero, sourcesStrip(), shell));
   if (!reduced()) {
     [...hero.querySelectorAll('.su-hero-copy > *')].forEach((el, k) => el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: k * 50, easing: EASE.out, fill: 'backwards' }));
     stagger(railBtns, { y: 6, gap: 35, ms: 360, delay: 60 });
