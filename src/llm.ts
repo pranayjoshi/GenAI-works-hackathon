@@ -41,6 +41,12 @@ export interface ChatOpts<T> {
   tag?: string;
   /** override thinking for this call */
   thinking?: boolean;
+  /** image data URLs sent with the user turn (OpenAI-style image_url parts); hosted providers only */
+  images?: string[];
+  /** model id override (vision calls); hosted providers only */
+  model?: string;
+  /** restrict the provider chain for this call (vision: the NVIDIA route) */
+  providers?: ProviderName[];
 }
 
 export interface ChatResult<T> {
@@ -107,7 +113,8 @@ function rec() {
 const occurrences = new Map<string, number>();
 /** Identical prompts within one run are numbered #1, #2...; the counter is per run so a second replay starts at #1. */
 function recordKey(o: ChatOpts<unknown>) {
-  const base = sha(JSON.stringify([o.role, o.system, o.user, o.schemaName ?? '', o.temperature ?? null]), 24);
+  const extra = o.images?.length || o.model ? [o.model ?? null, (o.images ?? []).map((i) => sha(i, 12))] : [];
+  const base = sha(JSON.stringify([o.role, o.system, o.user, o.schemaName ?? '', o.temperature ?? null, ...extra]), 24);
   const scope = `${(o.tag ?? 'misc').split(':')[0]}|${base}`;
   const n = (occurrences.get(scope) ?? 0) + 1;
   occurrences.set(scope, n);
@@ -134,7 +141,7 @@ function providerConfigured(p: ProviderName): boolean {
 
 async function openAiCompat(p: 'nightshift' | 'nvidia', o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
   const c = p === 'nightshift' ? config.nightshift : config.nvidia;
-  const model = c.models[o.role];
+  const model = o.model ?? c.models[o.role];
   const thinking = o.thinking ?? THINKING[o.role];
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (p === 'nightshift') {
@@ -150,7 +157,7 @@ async function openAiCompat(p: 'nightshift' | 'nvidia', o: ChatOpts<unknown>, js
     : o.system;
   const body: Record<string, unknown> = {
     model,
-    messages: [{ role: 'system', content: system }, { role: 'user', content: o.user }],
+    messages: [{ role: 'system', content: system }, { role: 'user', content: o.images?.length ? [{ type: 'text', text: o.user }, ...o.images.map((url) => ({ type: 'image_url', image_url: { url } }))] : o.user }],
     temperature: o.temperature ?? (o.role === 'crowd' || o.role === 'voice' ? 0.9 : 0.4),
     top_p: 0.95,
     max_tokens: (o.maxTokens ?? 1200) + (thinking ? 2000 : 0),
@@ -219,6 +226,7 @@ function isTransient(msg: string) {
 async function rawChat(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult & { provider: ProviderName }> {
   const errors: string[] = [];
   for (const p of config.providers) {
+    if (o.providers && !o.providers.includes(p)) continue;
     if (!providerConfigured(p)) continue;
     if ((downUntil[p] ?? 0) > Date.now()) continue;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -229,7 +237,7 @@ async function rawChat(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawRe
         const msg = (e as Error).message;
         lastError[p] = msg;
         if (/ECONNREFUSED|HTTP 401|HTTP 403|HTTP 404/.test(msg) || (e as any)?.cause?.code === 'ECONNREFUSED') {
-          downUntil[p] = Date.now() + 60_000; // provider unavailable; fall through to the next one
+          if (!o.model) downUntil[p] = Date.now() + 60_000; // provider unavailable; fall through to the next one (a model override failing says nothing about the provider)
           errors.push(`${p}: ${msg}`);
           break;
         }

@@ -10,9 +10,58 @@ import { createStage, dotTexture } from '../core/three-kit.js';
 
 const setupState = {
   business: '', handle: '', place: '', zip: '', goal: '', postA: '', postB: '',
+  platform: 'instagram',
+  // per version: type (post | image | ad | campaign) and its extra fields; postA/postB hold the caption, or the ad's primary text
+  vA: { kind: 'post', image: null, headline: '', cta: 'Learn more', posts: [{ text: '', image: null }, { text: '', image: null }] },
+  vB: { kind: 'post', image: null, headline: '', cta: 'Learn more', posts: [{ text: '', image: null }, { text: '', image: null }] },
   crowdSize: 60, rounds: 12, seeds: 2, useCustomers: true,
   audience: null, coreBands: null, coreShare: null, coreShareTouched: false,
   step: 0, visited: [0],
+};
+
+/* ---------- platforms (Pew has these six; LinkedIn is not in the data, so it is not offered) ---------- */
+const PLATFORMS = [
+  ['instagram', 'Instagram', 'Feed post', '#d6249f', [['rect', { x: 4, y: 4, width: 16, height: 16, rx: 5 }], ['circle', { cx: 12, cy: 12, r: 3.6 }], ['circle', { cx: 16.8, cy: 7.2, r: 0.6 }]]],
+  ['facebook', 'Facebook', 'News Feed post', '#1877f2', [['path', { d: 'M14 8h2.5V4.5H14c-2.2 0-3.5 1.4-3.5 3.6V10H8v3.4h2.5V20H14v-6.6h2.4l.4-3.4H14V8.4c0-.3.2-.4.5-.4z' }]]],
+  ['tiktok', 'TikTok', 'Sponsored video', '#25f4ee', [['path', { d: 'M14 4v10.2a3.2 3.2 0 1 1-3.2-3.2M14 4c.4 2.4 1.9 3.8 4.2 4' }]]],
+  ['youtube', 'YouTube', 'Video ad', '#ff3d3d', [['rect', { x: 3, y: 6.5, width: 18, height: 11, rx: 3.5 }], ['path', { d: 'M10.5 9.6v4.8l4-2.4z' }]]],
+  ['x', 'X', 'Promoted post', '#9aa4b2', [['path', { d: 'M5 5l14 14M19 5L5 19' }]]],
+  ['reddit', 'Reddit', 'Promoted post', '#ff5700', [['circle', { cx: 12, cy: 13.5, r: 6 }], ['circle', { cx: 9.6, cy: 13, r: 0.9 }], ['circle', { cx: 14.4, cy: 13, r: 0.9 }], ['path', { d: 'M9.8 16c1.3.9 3.1.9 4.4 0M12 7.5l1.2-3.2 3 .9' }]]],
+];
+const platOf = (k) => PLATFORMS.find((p) => p[0] === k) || PLATFORMS[0];
+const KINDS = [['post', 'Post', 'Text'], ['image', 'Image', 'Upload + caption'], ['ad', 'Ad', 'Headline, text, button'], ['campaign', 'Campaign', '2-3 posts']];
+const IMG_MAX = 8 * 1024 * 1024;
+
+/** File -> data URL; big rasters are redrawn at most 1600 px wide as JPEG so the request stays small. */
+async function readImage(file) {
+  if (!/^image\/(png|jpe?g|webp|gif|svg\+xml)$/.test(file.type)) throw new Error('Use a PNG, JPEG, WebP, GIF or SVG image');
+  if (file.size > IMG_MAX * 2) throw new Error('That image is larger than 16 MB');
+  const raw = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(new Error('Could not read the file')); r.readAsDataURL(file); });
+  if (file.size <= 3 * 1024 * 1024 || file.type === 'image/svg+xml' || file.type === 'image/gif') return raw;
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('Could not decode the image')); i.src = raw; });
+  const k = Math.min(1, 1600 / img.width), c = document.createElement('canvas');
+  c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.88);
+}
+
+/** What one side of the test sends: composed text for the crowd, its image, and the structured extra. */
+function versionBody(S, v) {
+  const x = S['v' + v], t = S['post' + v].trim();
+  if (x.kind === 'campaign') {
+    const items = x.posts.filter((p) => p.text.trim()).map((p) => ({ text: p.text.trim(), image: p.image || undefined }));
+    return { text: items.map((it, i) => `Post ${i + 1}: ${it.text}`).join(' '), image: undefined, extra: { kind: 'campaign', items } };
+  }
+  if (x.kind === 'ad') {
+    const ad = { headline: x.headline.trim(), primary: t, cta: x.cta.trim() || 'Learn more' };
+    return { text: `${ad.headline}. ${ad.primary} [Button: ${ad.cta}]`, image: x.image || undefined, extra: { kind: 'ad', ad } };
+  }
+  if (x.kind === 'image') return { text: t || '(no caption)', image: x.image || undefined, extra: { kind: 'image' } };
+  return { text: t, image: undefined, extra: { kind: 'post' } };
+}
+const versionFilled = (S, v) => {
+  const x = S['v' + v], t = S['post' + v].trim();
+  return x.kind === 'campaign' ? x.posts.filter((p) => p.text.trim()).length >= 2 : x.kind === 'ad' ? !!(x.headline.trim() && t) : x.kind === 'image' ? !!x.image : !!t;
 };
 
 /* ---------- audience maths (ported unchanged from legacy) ---------- */
@@ -298,12 +347,15 @@ export default function mountSetup(view) {
   let cur = Math.min(Math.max(S.step || 0, 0), STEPS.length - 1), goSeq = 0, launching = false, heroCtl = null;
 
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-  const missing = () => REQUIRED.filter((k) => !String(S[k]).trim());
-  const payload = () => ({ business: S.business, handle: S.handle, place: S.place, zip: S.zip, goal: S.goal, postA: S.postA, postB: S.postB });
+  const missing = () => REQUIRED.filter((k) => (k === 'postA' || k === 'postB' ? !versionFilled(S, k.slice(4)) : !String(S[k]).trim()));
+  const payload = () => {
+    const a = versionBody(S, 'A'), b = versionBody(S, 'B');
+    return { business: S.business, handle: S.handle, place: S.place, zip: S.zip, goal: S.goal, platform: S.platform, postA: a.text, postB: b.text, imageA: a.image, imageB: b.image, versionA: a.extra, versionB: b.extra };
+  };
   // A step reads as done once its inputs are complete. Run settings has working defaults, so it only counts once seen.
   const seen = new Set([...(S.visited || []), cur]);
   const stepDone = (i) => [
-    !!(S.business.trim() && S.zip.trim()), !!(S.postA.trim() && S.postB.trim()), !!S.audience, seen.has(3), false,
+    !!(S.business.trim() && S.zip.trim()), versionFilled(S, 'A') && versionFilled(S, 'B'), !!S.audience, seen.has(3), false,
   ][i];
 
   /* ---- fields ---- */
@@ -327,35 +379,109 @@ export default function mountSetup(view) {
     h('div.su-phead', h('div', h('div.su-kicker', `Step ${i + 1} of ${STEPS.length}`), h('h2', STEPS[i].label), h('p.su-sub', sub)), actions ? h('div.su-pact', actions) : null),
     h('div.su-body', body));
 
+  /* ---------- platform picker ---------- */
+  function platformPicker() {
+    const btns = PLATFORMS.map(([k, name, sub, color, shapes]) => h('button.su-plat', { type: 'button', role: 'radio', 'data-k': k, style: { '--pc': color }, onclick: () => pick(k) },
+      s('svg', { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' }, shapes.map(([t, a]) => s(t, a))),
+      h('b', name), h('small', sub)));
+    const sync = () => btns.forEach((b) => { const on = b.dataset.k === S.platform; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    function pick(k) {
+      if (S.platform === k) return;
+      S.platform = k; S.audience = null; S.coreBands = null; S.coreShareTouched = false;
+      syncers.forEach((fn) => fn()); sync(); renderAudience(); renderSummary(); mount(proposeBtn, 'Propose audience');
+    }
+    syncers.push(sync); sync();
+    return h('div.su-field.su-platform.w5', h('label', 'Platform'), h('div.su-plats', { role: 'radiogroup', 'aria-label': 'Platform' }, btns),
+      h('small.su-plat-note', 'The crowd is sampled from Pew use rates for this platform, by age and gender, and sees your versions framed as its sponsored items.'));
+  }
+
   /* ---------- step 1: business ---------- */
   const exampleBtn = h('button.btn.sm', { onclick: loadExample }, 'Load example');
   const p0 = panel(0, 'Tell the crowd who is posting. Business and ZIP are required; the rest sharpens the read.', exampleBtn,
     h('div.su-grid',
       field('business', 'Business', text('business', 'South Congress Coffee'), 'w2'),
-      field('handle', 'Instagram handle', text('handle', '@southcongresscoffee'), 'w2'),
+      field('handle', 'Handle', text('handle', '@southcongresscoffee'), 'w2'),
       field('place', 'Place', text('place', 'Austin, TX 78704'), 'w2'),
-      field('zip', 'ZIP', text('zip', '78704'), 'w1'),
-      field('goal', 'Goal', text('goal', 'Get people within 3 miles to come in this week'), 'w5')));
+      field('zip', 'ZIP or country', text('zip', '78704, or India, or London, UK'), 'w2'), // LOCATION: US ZIP, country, or "City, Country" (country-level World Bank data)
+      field('goal', 'Goal', text('goal', 'Get people within 3 miles to come in this week'), 'w5'),
+      /* LOCATION INPUT: the ZIP field above stays; a location picker can replace it here */
+      platformPicker()));
 
   /* ---------- step 2: drafts ---------- */
   const cardTilts = [];
+  /** Drag-and-drop or click-to-upload image box with a thumbnail. get/set read and write the data URL in state. */
+  function dropzone(get, set, onchange, label = 'Drop an image here or click to upload') {
+    const input = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml', hidden: true, onchange: (e) => { take(e.target.files[0]); e.target.value = ''; } });
+    const body = h('div.su-drop-in');
+    const box = h('div.su-drop', {
+      tabindex: '0', role: 'button', 'aria-label': label,
+      onclick: () => input.click(), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } },
+      ondragover: (e) => { e.preventDefault(); box.classList.add('over'); }, ondragleave: () => box.classList.remove('over'),
+      ondrop: (e) => { e.preventDefault(); box.classList.remove('over'); take(e.dataTransfer.files[0]); },
+    }, input, body);
+    async function take(file) {
+      if (!file) return;
+      try { set(await readImage(file)); draw(); onchange(); } catch (e) { toast(e.message, true); }
+    }
+    function draw() {
+      const d = get();
+      box.classList.toggle('has', !!d);
+      body.replaceChildren(...(d ? [h('img.su-thumb', { src: d, alt: 'Uploaded image' }), h('button.su-thumb-x', { type: 'button', 'aria-label': 'Remove image', onclick: (e) => { e.stopPropagation(); set(null); draw(); onchange(); } }, '×')]
+        : [s('svg', { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round', 'aria-hidden': 'true' }, s('path', { d: 'M12 16V5M7.5 9.5L12 5l4.500 4.500M5 19h14' })), h('span', label), h('small', 'PNG, JPEG, WebP, GIF or SVG')]));
+    }
+    draw();
+    return Object.assign(box, { redraw: draw });
+  }
+
   function postCard(v) {
-    const key = 'post' + v, lc = v.toLowerCase();
+    const key = 'post' + v, lc = v.toLowerCase(), X = S['v' + v];
     const handle = h('b.su-handle'), count = h('span.su-count'), peek = h('div.su-peek');
-    const ta = h('textarea', { placeholder: `Paste or write the caption for version ${v}`, value: S[key], maxlength: 4000, 'aria-label': `Version ${v} caption`,
-      oninput: (e) => { S[key] = e.target.value; upd(); railDone(); } });
+    const changed = () => { upd(); railDone(); };
+    const ta = h('textarea', { value: S[key], maxlength: 4000, 'aria-label': `Version ${v} text`, oninput: (e) => { S[key] = e.target.value; changed(); } });
     f[key] = ta;
+    const headline = h('input', { type: 'text', placeholder: 'Headline', value: X.headline, maxlength: 120, 'aria-label': `Version ${v} headline`, oninput: (e) => { X.headline = e.target.value; changed(); } });
+    const cta = h('input', { type: 'text', placeholder: 'Button text, e.g. Shop now', value: X.cta, maxlength: 30, 'aria-label': `Version ${v} button`, oninput: (e) => { X.cta = e.target.value; changed(); } });
+    const drop = dropzone(() => X.image, (d) => { X.image = d; }, changed);
+    const camp = h('div.su-camp');
+    const body = wrap[key] = h('div.su-post-body');
+    const kindBar = h('div.su-kinds', { role: 'tablist', 'aria-label': `Version ${v} type` }, KINDS.map(([k, name, sub]) => h('button', { type: 'button', role: 'tab', 'data-k': k, title: sub, onclick: () => { X.kind = k; sig = ''; renderFields(); changed(); } }, name)));
+    let sig = '';
+    function drawCamp() {
+      camp.replaceChildren(...X.posts.map((p, i) => {
+        const t = h('textarea', { placeholder: `Post ${i + 1}${i ? '' : ' (opens the campaign)'}`, value: p.text, maxlength: 2200, 'aria-label': `Campaign post ${i + 1}`, oninput: (e) => { p.text = e.target.value; changed(); } });
+        const z = dropzone(() => p.image, (d) => { p.image = d; }, changed, 'Image for this post (optional)');
+        return h('div.su-camp-row', h('span.su-camp-n', String(i + 1)), h('div.su-camp-f', t, z),
+          X.posts.length > 2 ? h('button.su-camp-x', { type: 'button', 'aria-label': `Remove post ${i + 1}`, onclick: () => { X.posts.splice(i, 1); sig = ''; renderFields(); changed(); } }, '×') : null);
+      }), X.posts.length < 3 ? h('button.btn.sm.su-camp-add', { type: 'button', onclick: () => { X.posts.push({ text: '', image: null }); sig = ''; renderFields(); changed(); } }, '+ Add a post') : null,
+      h('p.su-camp-note', 'Each person gets the posts one after another during the run (the first when they are reached, the next ones a few rounds later), so you test the series, not one post.'));
+    }
+    function renderFields() {
+      const k = `${X.kind}|${X.posts.length}`;
+      kindBar.querySelectorAll('button').forEach((b) => { const on = b.dataset.k === X.kind; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
+      if (k === sig) return;
+      sig = k;
+      ta.placeholder = X.kind === 'ad' ? `Primary text for version ${v}` : X.kind === 'image' ? 'Caption (optional)' : `Paste or write the caption for version ${v}`;
+      ta.style.minHeight = X.kind === 'post' ? '' : '84px';
+      drop.redraw();
+      if (X.kind === 'campaign') drawCamp();
+      body.replaceChildren(...(X.kind === 'campaign' ? [camp] : X.kind === 'image' ? [drop, ta] : X.kind === 'ad' ? [h('div.su-ad-row', headline, cta), ta, drop] : [ta]));
+    }
     const upd = () => {
       handle.textContent = S.handle.trim() || '@yourhandle';
-      const t = S[key], n = t.length;
-      count.textContent = `${n.toLocaleString()} / 2,200`; count.classList.toggle('over', n > 2200);
-      const words = t.trim() ? t.trim().split(/\s+/).length : 0;
-      peek.replaceChildren(h('span.su-peek-l', 'In the feed'), h('span.su-peek-t', t.trim() ? [t.length > 125 ? t.slice(0, 125).trimEnd() : t, t.length > 125 ? h('span.su-more', ' … more') : null] : h('i', 'Nothing yet')), h('span.su-words', `${words} words`));
+      const t = S[key], n = X.kind === 'campaign' ? X.posts.reduce((a, p) => a + p.text.length, 0) : t.length;
+      count.textContent = X.kind === 'campaign' ? `${X.posts.filter((p) => p.text.trim()).length} posts` : `${n.toLocaleString()} / 2,200`; count.classList.toggle('over', n > 2200 && X.kind !== 'campaign');
+      const b = versionBody(S, v), tx = b.text;
+      const words = tx.trim() ? tx.trim().split(/\s+/).length : 0;
+      peek.replaceChildren(h('span.su-peek-l', `In the ${platOf(S.platform)[1]} feed`),
+        X.kind === 'ad' && X.headline.trim() ? h('span.su-peek-t', h('b', X.headline.trim()), ` ${t.slice(0, 100)} `, h('span.su-cta', X.cta || 'Learn more'))
+          : h('span.su-peek-t', tx.trim() ? [tx.length > 125 ? tx.slice(0, 125).trimEnd() : tx, tx.length > 125 ? h('span.su-more', ' … more') : null] : h('i', 'Nothing yet')),
+        h('span.su-words', `${words} words`));
     };
-    syncers.push(upd); upd();
+    syncers.push(() => { ta.value = S[key]; headline.value = X.headline; cta.value = X.cta; sig = ''; renderFields(); upd(); });
+    renderFields(); upd();
     const card = h('article.su-post.' + lc,
       h('div.su-post-head', h('div.su-ava', v), h('div', handle, h('div.su-meta', 'Sponsored preview')), h('span.chip.' + lc, `Version ${v}`)),
-      wrap[key] = h('div.su-post-body', ta),
+      kindBar, body,
       h('div.su-post-foot', peek, count),
       h('div.su-glare'));
     cardTilts.push(tilt(card, { max: 3.5, scale: 1.005 }));
@@ -366,7 +492,7 @@ export default function mountSetup(view) {
     h('div.su-seam-node', s('svg', { viewBox: '0 0 48 32', width: 48, height: 32 }, s('circle', { cx: 18, cy: 16, r: 12, class: 'sa' }), s('circle', { cx: 30, cy: 16, r: 12, class: 'sb' }))),
     h('div.su-seam-cap', 'same people', h('br'), 'same graph', h('br'), 'same schedule'),
     h('i.su-seam-line'));
-  const p1 = panel(1, 'Write the two versions as they would appear. They run in twin worlds that differ only by this text.', null,
+  const p1 = panel(1, 'Write or upload the two versions: a post, an image, an ad or a short campaign. They run in twin worlds that differ only by this content.', null,
     h('div.su-twins', postCard('A'), seam, postCard('B')));
 
   /* ---------- step 3: audience ---------- */
@@ -382,7 +508,7 @@ export default function mountSetup(view) {
       dots.push(h('i', { style: { '--d': d.toFixed(2) } }));
     }
     return h('div.su-scan' + (live ? '.live' : ''), h('div.su-scan-grid', { style: { '--cols': cols } }, dots),
-      h('div.su-scan-cap', live ? `Joining Census adults to Pew Instagram use${S.zip ? ` around ${S.zip}` : ''}...` : 'No audience yet'));
+      h('div.su-scan-cap', live ? `Joining Census adults to Pew ${platOf(S.platform)[1]} use${S.zip ? ` around ${S.zip}` : ''}...` : 'No audience yet'));
   }
 
   function renderAudience() {
@@ -419,8 +545,8 @@ export default function mountSetup(view) {
     // join chart
     const maxAdults = Math.max(1, ...rows.map((r) => Number(r.adults) || 0));
     const fills = [], rowEls = [];
-    const chart = h('div.su-chart', { role: 'img', 'aria-label': 'Adults and Instagram users by age band' },
-      h('div.su-chart-key', h('span.k.ad', 'Adults (Census)'), h('span.k.ig', 'Instagram users (Pew rate x adults)'), h('span.k.core', 'Overlaps core bands')),
+    const chart = h('div.su-chart', { role: 'img', 'aria-label': `Adults and ${platOf(S.platform)[1]} users by age band` },
+      h('div.su-chart-key', h('span.k.ad', 'Adults (Census)'), h('span.k.ig', `${platOf(S.platform)[1]} users (Pew rate x adults)`), h('span.k.core', 'Overlaps core bands')),
       rows.map((r) => {
         const ad = h('i'), ig = h('i');
         fills.push([ad, (Number(r.adults) || 0) / maxAdults * 100], [ig, (Number(r.instagram_users) || 0) / maxAdults * 100]);
@@ -434,7 +560,7 @@ export default function mountSetup(view) {
       void chart.offsetWidth;
       fills.forEach(([el, w], i) => { el.style.transition = ''; el.style.transitionDelay = `${Math.floor(i / 2) * 40 + (i % 2) * 60}ms`; el.style.width = `${w}%`; });
     };
-    const tbl = h('div.tbl-wrap', { hidden: true }, h('table', h('thead', h('tr', h('th', 'Age band'), h('th.num', 'Adults (Census)'), h('th.num', 'Instagram use (Pew)'), h('th.num', 'Instagram users'))),
+    const tbl = h('div.tbl-wrap', { hidden: true }, h('table', h('thead', h('tr', h('th', 'Age band'), h('th.num', 'Adults (Census)'), h('th.num', `${platOf(S.platform)[1]} use (Pew)`), h('th.num', `${platOf(S.platform)[1]} users`))),
       h('tbody', rows.map((r) => h('tr', h('td', r.band), h('td.num', fmtInt(r.adults)), h('td.num', `${Number(r.instagram_pct).toFixed(0)}%`), h('td.num', fmtInt(r.instagram_users)))))));
     const tblBtn = h('button.btn.sm.ghost', { 'aria-expanded': 'false', onclick: () => { tbl.hidden = !tbl.hidden; tblBtn.setAttribute('aria-expanded', String(!tbl.hidden)); tblBtn.textContent = tbl.hidden ? 'Show table' : 'Hide table'; if (!tbl.hidden && !reduced()) tbl.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: EASE.out }); } }, 'Show table');
 
@@ -463,7 +589,7 @@ export default function mountSetup(view) {
       h('div.su-share',
         h('div.su-share-vis', donut, h('div.su-share-side', stack, legend)),
         h('div.su-share-ctl', h('div.row.spread', h('span.muted', 'Core share of the crowd'), shareLabel), slider, h('div.row.spread', note, resetBtn))),
-      h('div.card-head.su-join-head', h('h3', `Census x Pew: Instagram audience${a.geo ? ` in ${a.geo.geo_name}` : ''}`),
+      h('div.card-head.su-join-head', h('h3', `Census x Pew: ${platOf(S.platform)[1]} audience${a.geo ? ` in ${a.geo.geo_name}` : ''}`),
         h('span.row', h('span.chip', 'Engine: ' + a.join.engine), qidChip(a.join.query_id), tblBtn)),
       chart, tbl);
     drawChips(); update();
@@ -527,9 +653,9 @@ export default function mountSetup(view) {
   function excerpt(t) { const x = t.trim().replace(/\s+/g, ' '); return x.length > 90 ? x.slice(0, 90).trimEnd() + '…' : x || 'Empty draft'; }
   function renderSummary() {
     mount(fold,
-      h('div.su-mini.a', h('span.su-mini-tag', 'A'), h('p', excerpt(S.postA)), h('span.su-orb-cap', 'World A')),
+      h('div.su-mini.a', h('span.su-mini-tag', 'A'), h('p', excerpt(versionBody(S, 'A').text)), h('span.su-orb-cap', 'World A')),
       h('i.su-fold-seam'),
-      h('div.su-mini.b', h('span.su-mini-tag', 'B'), h('p', excerpt(S.postB)), h('span.su-orb-cap', 'World B')));
+      h('div.su-mini.b', h('span.su-mini-tag', 'B'), h('p', excerpt(versionBody(S, 'B').text)), h('span.su-orb-cap', 'World B')));
     const core = S.audience && S.coreBands?.length ? `${S.coreBands.join(', ')} (${Math.round((crowdShare() ?? 0.6) * 100)}% core)` : 'the run proposes its own';
     const facts = [
       ['Business', S.business.trim() || null, 'business'], ['ZIP', S.zip.trim() || null, 'zip'],
@@ -575,7 +701,8 @@ export default function mountSetup(view) {
     exampleBtn.disabled = true;
     try {
       const d = await api('/api/demo');
-      Object.assign(S, { business: d.business, handle: d.handle, place: d.place, zip: d.zip, goal: d.goal, postA: d.postA, postB: d.postB });
+      Object.assign(S, { business: d.business, handle: d.handle, place: d.place, zip: d.zip, goal: d.goal, postA: d.postA, postB: d.postB, platform: 'instagram' });
+      S.vA.kind = 'post'; S.vB.kind = 'post'; S.vA.image = S.vB.image = null;
       S.audience = null; S.coreBands = null; S.coreShareTouched = false;
       for (const k of ['business', 'handle', 'place', 'zip', 'goal', 'postA', 'postB']) f[k].value = S[k];
       syncers.forEach((fn) => fn()); renderAudience(); renderSummary(); settingsChanged(); railDone();

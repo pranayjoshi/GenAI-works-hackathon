@@ -14,7 +14,7 @@ import { decideBatch, type AgentTurn } from './crowd.js';
 import { guardDecision } from './guard.js';
 import { hourLabel } from './schedule.js';
 import type { BaseWorld, SimWorld } from './world.js';
-import type { FeedItem, InjectedEvent, Post, RunSpec, SimEvent, WorldCounters } from './types.js';
+import { itemOf, type FeedItem, type InjectedEvent, type Post, type RunSpec, type SimEvent, type WorldCounters } from './types.js';
 
 /** Uniform in [0,1) from a hash: identical in twin worlds for the same agent, item and round. */
 const hashU = (...parts: (string | number)[]) => parseInt(sha(parts.join('|'), 8), 16) / 0x100000000;
@@ -116,7 +116,9 @@ export class WorldRunner {
     const sched = this.base.schedule;
     this.currentRound = r;
     // 1. deliver
-    for (const [pid, sr] of sched.servedAt) if (sr === r) this.feeds.get(pid)!.push({ item_id: 'ad', kind: 'ad', delivered_round: r, via: null });
+    // a campaign delivers its posts at the person's serve round, then every `gap` rounds (posts past the last round are never delivered)
+    const nItems = this.post.items?.length ?? 1, gap = Math.max(1, Math.floor(sched.rounds / 4));
+    for (let k = 0; k < nItems; k++) for (const [pid, sr] of sched.servedAt) if (sr + k * gap === r) this.feeds.get(pid)!.push({ item_id: k ? `ad${k + 1}` : 'ad', kind: 'ad', delivered_round: r, via: null, idx: k });
     for (const ev of this.liveEvents()) {
       if (ev.round !== r || this.events.some((e) => e.id === ev.id)) continue;
       this.events.push(ev);
@@ -142,7 +144,7 @@ export class WorldRunner {
       post: this.post, place: this.spec.place, hourLabel: hl, worldNote: carry || 'The post just started running.',
       topComments: (a) => this.topComments(a),
       eventText: (iid) => this.events.find((e) => e.id === iid)?.text ?? '',
-      mode: this.spec.mode,
+      mode: this.spec.mode, platform: this.spec.platform,
     }, `${this.spec.run_id}`)));
     this.calls += batches.length;
     // per-batch CrowdAgent results go to the trace file only (many per round)
@@ -168,7 +170,7 @@ export class WorldRunner {
           const g = guardDecision({
             action: d?.action ?? 'scroll_past', feeling: clamp(Math.round(d?.feeling ?? 0), -2, 2), would_visit: Boolean(d?.would_visit),
             reason: (d?.reason ?? '').trim(), text: (d?.text ?? '').trim(), itemKind: it.kind,
-            firstExposure: (this.seen.get(p.id) ?? 0) === 0, postText: this.post.text, otherPostText: otherPost, eventTexts, voice: p.voice, batchReasons,
+            firstExposure: (this.seen.get(p.id) ?? 0) === 0, postText: itemOf(this.post, it.idx ?? 0).text, otherPostText: otherPost, eventTexts, voice: p.voice, batchReasons,
           });
           for (const c of g.checks) { guardHits[c] = (guardHits[c] ?? 0) + 1; guardN++; }
           let action: ActionType = g.action;
@@ -198,7 +200,7 @@ export class WorldRunner {
           if (d && (it.kind !== 'event' || this.deciders.has(p.id))) this.intent.set(p.id, wouldVisit);
           if (it.kind !== 'event') { this.deciders.add(p.id); this.exposures++; this.seen.set(p.id, (this.seen.get(p.id) ?? 0) + 1); }
 
-          const what = it.kind === 'event' ? `saw news: "${it.text}"` : it.kind === 'share' ? `saw @${it.via} share ${this.post.business}'s post` : `saw ${this.post.business}'s sponsored post "${this.post.text.slice(0, 80)}"`;
+          const what = it.kind === 'event' ? `saw news: "${it.text}"` : it.kind === 'share' ? `saw @${it.via} share ${this.post.business}'s post` : `saw ${this.post.business}'s sponsored post "${itemOf(this.post, it.idx ?? 0).text.slice(0, 80)}"${itemOf(this.post, it.idx ?? 0).image ? ' with an image' : ''}`;
           const memText = `${hl}: ${what}. I ${action.replace('_', ' ')}${text ? ` and wrote "${text}"` : ''}${unsaid ? ` (thought "${unsaid}" but kept it to myself)` : ''}. Felt ${feeling > 0 ? 'positive' : feeling < 0 ? 'negative' : 'neutral'}${g.reason ? `: ${g.reason}` : ''}.`;
           const mem = this.memories.get(p.id)!;
           const usedIds = t.memories.map((m) => m.id);
@@ -214,7 +216,7 @@ export class WorldRunner {
           if (action === 'comment' && text) this.comments.push({ agent: p.id, text, round: r });
           if (action === 'share') {
             for (const f of this.base.graph.followers.get(p.id) ?? []) {
-              deliveries.push({ from: p.id, to: f, item: { item_id: `sh_${p.id}_${r}_${t.items.indexOf(it)}`, kind: 'share', delivered_round: r + 1, via: p.id, caption: text } });
+              deliveries.push({ from: p.id, to: f, item: { item_id: `sh_${p.id}_${r}_${t.items.indexOf(it)}`, kind: 'share', delivered_round: r + 1, via: p.id, caption: text, idx: it.idx } });
             }
           }
         }
