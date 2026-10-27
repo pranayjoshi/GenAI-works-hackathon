@@ -20,6 +20,7 @@ export interface TraceEntry {
   model: string;
   served_by: string;
   ms: number;
+  queue_ms?: number;
   tokens_in: number;
   tokens_out: number;
   ok: boolean;
@@ -105,7 +106,7 @@ function recordKey(o: ChatOpts<unknown>) {
 }
 
 // ---------------------------------------------------------------- providers
-interface RawResult { text: string; tokens_in: number; tokens_out: number; served_by: string; model: string }
+interface RawResult { text: string; tokens_in: number; tokens_out: number; served_by: string; model: string; service_ms?: number }
 
 const sems: Record<ProviderName, Semaphore> = {
   nightshift: new Semaphore(config.nightshift.concurrency),
@@ -194,7 +195,12 @@ async function ollama(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawRes
 }
 
 async function callProvider(p: ProviderName, o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
-  return sems[p].run(() => (p === 'ollama' ? ollama(o, jsonSchema) : openAiCompat(p, o, jsonSchema)));
+  // service_ms is time on the model after a slot is free; queue wait is reported separately in the trace
+  return sems[p].run(async () => {
+    const t = Date.now();
+    const r = await (p === 'ollama' ? ollama(o, jsonSchema) : openAiCompat(p, o, jsonSchema));
+    return { ...r, service_ms: Date.now() - t };
+  });
 }
 
 function isTransient(msg: string) {
@@ -290,7 +296,7 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
       const raw2 = await rawChat(repairOpts, jsonSchema);
       tokensIn += raw2.tokens_in; tokensOut += raw2.tokens_out;
       const r2 = finish(raw2, true);
-      if (r2.ok) { result = r2; raw = raw2; }
+      if (r2.ok) { result = r2; raw = { ...raw2, service_ms: (raw.service_ms ?? 0) + (raw2.service_ms ?? 0) }; }
     } catch { /* keep the failed result; caller applies the documented default */ }
   }
 
@@ -299,7 +305,9 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
       rec().prepare('INSERT OR REPLACE INTO llm (key, role, provider, model, served_by, text, tokens_in, tokens_out, created, repaired) VALUES (?,?,?,?,?,?,?,?,?,?)').run(key, o.role, raw.provider, raw.model, raw.served_by, raw.text, tokensIn, tokensOut, new Date().toISOString(), result.repaired ? 1 : 0);
     } catch (e) { console.warn(`[llm] recording skipped: ${(e as Error).message}`); }
   }
-  trace({ ts: new Date().toISOString(), tag, role: o.role, provider: raw.provider, model: raw.model, served_by: raw.served_by, ms: Date.now() - t0, tokens_in: tokensIn, tokens_out: tokensOut, ok: result.ok, repaired: result.repaired });
+  const wall = Date.now() - t0;
+  const service = raw.service_ms ?? wall;
+  trace({ ts: new Date().toISOString(), tag, role: o.role, provider: raw.provider, model: raw.model, served_by: raw.served_by, ms: service, queue_ms: Math.max(0, wall - service), tokens_in: tokensIn, tokens_out: tokensOut, ok: result.ok, repaired: result.repaired });
   return { ...result, tokens_in: tokensIn, tokens_out: tokensOut };
 }
 
