@@ -1,6 +1,6 @@
 # Turning on the hosted sponsor paths
 
-Dry Run runs fully offline on local Nemotron 3 Nano 4B and an in-process DuckDB. The three paths below are coded and wired, but each needs credentials only the account owner can create. Each one is picked up automatically on the next start, with no code change.
+Ripple runs fully offline on local Nemotron 3 Nano 4B and an in-process DuckDB. The three paths below are coded and wired, but each needs credentials only the account owner can create. Each one is picked up automatically on the next start, with no code change.
 
 ## 1. NVIDIA hosted Nemotron (the three-model roles)
 
@@ -30,7 +30,7 @@ Every call logs `served_by` in `runs/trace.jsonl` and in the Nemotron panel, so 
 4. Copy the key from Nightshift > Console (⌘5) > API key into `.env` as `NIGHTSHIFT_TOKEN=...`. Without it the runtime answers 401 `runtime_token_missing`. If unset, the token is read from Nightshift's `proxy-token` file (`~/Library/Application Support/ai.meterless.runtime/`, then the older locations), or from `NIGHTSHIFT_TOKEN` / `NIGHTSHIFT_STATE_DIR` if set. Calls carry `meterless-app: dryrun`.
 5. `npm run probe` should show `nightshift ONLINE` and `served_by=nightshift:...` for each role.
 
-Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVIDIA models may be missing from Nightshift's lane picker. Dry Run asks for the model id directly, so this may not matter; if Nightshift refuses the NVIDIA ids, the calls fall through to the direct NVIDIA path (step 1) and `served_by` says so.
+Observed 27 Oct: Nightshift served the crowd, voice and review roles, and refused the Super VL id (`model_excluded`), so the reason/interview role fell through to direct NVIDIA. Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVIDIA models may be missing from Nightshift's lane picker. Ripple asks for the model id directly, so this may not matter; if Nightshift refuses the NVIDIA ids, the calls fall through to the direct NVIDIA path (step 1) and `served_by` says so.
 
 ## 3. Zetaris (federated SQL)
 
