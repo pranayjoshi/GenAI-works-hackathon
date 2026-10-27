@@ -1,0 +1,96 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ripple agents in parallel</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .head { position: absolute; left: 60px; top: 46px; display: flex; flex-direction: column; gap: 10px; }
+  .head h2 { font-size: 50px; }
+  .phase { position: absolute; top: 172px; font-family: var(--mono); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); }
+  .phase.gate { color: var(--warn); }
+  .n { position: absolute; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; border-radius: 14px; }
+  .n b { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; line-height: 1.15; }
+  .n span { font-size: 13.5px; color: var(--muted); line-height: 1.35; }
+  .n.sm { padding: 9px 8px; align-items: center; text-align: center; gap: 2px; }
+  .n.sm b { font-size: 14px; } .n.sm span { font-size: 11.5px; }
+  .lane { position: absolute; padding: 14px 16px; border-radius: 18px; }
+  .lane.a { border-color: rgba(91,140,255,.55); } .lane.b { border-color: rgba(255,154,77,.55); }
+  .lane .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .lane .top b { font-size: 19px; font-weight: 650; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cb { border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 6px; text-align: center; background: rgba(255,255,255,.03); }
+  .cb b { display: block; font-size: 13px; font-weight: 600; }
+  .cb span { font-size: 11px; color: var(--muted); }
+  .lane.a .cb { border-color: rgba(91,140,255,.35); } .lane.b .cb { border-color: rgba(255,154,77,.35); }
+  .post { margin-top: 10px; font-size: 13.5px; color: var(--muted); white-space: nowrap; }
+  .post i { font-style: normal; color: var(--accent-text); }
+  .par { position: absolute; left: 420px; top: 498px; width: 530px; text-align: center; font-family: var(--mono); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--good); }
+  .cap { position: absolute; font-family: var(--mono); font-size: 12px; color: var(--faint); letter-spacing: .03em; line-height: 1.45; }
+  .gate { border-color: rgba(255,200,77,.55); }
+  .gate b { color: #ffe08f; }
+  svg.wires { position: absolute; inset: 0; width: 1600px; height: 900px; pointer-events: none; }
+  svg.wires path { fill: none; stroke: rgba(185,173,255,.55); stroke-width: 1.6; }
+  svg.wires path.a { stroke: rgba(91,140,255,.65); } svg.wires path.b { stroke: rgba(255,154,77,.65); }
+  svg.wires path.dash { stroke-dasharray: 5 5; }
+</style></head>
+<body><div class="grain"></div>
+<div class="head"><div class="kicker">How Ripple works</div><h2 class="display">Many agents, working in parallel</h2></div>
+
+<svg class="wires" viewBox="0 0 1600 900">
+  <path d="M210 287 V305"/><path d="M210 383 V401"/>
+  <path d="M210 479 C210 502 106 498 106 520"/><path d="M210 479 V520"/><path d="M210 479 C210 502 314 498 314 520"/>
+  <path class="a" d="M360 545 C392 545 388 330 420 330"/><path class="b" d="M360 565 C392 565 388 640 420 640"/>
+  <path class="a" d="M950 330 C972 330 968 262 990 262"/><path class="b" d="M950 640 C976 640 966 270 990 270"/>
+  <path d="M1125 318 V340"/><path class="dash" d="M1113 340 V318"/>
+  <path d="M1125 412 C1125 438 1030 434 1030 458"/><path d="M1125 412 V458"/><path d="M1125 412 C1125 438 1220 434 1220 458"/>
+  <path d="M1260 376 C1282 376 1278 262 1300 262"/>
+  <path d="M1420 318 V338"/><path d="M1420 428 V450"/><path d="M1420 540 V560"/>
+</svg>
+
+<div class="phase" style="left:60px">1 · Build the audience</div>
+<div class="card n" style="left:60px; top:205px; width:300px; height:82px"><b>DataAgent</b><span>7 audience queries on Zetaris: Census, Pew, priors, customers</span></div>
+<div class="card n" style="left:60px; top:305px; width:300px; height:78px"><b>AudienceAgent</b><span>names the core and spillover segments</span></div>
+<div class="card n" style="left:60px; top:401px; width:300px; height:78px"><b>Audience sampler</b><span>copula sampling matched to Census marginals</span></div>
+<div class="card n sm" style="left:60px; top:520px; width:92px; height:70px"><b>VoiceWriter</b><span>batch</span></div>
+<div class="card n sm" style="left:164px; top:520px; width:92px; height:70px"><b>VoiceWriter</b><span>batch</span></div>
+<div class="card n sm" style="left:268px; top:520px; width:92px; height:70px"><b>VoiceWriter</b><span>batch</span></div>
+<div class="cap" style="left:60px; top:602px; width:300px">voice batches run in parallel<br>24 voice calls in run 1458</div>
+
+<div class="phase" style="left:420px">2 · Simulate · both worlds at once</div>
+<div class="card lane a" style="left:420px; top:205px; width:530px; height:280px">
+  <div class="top"><b>Counterfactual world A</b><span class="chip a">Draft A</span></div>
+  <div class="grid">
+    <div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div>
+    <div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div>
+  </div>
+  <div class="post"><i>each decision →</i> Guard (fact check) <i>→</i> MemoryAgent (H-MEM per person)</div>
+  <div class="post">every round, the batches of people whose feed changed are sent together</div>
+</div>
+<div class="par">‖ world A and world B run at the same time ‖</div>
+<div class="card lane b" style="left:420px; top:520px; width:530px; height:280px">
+  <div class="top"><b>Counterfactual world B</b><span class="chip b">Draft B</span></div>
+  <div class="grid">
+    <div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div>
+    <div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div><div class="cb"><b>CrowdAgent</b><span>8 people</span></div>
+  </div>
+  <div class="post"><i>each decision →</i> Guard (fact check) <i>→</i> MemoryAgent (H-MEM per person)</div>
+  <div class="post">same people, graph and schedule as world A; only the content differs</div>
+</div>
+
+<div class="phase" style="left:990px">3 · Investigate and explain</div>
+<div class="card n" style="left:990px; top:205px; width:270px; height:113px"><b>ReportWriter</b><span>11 SQL tool calls over its own run log; every claim cites a query id</span></div>
+<div class="card n" style="left:990px; top:340px; width:270px; height:72px"><b>ReportCritic</b><span>code + model critic, one revision</span></div>
+<div class="card n sm" style="left:990px; top:458px; width:80px; height:62px"><b>Interviewer</b><span>person 1</span></div>
+<div class="card n sm" style="left:1085px; top:458px; width:80px; height:62px"><b>Interviewer</b><span>person 2</span></div>
+<div class="card n sm" style="left:1180px; top:458px; width:80px; height:62px"><b>Interviewer</b><span>person 3</span></div>
+<div class="card n sm" style="left:990px; top:530px; width:80px; height:62px"><b>Interviewer</b><span>person 4</span></div>
+<div class="card n sm" style="left:1085px; top:530px; width:80px; height:62px"><b>Interviewer</b><span>person 5</span></div>
+<div class="card n sm" style="left:1180px; top:530px; width:80px; height:62px"><b>Interviewer</b><span>person 6</span></div>
+<div class="cap" style="left:990px; top:602px; width:270px">ask a segment why: up to six<br>interviews at once, each from<br>that person's own memory</div>
+
+<div class="phase gate" style="left:1300px">4 · Recommend, gated</div>
+<div class="card n" style="left:1300px; top:205px; width:240px; height:113px"><b>DecisionAgent</b><span>spend gate: sample size vs reachable audience</span></div>
+<div class="card n" style="left:1300px; top:338px; width:240px; height:90px"><b>Rewriter + Honesty check</b><span>suggested rewrite (C)</span></div>
+<div class="card n gate" style="left:1300px; top:450px; width:240px; height:90px"><b>Owner approval</b><span>nothing spends or publishes without a yes</span></div>
+<div class="card n" style="left:1300px; top:560px; width:240px; height:72px"><b>LaunchAgent</b><span>Meta, created paused</span></div>
+
+<div class="foot"><span>run 1458: 394 crowd calls + 24 voice calls through Nightshift · hosted batches of 8 people · up to 8 calls at once (NIGHTSHIFT_CONCURRENCY)</span><span>seeds run one after another</span></div>
+</body></html>

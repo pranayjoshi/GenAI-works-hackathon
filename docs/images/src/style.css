@@ -1,0 +1,36 @@
+/* README illustrations (docs/images/*.jpg). Same night-lab tokens as the app and scripts/video/scenes/base.css.
+ * Pages are 1600 x 900 stills; render with scripts/render-images.sh. Every number and quote comes from run
+ * 20261027-south-congress-coffe-1458 (summary.json and actions.sqlite). */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=block');
+:root {
+  --bg: #07080d; --panel: #12151f; --line: rgba(255,255,255,.08); --line-2: rgba(255,255,255,.14);
+  --text: #eef0f7; --muted: #9196ab; --faint: #5d6278;
+  --accent: #8f7bff; --accent-text: #b9adff; --teal: #4fe3c1; --a: #5b8cff; --b: #ff9a4d; --c: #c084fc; --good: #4fe3a0; --warn: #ffc84d; --bad: #ff5f6d;
+  --sans: "Instrument Sans", system-ui, sans-serif; --display: "Bricolage Grotesque", "Instrument Sans", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1600px; height: 900px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; position: relative; }
+body::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(1100px 640px at 88% -14%, rgba(143,123,255,.20), transparent 60%),
+              radial-gradient(900px 600px at -8% 114%, rgba(91,140,255,.14), transparent 60%); }
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: .05;
+  background-image: radial-gradient(rgba(255,255,255,.7) 1px, transparent 1px); background-size: 3px 3px; }
+.rings { position: absolute; left: 1240px; top: 450px; pointer-events: none; }
+.rings i { position: absolute; border: 1px solid rgba(143,123,255,.22); border-radius: 50%; transform: translate(-50%, -50%); }
+.kicker { font-family: var(--mono); font-size: 17px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-text); }
+.display { font-family: var(--display); font-weight: 750; letter-spacing: -0.035em; line-height: 1.02; }
+.grad { background: linear-gradient(90deg, #5b8cff, #8f7bff 45%, #ff9a4d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255,255,255,.04); font-size: 17px; white-space: nowrap; }
+.chip.a { color: #a9c3ff; border-color: rgba(91,140,255,.5); background: rgba(91,140,255,.12); }
+.chip.b { color: #ffc49a; border-color: rgba(255,154,77,.5); background: rgba(255,154,77,.12); }
+.chip.good { color: #9ff0c9; border-color: rgba(79,227,160,.45); background: rgba(79,227,160,.10); }
+.chip.warn { color: #ffe08f; border-color: rgba(255,200,77,.45); background: rgba(255,200,77,.10); }
+.chip.qid { font-family: var(--mono); font-size: 14px; color: var(--accent-text); border-color: rgba(143,123,255,.4); background: rgba(143,123,255,.10); padding: 4px 10px; }
+.card { background: linear-gradient(180deg, rgba(24,28,41,.94), rgba(16,19,29,.94)); border: 1px solid var(--line-2); border-radius: 18px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 24px 64px rgba(0,0,0,.45); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); }
+.brand { display: flex; align-items: center; gap: 16px; }
+.brand b { font-family: var(--display); font-weight: 750; font-size: 52px; letter-spacing: -0.03em; }
+.foot { position: absolute; left: 80px; right: 80px; bottom: 26px; display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; color: var(--faint); letter-spacing: .04em; }
