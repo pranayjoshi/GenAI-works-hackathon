@@ -102,7 +102,12 @@ ${toolText}`;
         if (!fractions.some((x) => Math.abs(x * 100 - n) < 0.15)) issues.push(`Number ${m} in "${c.text}" is not in its cited results`);
       }
       const ints = new Set(cells.filter((x) => Number.isInteger(x)));
-      for (const m of c.text.replace(/\d+(\.\d+)?%/g, '').match(/\b\d{2,}\b/g) ?? []) if (!ints.has(Number(m))) issues.push(`Count ${m} in "${c.text}" is not in its cited results`);
+      // bare decimals like 0.365 are rates: they must match a fraction cell, like percentages do
+      for (const m of c.text.replace(/\d+(\.\d+)?%/g, '').match(/\b0?\.\d+\b/g) ?? []) {
+        const n = parseFloat(m);
+        if (!fractions.some((x) => Math.abs(x - n) < 0.0015)) issues.push(`Rate ${m} in "${c.text}" is not in its cited results`);
+      }
+      for (const m of c.text.replace(/\d+(\.\d+)?%/g, '').replace(/\d*\.\d+/g, '').match(/\b\d{2,}\b/g) ?? []) if (!ints.has(Number(m))) issues.push(`Count ${m} in "${c.text}" is not in its cited results`);
     }
     for (const th of [...rep.objections, ...rep.likes]) for (const id of th.action_ids) if (!recById.has(id)) issues.push(`Quote ${id} is not an action in this run`);
     // direction: "A leads/has higher ... (x% vs y%)" must give x to the version it names
@@ -171,27 +176,18 @@ ${toolText}`;
     report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C before spending.';
   }
   for (const th of [...report.objections, ...report.likes]) th.action_ids = th.action_ids.filter((id) => recById.has(id));
-  // floor: at least 3 claims; extras are the widest segment gaps, built in code from the segment queries they cite
-  if (report.claims.length < 3) {
-    const gaps: { text: string; qid: string; gap: number }[] = [];
-    for (const t of tools.filter((x) => x.tool === 'segment_breakdown')) {
-      const bySeg = new Map<string, Record<string, { rate: number; n: number }>>();
-      for (const r of t.rows) {
-        const k = String(r.segment);
-        bySeg.set(k, { ...(bySeg.get(k) ?? {}), [String(r.variant)]: { rate: Number(r.intent_rate), n: Number(r.deciders) } });
-      }
-      for (const [seg, m] of bySeg) {
-        const a = m[va], b = m[vb];
-        if (!a || !b || a.n < 15 || b.n < 15) continue;
-        gaps.push({ qid: t.query_id, gap: Math.abs(a.rate - b.rate), text: `${t.args.by === 'customer' ? seg : `${t.args.by} ${seg}`}: intent ${(a.rate * 100).toFixed(1)}% on ${va} vs ${(b.rate * 100).toFixed(1)}% on ${vb} (${a.n} and ${b.n} decisions).` });
-      }
-    }
-    gaps.sort((x, y) => y.gap - x.gap);
-    for (const g of gaps) {
-      if (report.claims.length >= 3) break;
-      report.claims.push({ text: g.text, query_ids: [g.qid] });
-    }
-  }
+  // a quote must point the same way as its theme, and three quotes are enough
+  for (const th of report.objections) th.action_ids = th.action_ids.filter((id) => (recById.get(id)?.feeling ?? 0) < 0).slice(0, 3);
+  for (const th of report.likes) th.action_ids = th.action_ids.filter((id) => (recById.get(id)?.feeling ?? 0) > 0).slice(0, 3);
+  // a model theme must be about what its quotes say: its label's words appear in at least two quoted reasons
+  const labelFits = (th: Report['objections'][number]) => {
+    const words = th.theme.toLowerCase().match(/[a-z]{4,}|\d+%/g) ?? [];
+    return th.action_ids.filter((id) => words.some((w) => (recById.get(id)?.reason ?? '').toLowerCase().includes(w))).length >= 2;
+  };
+  report.objections = report.objections.filter(labelFits);
+  report.likes = report.likes.filter(labelFits);
+  // a claim states a number from its query; a claim without one cannot be checked
+  report.claims = report.claims.filter((c) => /\d/.test(c.text));
   // query aliases belong in query_ids, not in the prose
   const noAlias = (x: string) => x.replace(/\s*\((?:Q\d+(?:,\s*)?)+\)/g, '').replace(/\s+([.,;])/g, '$1');
   report.summary = noAlias(report.summary);
@@ -204,15 +200,40 @@ ${toolText}`;
       report.summary = `${v.headline} ${rest}`.trim();
       issues.push('Summary implied a winner although the verdict is too close to call; the verdict now leads it.');
     }
+    const before = report.claims.length;
+    report.claims = report.claims.filter((c) => !/\b(leads?|wins?|winner|beats?|outperforms?)\b/i.test(c.text));
+    if (report.claims.length < before) issues.push('Dropped claims that named a winner although the verdict is too close to call.');
     if (!/version c|test|re-?run|bigger|larger/i.test(report.recommendation)) {
       report.recommendation = 'Too close to call: test a sharper version C on the same crowd before spending.';
       issues.push('Recommendation picked a side without a winner; replaced with the next test.');
     }
   }
+  // floor: at least 3 claims; extras are the widest segment gaps, built in code from the segment queries they cite
+  if (report.claims.length < 3) {
+    const gaps: { text: string; qid: string; gap: number }[] = [];
+    for (const t of tools.filter((x) => x.tool === 'segment_breakdown')) {
+      const bySeg = new Map<string, Record<string, { rate: number; n: number }>>();
+      for (const r of t.rows) {
+        const k = String(r.segment);
+        bySeg.set(k, { ...(bySeg.get(k) ?? {}), [String(r.variant)]: { rate: Number(r.intent_rate), n: Number(r.deciders) } });
+      }
+      for (const [seg, m] of bySeg) {
+        const a = m[va], b = m[vb];
+        if (!a || !b || a.n < 40 || b.n < 40) continue; // small segments swing on a handful of people
+        gaps.push({ qid: t.query_id, gap: Math.abs(a.rate - b.rate), text: `${t.args.by === 'customer' ? seg : `${t.args.by} ${seg}`}: intent ${(a.rate * 100).toFixed(1)}% on ${va} vs ${(b.rate * 100).toFixed(1)}% on ${vb} (${a.n} and ${b.n} people deciding).` });
+      }
+    }
+    gaps.sort((x, y) => y.gap - x.gap);
+    for (const g of gaps) {
+      if (report.claims.length >= 3) break;
+      report.claims.push({ text: g.text, query_ids: [g.qid] });
+    }
+  }
   // floor: every version gets at least one objection and one like theme, quoted from the real reaction samples
   const [sa, sb] = [va, vb];
   const fill = (list: Report['objections'], kind: 'negative' | 'positive') => {
-    const kept = list.filter((t) => t.action_ids.length);
+    // a theme needs quotes and a real description (one-word labels like "intent" are metric names, not themes)
+    const kept = list.filter((t) => t.action_ids.length && t.theme.trim().split(/\s+/).length >= 2);
     for (const [i, variant] of [sa, sb].entries()) {
       if (kept.some((t) => t.variant === variant)) continue;
       const th = themeFrom(samples[i * 2 + (kind === 'positive' ? 1 : 0)], variant, kind);
@@ -245,7 +266,7 @@ function fallbackReport(st: RunState, tools: ToolResult[], samples: ToolResult[]
   const [va, vb] = v.variants;
   return {
     summary: v.headline,
-    claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% (${r.deciders} decisions across ${st.spec.seeds.length} seed${st.spec.seeds.length > 1 ? 's' : ''}).`, query_ids: [seg.query_id] })).slice(0, 4),
+    claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% (${r.deciders} simulated people deciding, summed over ${st.spec.seeds.length} seed${st.spec.seeds.length > 1 ? "s" : ""}).`, query_ids: [seg.query_id] })).slice(0, 4),
     objections: [va, vb].map((variant, i) => themeFrom(samples[i * 2], variant, 'negative') ?? { theme: `Negative reactions to ${variant}`, variant, action_ids: pick(samples[i * 2]) }),
     likes: [va, vb].map((variant, i) => themeFrom(samples[i * 2 + 1], variant, 'positive') ?? { theme: `Positive reactions to ${variant}`, variant, action_ids: pick(samples[i * 2 + 1]) }),
     tipping_note: tippingNote(st),
