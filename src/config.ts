@@ -48,7 +48,8 @@ export const config = {
   sampleMode: env('SAMPLE_MODE', 'false') === 'true',
   sampleStrict: env('SAMPLE_STRICT', 'false') === 'true', // replay misses fail instead of calling a live provider
   record: env('RECORD', 'true') !== 'false',
-  replayCrowdMs: num('REPLAY_CROWD_MS', 450),   // pacing per crowd call in SAMPLE_MODE so replays look live
+  replayCrowdMs: num('REPLAY_CROWD_MS', 450),
+  crowdPrompt: env('CROWD_PROMPT', 'v1') as 'v1' | 'v2',   // pacing per crowd call in SAMPLE_MODE so replays look live
   providers: (env('PROVIDERS', 'nightshift,nvidia,ollama').split(',').map((s) => s.trim()).filter(Boolean)) as ProviderName[],
   nightshift: {
     baseUrl: env('NIGHTSHIFT_BASE_URL', 'http://127.0.0.1:8088/v1'),

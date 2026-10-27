@@ -38,4 +38,16 @@ export const CrowdDecision = z.object({
   text: z.string().describe('the comment or share caption if action is comment or share, else empty'),
 });
 export const CrowdBatch = z.object({ decisions: z.array(CrowdDecision) });
+
+/** Prompt v2: the person first names what in the item caught (or lost) their attention, then decides. */
+export const CrowdDecisionV2 = z.object({
+  key: z.string(),
+  noticed: z.string().describe('the specific words, price, offer or tone in the item this person reacts to, under 10 words'),
+  action: z.enum(ACTIONS),
+  feeling: z.number().int().min(-2).max(2),
+  would_visit: z.boolean(),
+  reason: z.string(),
+  text: z.string(),
+});
+export const CrowdBatchV2 = z.object({ decisions: z.array(CrowdDecisionV2) });
 export type CrowdDecision = z.infer<typeof CrowdDecision>;

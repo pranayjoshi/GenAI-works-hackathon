@@ -3,7 +3,8 @@
  * records, each agent's recalled memories and its new feed items, so call size stays flat over the run.
  */
 import { chat } from '../llm.js';
-import { CrowdBatch, type CrowdDecision } from '../schemas/action.js';
+import { CrowdBatch, CrowdBatchV2, type CrowdDecision } from '../schemas/action.js';
+import { config } from '../config.js';
 import type { Persona } from '../schemas/persona.js';
 import type { MemoryLine } from '../memory/hmem.js';
 import type { FeedItem, Post } from './types.js';
@@ -61,7 +62,9 @@ const SYSTEM_BT = `You simulate real people browsing a social feed in the United
 - reason: private, first person, about the headline's wording, under 20 words.
 - text: for comment or share, a short real comment; otherwise "".`;
 
-export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: string): Promise<{ decisions: Map<string, CrowdDecision>; repaired: boolean; served_by: string }> {
+const V2_RULE = `\n- First fill "noticed": the exact words, price, offer or tone in the item that this person reacts to. Then decide based on how that specific thing meets this person's numbers and voice. Two different posts should get different reactions from the same person when their wording, price or offer differ.`;
+
+export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: string, variant: 'v1' | 'v2' = config.crowdPrompt): Promise<{ decisions: Map<string, CrowdDecision>; repaired: boolean; served_by: string }> {
   const blocks = turns.map((t) => {
     const seen = t.seenBefore === 0 ? 'first time seeing this post' : `has seen this post ${t.seenBefore} time${t.seenBefore > 1 ? 's' : ''} before`;
     const mem = t.memories.length ? `\n  memories: ${t.memories.map((m) => m.text).join(' | ')}` : '';
@@ -74,9 +77,9 @@ export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: strin
   try {
     const r = await chat({
       role: 'crowd',
-      system: ctx.mode === 'backtest' ? SYSTEM_BT : SYSTEM_AB(ctx.place, ctx.post.business),
-      user, schema: CrowdBatch, schemaName: 'CrowdBatch', tag,
-      maxTokens: 90 * expected.length + 60,
+      system: (ctx.mode === 'backtest' ? SYSTEM_BT : SYSTEM_AB(ctx.place, ctx.post.business)) + (variant === 'v2' ? V2_RULE : ''),
+      user, schema: (variant === 'v2' ? CrowdBatchV2 : CrowdBatch) as typeof CrowdBatch, schemaName: variant === 'v2' ? 'CrowdBatchV2' : 'CrowdBatch', tag,
+      maxTokens: (variant === 'v2' ? 110 : 90) * expected.length + 60,
     });
     served_by = r.served_by;
     repaired = r.repaired;
