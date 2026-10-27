@@ -47,16 +47,16 @@ function renderItem(it: FeedItem, ctx: RenderCtx, agentId: string): string {
 const SYSTEM_AB = (place: string, business: string) => `You simulate real Instagram users in ${place} scrolling their feeds. For every person and every feed item listed under them, decide what that person does, in character.
 How to decide:
 - Ground every decision in the person's numbers and voice. High price sensitivity reacts to price; high ad skepticism distrusts hype, urgency and discounts; few minutes per day means little attention.
-- Most people scroll past sponsored posts. Engage only when the post genuinely fits the person. Hiding is for posts that annoy them.
+- Most people scroll past sponsored posts: in a typical crowd about 8 or 9 in 10 do. Engage only when the post genuinely fits the person.
 - Memories are things this person already saw or did; stay consistent with them. Only mention seeing the post before if the person has actually seen it before (seeing the same ad again often annoys people).
 - feeling: -2 strongly negative, 0 indifferent, +2 strongly positive about ${business} after seeing the item.
 - would_visit: true only if this person would realistically go to or buy from ${business} this week.
-- reason: private, first person, 5 to 14 words naming the specific thing in the item (a word, the price, the offer, the tone). Never quote the person's numbers.
+- reason: the person's private thought, first person, 6 to 14 words, saying WHY the post lands that way for them in their own life (budget, routine, taste, trust in ads). Do not just repeat the post's words. Never quote the person's numbers.
 - Facts: only mention prices, discounts and details that are written in the item itself. Never invent a price or a menu item.
 - If the line says "first time seeing this post", the reason must not say seen, again, same, already or old.
 - Never mention the person's age, gender or a role like student unless it is in their voice line.
 - text: for comment or share only, what this person would actually type to friends: 3 to 12 casual words in their own voice, never the business's voice (no "Just posted", no "Try the"), never a copy of the reason; otherwise "".
-- feeling must match the action: like, save, share, comment and tap_through mean feeling 0 or above; hide means feeling 0 or below.
+- Actions, from most to least common: scroll_past is what nearly everyone does, including people who mildly dislike or are indifferent to the post. like and save are for people who genuinely like it (about 1 in 10). tap_through means they open it to learn more (about 1 in 20). comment and share are rare (about 1 in 50). hide is rare (about 1 in 50) and only for posts that truly annoy the person. A person can scroll past and still plan to visit.
 - People differ: vary wording, length and tone. Do not reuse phrases across people.`;
 
 const SYSTEM_BT = `You simulate real people browsing a social feed in the United States. For every person and every item listed under them, decide what they do, in character.
@@ -66,7 +66,7 @@ const SYSTEM_BT = `You simulate real people browsing a social feed in the United
 - reason: private, first person, about the headline's wording, under 20 words.
 - text: for comment or share, a short real comment; otherwise "".`;
 
-const V2_RULE = `\n- First fill "noticed": the exact words, price, offer or tone in the item that this person reacts to. Then decide based on how that specific thing meets this person's numbers and voice. Two different posts should get different reactions from the same person when their wording, price or offer differ.`;
+const V2_RULE = `\n- First fill "noticed": the one detail in the item this person's eye lands on (a word, the price, the offer, the tone), in their own terms. Then decide how that detail meets this person's numbers and voice; most details still lead to scroll_past.\n- Each person notices something different; do not give batch-mates the same "noticed" or reason.`;
 
 export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: string, variant: 'v1' | 'v2' = config.crowdPrompt): Promise<{ decisions: Map<string, CrowdDecision>; repaired: boolean; served_by: string }> {
   const blocks = turns.map((t) => {

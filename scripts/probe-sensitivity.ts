@@ -18,6 +18,8 @@ const variant = (flag('prompt', config.crowdPrompt) as 'v1' | 'v2');
 const people = st.personas.filter((_, i) => i % Math.max(1, Math.floor(st.personas.length / n)) === 0).slice(0, n);
 const posts = [{ variant: 'A', text: flag('a', CAFE_DEMO.postA)!, business: st.spec.business, handle: st.spec.handle }, { variant: 'B', text: flag('b', CAFE_DEMO.postB)!, business: st.spec.business, handle: st.spec.handle }];
 const out: Record<string, { visit: number; feel: number; engaged: number; n: number; missing: number }> = {};
+const mix: Record<string, Record<string, number>> = { A: {}, B: {} };
+const reasons: string[] = [];
 const t0 = Date.now();
 const diffs: number[] = [];
 for (let rep = 0; rep < reps; rep++) {
@@ -32,6 +34,7 @@ for (let rep = 0; rep < reps; rep++) {
       for (const p of batch) {
         const d = r.decisions.get(`${p.id}/ad`);
         if (!d) { o.missing++; continue; }
+        mix[post.variant][d.action] = (mix[post.variant][d.action] ?? 0) + 1; if (reasons.length < 16) reasons.push(`${post.variant} ${d.action} ${d.feeling}: ${d.reason}`);
         o.n++; o.visit += d.would_visit ? 1 : 0; o.feel += d.feeling; o.engaged += d.action !== 'scroll_past' && d.action !== 'hide' ? 1 : 0;
       }
     }
@@ -42,4 +45,6 @@ for (let rep = 0; rep < reps; rep++) {
 console.log(`\nprompt ${variant}, ${people.length} people x ${reps} reps, ${((Date.now() - t0) / 1000).toFixed(0)}s`);
 for (const [v, o] of Object.entries(out)) console.log(`  ${v}: n=${o.n} missing=${o.missing} visit=${(o.visit / o.n * 100).toFixed(1)}% meanFeeling=${(o.feel / o.n).toFixed(2)} engaged=${(o.engaged / o.n * 100).toFixed(1)}%`);
 console.log(`  per-person change A vs B (feeling diff + visit flip + action flip), mean: ${(diffs.reduce((a, b) => a + b, 0) / diffs.length).toFixed(2)}; share of people with any change: ${(diffs.filter((d) => d > 0).length / diffs.length * 100).toFixed(0)}%`);
+console.log('  action mix', JSON.stringify(mix));
+for (const r of reasons) console.log('   ', r);
 process.exit(0);
