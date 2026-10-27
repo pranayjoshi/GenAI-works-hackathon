@@ -26,7 +26,7 @@ const CriticSchema = z.object({ ok: z.boolean(), issues: z.array(z.string()) });
 export interface ReportBundle {
   report: Report;
   tools: { tool: string; query_id: string; engine: string; args: Record<string, unknown>; row_count: number }[];
-  quotes: Record<string, { agent_id: string; world_id: string; hour: number; action: string; reason: string; text: string; unsaid: string; variant: string }>;
+  quotes: Record<string, { agent_id: string; world_id: string; hour: number; action: string; reason: string; text: string; unsaid: string; variant: string; checks: string[] }>;
   critic: { code_issues: string[]; model: { ok: boolean; issues: string[] } | null; revised: boolean };
   served_by: string[];
   fallback: boolean;
@@ -163,7 +163,7 @@ ${toolText}`;
   const quotes: ReportBundle['quotes'] = {};
   for (const th of [...report.objections, ...report.likes]) for (const id of th.action_ids) {
     const r = recById.get(id)!;
-    quotes[id] = { agent_id: r.agent_id, world_id: r.world_id, hour: r.hour, action: r.action, reason: r.reason, text: r.text, unsaid: r.unsaid, variant: r.variant };
+    quotes[id] = { agent_id: r.agent_id, world_id: r.world_id, hour: r.hour, action: r.action, reason: r.reason, text: r.text, unsaid: r.unsaid, variant: r.variant, checks: r.checks ?? [] };
   }
   return {
     report,

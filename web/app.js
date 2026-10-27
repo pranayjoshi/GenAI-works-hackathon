@@ -81,6 +81,24 @@ const ACTION_LABEL = { scroll_past: 'scrolled past', like: 'liked', comment: 'co
 function actPill(action) {
   return h('span.act.' + action, s('svg', { viewBox: '0 0 24 24' }, s('path', { d: ICONS[action] || ICONS.scroll_past })), ACTION_LABEL[action] || action);
 }
+const CHECK_LABEL = {
+  'reason:invented_price': 'invented price', 'reason:other_version_leak': 'detail from the other version', 'reason:false_repeat_claim': 'false "seen it before" claim',
+  'reason:identity_trope': 'identity trope', 'reason:duplicate_in_batch': 'duplicate answer', 'text:brand_voice': 'comment sounded like the brand',
+  'text:copied_reason': 'comment copied the private reason', 'coherence:positive_action_negative_feeling': 'like contradicted a negative feeling',
+  'coherence:visit_with_strong_dislike': 'visit intent contradicted strong dislike', 'coherence:hide_positive_feeling': 'hide contradicted a positive feeling',
+};
+const checkLabel = (c) => CHECK_LABEL[c] || c.replace(/^\w+:/, '').replace(/_/g, ' ');
+/** The private-reason line, or the guard's explanation when it withheld the reason, plus "resolved" chips for coherence fixes. */
+function reasonLines(r) {
+  const checks = r.checks || [];
+  const out = [];
+  const why = checks.filter((c) => c.startsWith('reason:'));
+  if (r.reason) out.push(h('div.thought', `thought: ${r.reason}`));
+  else if (why.length) out.push(h('div.thought', `reason withheld by the fact check (${why.map(checkLabel).join(', ')})`));
+  const coh = checks.filter((c) => c.startsWith('coherence:'));
+  if (coh.length) out.push(h('div', coh.map((c) => h('span.chip', { style: { fontSize: '11px', padding: '0 8px', marginRight: '4px' }, title: 'The private feeling wins over the public action: the guard changed the logged action or intent to match how they actually felt.' }, `resolved: ${checkLabel(c)}`))));
+  return out;
+}
 const variantChip = (v) => h('span.chip.' + String(v || 'a').toLowerCase(), `Version ${v}`);
 const AGE_BANDS = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
 const INCOME_BANDS = ['<$25k', '$25-50k', '$50-75k', '$75-100k', '$100-150k', '$150k+'];
@@ -194,7 +212,7 @@ async function openAgent(agentId, opts = {}) {
     mount(actBox, wd.actions?.length ? wd.actions.map((a) => h('div.mem', { 'data-action': a.id },
       h('div.row', { style: { gap: '8px' } }, h('span.hr', roundTime(a.hour)), actPill(a.action), h('span.chip.mono', a.id)),
       a.text ? h('div', { style: { marginTop: '4px' } }, `"${a.text}"`) : null,
-      a.reason ? h('div.thought', `thought: ${a.reason}`) : null,
+      reasonLines(a),
       a.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), a.unsaid) : null)) : h('div.muted', 'No actions in this world.'));
   }
   function focusAction(id) {
@@ -649,7 +667,7 @@ function runView(id, view) {
           r.item_kind === 'event' ? h('span.chip', { style: { fontSize: '11px', padding: '0 7px' } }, 'reacting to news') : null,
           h('span.hr', roundTime(r.hour))),
         r.text ? h('div.said', r.text) : null,
-        r.reason ? h('div.thought', `thought: ${r.reason}`) : null,
+        reasonLines(r),
         r.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), r.unsaid) : null));
   }
   function redrawFeed(wid) {
@@ -754,7 +772,7 @@ function runView(id, view) {
     mount(ui.nemo, h('div.card-head', h('h2', 'Nemotron panel'), h('span.sub', `${fmtInt(totalCalls)} calls. served_by shows which model answered each call.`)),
       rows.length ? h('div.tbl-wrap', h('table', h('thead', h('tr', h('th', 'Role'), h('th', 'Model'), h('th.num', 'Calls'), h('th.num', 'Tok in/out'), h('th.num', 'Avg ms'), h('th', 'Served by'))),
         h('tbody', rows.map((r) => h('tr', h('td', h('b', r.role)), h('td.mono', r.model), h('td.num', fmtInt(r.calls)), h('td.num', `${fmtInt(r.tin)} / ${fmtInt(r.tout)}`), h('td.num', fmtInt(Math.round(r.ms / Math.max(1, r.calls)))),
-          h('td', Object.entries(r.served).map(([k, c]) => h('span.served', `${k} x${c}`)), r.errors ? h('span.chip.bad', `${r.errors} errors`) : null)))))) : h('div.muted', 'Waiting for the first model call...'),
+          h('td', Object.entries(r.served).map(([k, c]) => h('span.served', `${k} \u00d7 ${c}`)), r.errors ? h('div', { style: { marginTop: '4px' } }, h('span.chip.bad', `${r.errors} failed call${r.errors > 1 ? 's' : ''}`)) : null)))))) : h('div.muted', 'Waiting for the first model call...'),
       S.traceLog.length ? h('div.ticker', S.traceLog.map((t) => h('div', `${t.role} | ${t.served_by} | ${(t.ms / 1000).toFixed(1)}s | ${t.tokens_in}>${t.tokens_out} tok${t.ok ? '' : ' | FAILED'}`))) : null);
   }
 
@@ -933,7 +951,10 @@ function runView(id, view) {
           h('span.chip.' + (t.reached > 0 ? 'good' : ''), `reached ${t.reached} people`), ' ', h('span.chip.mono', t.record.id))
           : h('div.muted', 'Nobody shared the post in this world, so there was no cascade.')))) : null,
       val ? h('div.card', { style: { marginTop: '16px' } }, h('div.card-head', h('h2', 'Validity panel'), h('span.sub', 'checks on whether the crowd behaved like a crowd')),
-        h('div.grid', { style: { gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' } }, vexp.map(([k, value, ex]) => h('div', h('span.tag', k), h('div', { style: { fontSize: '18px', fontWeight: 650, margin: '2px 0' } }, value), h('div.expl', ex))))) : null);
+        h('div.grid', { style: { gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' } }, vexp.map(([k, value, ex]) => h('div', h('span.tag', k), h('div', { style: { fontSize: '18px', fontWeight: 650, margin: '2px 0' } }, value), h('div.expl', ex))))) : null,
+      val && val.guard ? h('div.card', { style: { marginTop: '16px' } }, h('div.card-head', h('h2', 'Fact check'), h('span.sub', `${pct(val.decisions ? val.guard.decisions_with_a_check / val.decisions : 0)} of decisions had a check fire (${fmtInt(val.guard.decisions_with_a_check)} of ${fmtInt(val.decisions)})`)),
+        h('p.expl', 'Before anything is logged or quoted, a guard withholds invented prices, details from the other version, false \u201cseen it before\u201d claims and identity tropes, and resolves likes that contradict a negative feeling.'),
+        Object.keys(val.guard.by_check || {}).length ? h('div.chips', Object.entries(val.guard.by_check).sort((a, b) => b[1] - a[1]).map(([k, c]) => h('span.chip', { title: k }, `${checkLabel(k)}: `, h('b', c)))) : h('div.muted', 'No check fired in this run.')) : null);
   }
 
   /* ============================================================ 10. report */
@@ -950,7 +971,7 @@ function runView(id, view) {
       return h('div.quote', { title: 'Open this person and ask them why', onclick: () => openAgent(q.agent_id, { world: q.world_id }) },
         h('div.src', variantChip(q.variant), h('b', q.agent_id), h('span', `world ${q.world_id}`), h('span.mono', roundTime(q.hour)), actPill(q.action), h('span.chip.qid', `action ${id}`)),
         q.text ? h('div.q', `"${q.text}"`) : null,
-        q.reason ? h('div.thought', `thought: ${q.reason}`) : null,
+        reasonLines(q),
         q.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), q.unsaid) : null);
     };
     const themes = (title, list) => h('div.card', h('div.card-head', h('h2', title)), list.length ? list.map((t) => h('div.theme', h('div.row', { style: { marginBottom: '8px' } }, variantChip(t.variant), h('h4', t.theme)), h('div.stack', (t.action_ids || []).map(quote)))) : h('div.muted', 'None reported.'));
