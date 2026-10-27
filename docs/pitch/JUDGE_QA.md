@@ -1,7 +1,7 @@
 # Ripple: likely judge questions
 
-## 1. How does this fit Track 3?
-Each layer is one word of the track sentence. Data: federated SQL with receipts. Knowledge: the Census x Pew audience size and labelled priors. Memory: an H-MEM per person per world. Reasoning: twin worlds, two seeds, a verdict in code. Reliable decisions: the spend decision. Actions: an approval-gated launch of two paused Meta ad sets.
+## 1. How does this fit Track 2, The Agent That Can Explain Why?
+Every reason Ripple gives comes with its evidence. The report agent investigates with tools: SQL against its own run log and the Census and Pew data, and each claim cites the query id behind it; each quote is an action id you can open. A code critic rejects uncited numbers, a Nemotron Ultra critic sends the report back, and an honesty check rejects rewrites that invent claims. In "Ask why", a simulated person answers only from their own memory lines and cites them. The trace shows the agent, handoff and model behind every step.
 
 ## 2. Does it predict what customers will do?
 No. It estimates whether two posts can be told apart on a simulated crowd, and reports the uncertainty. On our backtest no method beat chance, so we do not claim prediction.
