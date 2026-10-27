@@ -17,7 +17,7 @@ The roles then map to:
 | Role | Model |
 |---|---|
 | crowd, voice | `nvidia/nemotron-3.5-lightning-30b-a3b` (thinking off) |
-| reason, interview, rewriter | `nvidia/nemotron-3-super-120b-a12b` |
+| reason, interview, rewriter | `nvidia/nemotron-3.5-super-vl-120b-a12b` (the 3.0 Super id returns 404 on build.nvidia.com keys) |
 | review (report critic, honesty check) | `nvidia/nemotron-3-ultra-550b-a55b` |
 
 Every call logs `served_by` in `runs/trace.jsonl` and in the Nemotron panel, so the role split is visible.
@@ -27,7 +27,7 @@ Every call logs `served_by` in `runs/trace.jsonl` and in the Nemotron panel, so 
 1. Download the Mac M1+ edition from meterless.ai/mac.html (`Nightshift-Setup-mac-m1.dmg`, 17.8 MB, built 25 Oct). It is not notarized yet, so macOS blocks the first open: double-click Nightshift Setup, click Done, then System Settings > Privacy & Security > "Open Anyway" and confirm with your password. Setup copies Nightshift into Applications.
 2. Start Nightshift. It serves `http://127.0.0.1:8088/v1`.
 3. Paste the `nvapi-` key into Setup > Providers > Cloud provider keys > NVIDIA, then restart Nightshift once.
-4. Nothing to set in Dry Run. The runtime token is read from Nightshift's `proxy-token` file (`~/Library/Application Support/ai.meterless.runtime/`, then the older locations), or from `NIGHTSHIFT_TOKEN` / `NIGHTSHIFT_STATE_DIR` if set. Calls carry `meterless-app: dryrun`.
+4. Copy the key from Nightshift > Console (⌘5) > API key into `.env` as `NIGHTSHIFT_TOKEN=...`. Without it the runtime answers 401 `runtime_token_missing`. If unset, the token is read from Nightshift's `proxy-token` file (`~/Library/Application Support/ai.meterless.runtime/`, then the older locations), or from `NIGHTSHIFT_TOKEN` / `NIGHTSHIFT_STATE_DIR` if set. Calls carry `meterless-app: dryrun`.
 5. `npm run probe` should show `nightshift ONLINE` and `served_by=nightshift:...` for each role.
 
 Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVIDIA models may be missing from Nightshift's lane picker. Dry Run asks for the model id directly, so this may not matter; if Nightshift refuses the NVIDIA ids, the calls fall through to the direct NVIDIA path (step 1) and `served_by` says so.
@@ -35,15 +35,15 @@ Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVID
 ## 3. Zetaris (federated SQL)
 
 1. Register at cloud.enterprise.zetaris.com and download the "Run locally" platform bundle. It includes the Docker registry sign-in (`docker login`); the public Freemium repo's images (`zetaris/lightning-*`) are private on Docker Hub until Zetaris approves access, which can take up to 24 hours.
-2. Start Docker Desktop and give it at least 10 GB of memory (Settings > Resources); the Lightning server asks for 4 GB driver plus 4 GB executor.
+2. Start Docker Desktop and give it 10 GB of memory (Settings > Resources). On Apple Silicon, preflight always warns that the images are amd64; with "Use Rosetta" on (the default) that warning needs no action.
 3. Mount this project into the bundle, then start it:
 
 ```bash
-scripts/zetaris-mount.sh ~/zetaris/zetaris-platform
+scripts/zetaris-mount.sh ~/Downloads/zetaris-platform
 ```
 
 ```bash
-cd ~/zetaris/zetaris-platform && docker compose up -d
+cd ~/Downloads/zetaris-platform && docker compose up -d
 ```
 
    The script writes a `docker-compose.override.yml` that mounts the project read-only at `/data/dryrun` in the Lightning server and API containers.

@@ -27,8 +27,8 @@ function nightshiftToken(): string {
 const HOSTED: Record<Role, string> = {
   crowd: env('MODEL_CROWD', 'nvidia/nemotron-3.5-lightning-30b-a3b'),
   voice: env('MODEL_VOICE', 'nvidia/nemotron-3.5-lightning-30b-a3b'),
-  reason: env('MODEL_REASON', 'nvidia/nemotron-3-super-120b-a12b'),
-  interview: env('MODEL_INTERVIEW', 'nvidia/nemotron-3-super-120b-a12b'),
+  reason: env('MODEL_REASON', 'nvidia/nemotron-3.5-super-vl-120b-a12b'),
+  interview: env('MODEL_INTERVIEW', 'nvidia/nemotron-3.5-super-vl-120b-a12b'),
   review: env('MODEL_REVIEW', 'nvidia/nemotron-3-ultra-550b-a55b'),
 };
 const LOCAL: Record<Role, string> = {

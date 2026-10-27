@@ -12,7 +12,8 @@ cd "$bundle"
 services=$(docker compose config --format json | python3 -c '
 import json, sys
 for name, s in json.load(sys.stdin)["services"].items():
-    if any(k in (s.get("image") or "") for k in ("lightning-server", "lightning-api", "driver", "spark")): print(name)')
+    if name in ("init", "bootstrap"): continue   # one-shot setup jobs
+    if any(k in (s.get("image") or "") for k in ("lightning-server", "lightning-api", "ndp-driver", "ndp-api")): print(name)')
 [ -n "$services" ] || { echo "no Lightning server/API service found in the compose file"; exit 1; }
 
 {
