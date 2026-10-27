@@ -1,0 +1,57 @@
+/* Run workspace shell: head, phase rail, stage dock, stage area. Stage internals live in their own css files. */
+.ws { max-width: 1520px; margin: 0 auto; padding: 18px 22px 40px; }
+.ws-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ws-head-main { min-width: 0; }
+.ws-back { display: inline-block; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; transition: color var(--t-hover) ease, transform var(--t-ui) var(--ease-out); }
+.ws-back:hover { color: var(--text); transform: translateX(-3px); }
+.ws-title { font-size: clamp(24px, 3vw, 38px); }
+.ws-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ws-live { display: inline-flex; align-items: center; gap: 6px; }
+.ws-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: breathe 1.4s ease-in-out infinite; }
+.chip.ws-stream.live { color: var(--good); } .chip.ws-stream.reconnecting { color: var(--warn); } .chip.ws-stream.closed { color: var(--faint); }
+.ws-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ws-seg { display: inline-flex; padding: 3px; border-radius: 11px; border: 1px solid var(--line); background: var(--glass); }
+.ws-seg button { border: 0; background: transparent; color: var(--muted); font: 600 12px var(--sans); padding: 5px 10px; border-radius: 8px; cursor: pointer; transition: all var(--t-hover) ease; }
+.ws-seg button:hover { color: var(--text); }
+.ws-seg button.on { background: var(--panel-3); color: var(--text); box-shadow: 0 0 0 1px var(--line-2) inset; }
+
+/* phase rail */
+.ws-phases { position: relative; margin: 18px 0 14px; padding: 12px 16px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); backdrop-filter: blur(12px); }
+.ws-phase-track { position: absolute; left: 16px; right: 16px; top: 21px; height: 2px; background: var(--line-2); border-radius: 2px; overflow: hidden; }
+.ws-phase-track i { display: block; height: 100%; background: linear-gradient(90deg, var(--a), var(--accent), var(--b)); transition: width 900ms var(--ease-expo); box-shadow: var(--glow-accent); }
+.ws-phase-list { position: relative; display: grid; grid-template-columns: repeat(8, 1fr); }
+.ws-phase { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11.5px; color: var(--faint); font-weight: 600; }
+.ws-phase:first-child { align-items: flex-start; } .ws-phase:last-child { align-items: flex-end; }
+.ws-phase i { width: 12px; height: 12px; border-radius: 50%; background: var(--panel-solid); border: 2px solid var(--line-2); transition: all 500ms var(--ease-expo); }
+.ws-phase.done { color: var(--muted); } .ws-phase.done i { background: var(--accent); border-color: var(--accent); }
+.ws-phase.now { color: var(--text); } .ws-phase.now i { border-color: var(--accent); background: var(--bg); box-shadow: 0 0 0 5px var(--accent-soft), var(--glow-accent); animation: phase-pulse 1.6s ease-in-out infinite; }
+@keyframes phase-pulse { 50% { box-shadow: 0 0 0 9px transparent, var(--glow-accent); } }
+.ws-phase-detail { margin-top: 6px; min-height: 18px; text-align: center; font-size: 12.5px; color: var(--muted); }
+.ws-banner:empty { display: none; } .ws-banner { margin-bottom: 12px; }
+
+/* dock + stage */
+.ws-body { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 18px; align-items: start; }
+.ws-dock { position: sticky; top: calc(var(--topbar-h) + 14px); display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); backdrop-filter: blur(14px); }
+.ws-dock-ink { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 11px; background: var(--panel-3); box-shadow: 0 0 0 1px var(--line-2) inset, 0 6px 20px rgba(0,0,0,.18); transition: transform 460ms var(--ease-expo), width 460ms var(--ease-expo), height 460ms var(--ease-expo); }
+.ws-dock-item { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; padding: 10px 11px; border-radius: 11px; color: var(--muted); font-weight: 600; font-size: 14px; transition: color var(--t-hover) ease; }
+.ws-dock-item:hover { color: var(--text); }
+.ws-dock-item.active { color: var(--text); }
+.ws-dock-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: var(--glass); border: 1px solid var(--line); transition: all var(--t-ui) var(--ease-out); }
+.ws-dock-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ws-dock-item.active .ws-dock-icon { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--a)); box-shadow: var(--glow-accent); }
+.ws-dock-item:hover .ws-dock-icon { transform: rotate(-6deg) scale(1.06); }
+.ws-badge { margin-left: auto; min-width: 20px; padding: 1px 7px; border-radius: 999px; font: 600 11px var(--mono); text-align: center; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
+.ws-badge.pulse { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 50%, transparent); animation: badge-pulse 1.8s ease-in-out infinite; }
+@keyframes badge-pulse { 50% { box-shadow: 0 0 0 5px var(--accent-soft); } }
+.ws-stage { position: relative; min-height: 70vh; min-width: 0; }
+.ws-pane { will-change: transform, opacity; }
+.ws-pane-loading { padding: 60px; text-align: center; color: var(--muted); }
+
+@media (max-width: 980px) {
+  .ws { padding: 14px 16px 90px; }
+  .ws-body { grid-template-columns: minmax(0, 1fr); }
+  .ws-dock { position: fixed; z-index: 45; left: 10px; right: 10px; bottom: 10px; top: auto; flex-direction: row; overflow-x: auto; gap: 2px; box-shadow: 0 18px 50px rgba(0,0,0,.45); background: var(--panel-solid); }
+  .ws-dock-item { flex: none; flex-direction: column; gap: 3px; padding: 6px 9px; font-size: 10.5px; }
+  .ws-badge { position: absolute; top: 0; right: 0; margin: 0; font-size: 9px; padding: 0 5px; min-width: 0; }
+  .ws-phase span { display: none; } .ws-phase.now span { display: inline; }
+}

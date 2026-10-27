@@ -3,33 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark light">
   <title>Dry Run: test your post on a crowd</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d5efc'/%3E%3Cpath d='M9 22V10h6a6 6 0 0 1 0 12z' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M15 4a12 12 0 0 0 0 24z' fill='%235b8cff'/%3E%3Cpath d='M17 4a12 12 0 0 1 0 24z' fill='%23ff9a4d'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/theme.css?v=4">
+  <link rel="stylesheet" href="css/setup.css?v=4">
+  <link rel="stylesheet" href="css/library.css?v=4">
+  <link rel="stylesheet" href="css/workspace.css?v=4">
+  <link rel="stylesheet" href="css/pipeline.css?v=4">
+  <link rel="stylesheet" href="css/crowd.css?v=4">
+  <link rel="stylesheet" href="css/worlds.css?v=4">
+  <link rel="stylesheet" href="css/verdict.css?v=4">
+  <link rel="stylesheet" href="css/insights.css?v=4">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+  </script>
 </head>
 <body>
+  <canvas id="ambient" aria-hidden="true"></canvas>
   <header class="topbar">
     <a class="brand" href="#/">
-      <span class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="28" height="28"><rect width="32" height="32" rx="8" fill="var(--accent)"/><path d="M9 22V10h6a6 6 0 0 1 0 12z" fill="none" stroke="#fff" stroke-width="3"/></svg></span>
-      <span class="brand-text"><b>Dry Run</b><small>Test your post on a crowd before you spend a dollar.</small></span>
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><path class="half-a" d="M15 4a12 12 0 0 0 0 24z"/><path class="half-b" d="M17 4a12 12 0 0 1 0 24z"/></svg></span>
+      <span class="brand-text"><b>Dry Run</b><small>Twin-world A/B tests on a simulated crowd</small></span>
     </a>
     <nav class="nav">
+      <span class="nav-ink" aria-hidden="true"></span>
       <a href="#/" data-nav="setup">New test</a>
       <a href="#/runs" data-nav="runs">Runs</a>
       <a href="#/backtest" data-nav="backtest">Backtest</a>
     </nav>
     <div id="status-pill" class="status-pill" tabindex="0" role="button" aria-haspopup="dialog" title="Provider and data engine status"><span class="dot"></span><span class="status-text">Checking status...</span></div>
+    <button class="theme-btn" id="theme-btn" title="Toggle light and dark" aria-label="Toggle light and dark"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   </header>
 
   <main id="view" class="view" aria-live="polite"></main>
-
-  <footer class="footer">
-    <span>Simulated people sampled from Census and Pew data. Not real customers. Backtest numbers are shown as measured.</span>
-  </footer>
 
   <div id="modal" class="modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true">
@@ -42,6 +52,6 @@
     <div id="drawer-body"></div>
   </aside>
   <div id="toasts" class="toasts"></div>
-  <script src="app.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
