@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Intro: the paid test</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  .panel { position: absolute; left: 50%; top: 290px; transform: translateX(-50%); width: 1500px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 36px;
+    animation: dim .9s ease both; animation-delay: var(--qd, 5s); }
+  @keyframes dim { to { opacity: .16; filter: blur(6px); transform: translateX(-50%) scale(.97); } }
+  .step { padding: 36px; display: flex; flex-direction: column; gap: 22px; min-height: 470px; }
+  .step:nth-child(1) { animation: up .9s .1s var(--ease) both; } .step:nth-child(2) { animation: up .9s .7s var(--ease) both; } .step:nth-child(3) { animation: up .9s 1.4s var(--ease) both; }
+  .step h3 { font-size: 34px; font-family: var(--display); font-weight: 650; letter-spacing: -0.02em; }
+  .step p { color: var(--muted); font-size: 24px; line-height: 1.4; }
+  .n { font-family: var(--mono); color: var(--accent-text); font-size: 22px; letter-spacing: .14em; }
+  /* budget meter */
+  .meter { height: 26px; border-radius: 13px; background: rgba(255,255,255,.07); overflow: hidden; margin-top: auto; }
+  .meter i { display: block; height: 100%; background: linear-gradient(90deg, #4fe3a0, #ffc84d); transform-origin: left; animation: drain 3.6s 1s cubic-bezier(.5,0,.5,1) both; }
+  @keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(.04); background: #ff5f6d; } }
+  .coins { display: flex; gap: 10px; font-family: var(--display); font-size: 64px; font-weight: 750; color: #ffc84d; }
+  .coins span { animation: coin 1.2s ease-in both; }
+  .coins span:nth-child(1) { animation-delay: 1.6s; } .coins span:nth-child(2) { animation-delay: 2.2s; } .coins span:nth-child(3) { animation-delay: 2.8s; } .coins span:nth-child(4) { animation-delay: 3.4s; }
+  @keyframes coin { from { transform: none; opacity: 1; } to { transform: translateY(160px) rotate(40deg); opacity: 0; } }
+  /* calendar */
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: auto; }
+  .cal i { height: 64px; border-radius: 12px; background: rgba(255,255,255,.06); border: 1px solid var(--line); position: relative; }
+  .cal i::after { content: ""; position: absolute; inset: 0; border-radius: 12px; background: rgba(143,123,255,.55); animation: fade .3s both; }
+  .cal i:nth-child(1)::after { animation-delay: 1.1s; } .cal i:nth-child(2)::after { animation-delay: 1.45s; } .cal i:nth-child(3)::after { animation-delay: 1.8s; } .cal i:nth-child(4)::after { animation-delay: 2.15s; }
+  .cal i:nth-child(5)::after { animation-delay: 2.5s; } .cal i:nth-child(6)::after { animation-delay: 2.85s; } .cal i:nth-child(7)::after { animation-delay: 3.2s; }
+  /* result */
+  .bars { display: flex; flex-direction: column; gap: 18px; margin-top: auto; }
+  .bar { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 14px; font-weight: 700; font-size: 24px; }
+  .bar i { height: 34px; border-radius: 9px; transform-origin: left; animation: grow 1.4s 2s var(--ease) both; }
+  .bar.a i { background: var(--a); width: 74%; } .bar.b i { background: var(--b); width: 71%; }
+  @keyframes grow { from { transform: scaleX(0); } }
+  .stamp { align-self: flex-start; font-family: var(--mono); font-weight: 700; font-size: 26px; letter-spacing: .1em; color: var(--warn); border: 3px solid var(--warn); border-radius: 10px; padding: 8px 16px;
+    transform: rotate(-4deg); animation: stamp .5s 3.5s var(--spring) both; }
+  @keyframes stamp { from { opacity: 0; transform: rotate(-4deg) scale(1.8); } to { opacity: 1; transform: rotate(-4deg); } }
+  .q { position: absolute; left: 0; right: 0; top: 330px; text-align: center; font-size: 112px; animation: up 1.1s var(--ease) both; animation-delay: calc(var(--qd, 5s) + .25s); }
+  .q em { font-style: normal; color: var(--accent-text); }
+  .rings { position: absolute; left: 50%; top: 500px; }
+  .rings i { position: absolute; width: 1400px; height: 1400px; border-radius: 50%; border: 2px solid rgba(143,123,255,.35); animation: ring 3.2s ease-out infinite both; }
+  .rings i:nth-child(2) { animation-delay: 1.07s; } .rings i:nth-child(3) { animation-delay: 2.13s; }
+  .rings { animation: fade .6s both; animation-delay: var(--qd, 5s); }
+</style></head>
+<body><div class="grain"></div>
+<div class="panel">
+  <div class="card step"><div class="n">01 · PAY</div><h3>Buy the ads</h3><p>Real budget, split between A and B.</p><div class="coins"><span>$</span><span>$</span><span>$</span><span>$</span></div><div class="meter"><i></i></div></div>
+  <div class="card step"><div class="n">02 · WAIT</div><h3>Wait a week</h3><p>Hope enough people see both versions.</p><div class="cal"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="card step"><div class="n">03 · HOPE</div><h3>Read the result</h3><p>If the two are too close, the money taught you nothing.</p><div class="bars"><div class="bar a"><span>A</span><i></i></div><div class="bar b"><span>B</span><i></i></div></div><div class="stamp">TOO CLOSE TO CALL</div></div>
+</div>
+<div class="rings"><i></i><i></i><i></i></div>
+<div class="q display">What if she could<br><em>rehearse the test first?</em></div>
+<script>
+  const dur = Number(new URLSearchParams(location.search).get('dur') || 9);
+  document.documentElement.style.setProperty('--qd', Math.max(3.8, dur - 3.3) + 's');
+</script>
+</body></html>

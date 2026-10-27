@@ -1,0 +1,26 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ripple thumbnail</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  .l { position: absolute; left: 110px; top: 0; bottom: 0; width: 1000px; display: flex; flex-direction: column; justify-content: center; gap: 34px; }
+  .logo { display: flex; align-items: center; gap: 22px; } .logo svg { width: 96px; height: 96px; } .logo b { font-family: var(--display); font-size: 92px; font-weight: 750; letter-spacing: -0.04em; }
+  h1 { font-size: 104px; } h1 em { font-style: normal; background: linear-gradient(90deg, #5b8cff, #8f7bff 50%, #ff9a4d); -webkit-background-clip: text; color: transparent; }
+  .chips { display: flex; gap: 14px; } .chips .chip { font-size: 26px; padding: 10px 20px; }
+  .r { position: absolute; right: 110px; top: 160px; display: flex; flex-direction: column; gap: 30px; width: 640px; }
+  .p { padding: 28px 30px; font-size: 27px; line-height: 1.38; position: relative; }
+  .p .chip { margin-bottom: 14px; font-size: 20px; font-weight: 600; }
+  .p.a { border-top: 5px solid var(--a); transform: rotate(-2deg); } .p.b { border-top: 5px solid var(--b); transform: rotate(1.5deg) translateX(-40px); }
+  .rings { position: absolute; right: 430px; top: 540px; } .rings i { position: absolute; border-radius: 50%; border: 2px solid rgba(143,123,255,.25); transform: translate(-50%,-50%); }
+</style></head>
+<body><div class="grain"></div>
+<div class="rings"><i style="width:700px;height:700px"></i><i style="width:1100px;height:1100px"></i><i style="width:1500px;height:1500px"></i></div>
+<div class="l">
+  <div class="logo"><svg viewBox="0 0 32 32"><path d="M16 3.5a12.5 12.5 0 0 0 0 25" fill="none" stroke="#5b8cff" stroke-width="3" stroke-linecap="round"/><path d="M16 3.5a12.5 12.5 0 0 1 0 25" fill="none" stroke="#ff9a4d" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="8" fill="none" stroke="#4fe3c1" stroke-width="1.8" opacity=".75"/><path d="M16 9.8c-1.2 2.2-4 5.2-4 7.6a4 4 0 0 0 8 0c0-2.4-2.8-5.4-4-7.6z" fill="#8f7bff"/></svg><b>Ripple</b></div>
+  <h1 class="display">Rehearse your A/B test <em>before you pay for it</em></h1>
+  <div class="chips"><span class="chip">twin worlds</span><span class="chip">4 Nemotron models</span><span class="chip">Census × Pew on Zetaris</span></div>
+</div>
+<div class="r">
+  <div class="card p a"><span class="chip a">Version A · product-first</span><div>New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now…</div></div>
+  <div class="card p b"><span class="chip b">Version B · story-first</span><div>Slow mornings, done right. Our new Oat Milk Honey Latte is sweetened with wildflower honey…</div></div>
+</div>
+</body></html>

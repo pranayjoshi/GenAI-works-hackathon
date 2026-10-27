@@ -1,0 +1,35 @@
+/* Shared look for the video's illustrated scenes: Ripple's night-lab tokens and type. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=block');
+:root {
+  --bg: #07080d; --panel: #12151f; --panel-2: #181c29; --line: rgba(255,255,255,.08); --line-2: rgba(255,255,255,.14);
+  --text: #eef0f7; --muted: #9196ab; --faint: #5d6278;
+  --accent: #8f7bff; --accent-text: #b9adff; --teal: #4fe3c1; --a: #5b8cff; --b: #ff9a4d; --good: #4fe3a0; --warn: #ffc84d; --bad: #ff5f6d;
+  --nv: #76b900;
+  --sans: "Instrument Sans", system-ui, sans-serif; --display: "Bricolage Grotesque", "Instrument Sans", sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; position: relative; }
+body::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(1300px 760px at 86% -12%, rgba(143,123,255,.20), transparent 60%),
+              radial-gradient(1000px 680px at -8% 112%, rgba(91,140,255,.15), transparent 60%); }
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: .05;
+  background-image: radial-gradient(rgba(255,255,255,.7) 1px, transparent 1px); background-size: 3px 3px; }
+.kicker { font-family: var(--mono); font-size: 22px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-text); }
+.display { font-family: var(--display); font-weight: 750; letter-spacing: -0.035em; line-height: 1.02; }
+.chip { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255,255,255,.04); font-size: 22px; }
+.chip.a { color: #a9c3ff; border-color: rgba(91,140,255,.5); background: rgba(91,140,255,.12); }
+.chip.b { color: #ffc49a; border-color: rgba(255,154,77,.5); background: rgba(255,154,77,.12); }
+.card { background: linear-gradient(180deg, rgba(24,28,41,.92), rgba(16,19,29,.92)); border: 1px solid var(--line-2); border-radius: 22px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 30px 80px rgba(0,0,0,.45); }
+
+/* entry helpers: fill-mode both so frame 0 shows the "from" state */
+@keyframes up { from { opacity: 0; transform: translateY(36px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
+@keyframes drift { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+@keyframes ring { from { transform: translate(-50%,-50%) scale(.2); opacity: .9; } to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+.in { animation: up .9s var(--ease) both; }
+.fade { animation: fade .8s ease both; }
+.pop { animation: pop .8s var(--spring) both; }

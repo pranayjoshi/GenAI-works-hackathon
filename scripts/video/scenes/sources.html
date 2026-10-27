@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Data sources</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  .title { position: absolute; left: 120px; top: 92px; display: flex; flex-direction: column; gap: 14px; animation: up .9s var(--ease) both; }
+  .title h2 { font-size: 64px; }
+  .src { position: absolute; left: 120px; width: 620px; padding: 22px 26px; display: grid; grid-template-columns: 58px 1fr; gap: 6px 18px; align-items: center; }
+  .src .ic { grid-row: span 2; width: 58px; height: 58px; border-radius: 16px; display: grid; place-items: center; font-family: var(--mono); font-weight: 700; font-size: 20px; }
+  .src b { font-size: 29px; letter-spacing: -0.01em; }
+  .src span { color: var(--muted); font-size: 21px; }
+  .src .lab { position: absolute; right: 22px; top: 22px; font-family: var(--mono); font-size: 16px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border-radius: 8px; font-style: normal; }
+  .real { color: var(--good); background: rgba(79,227,160,.12); } .model { color: var(--warn); background: rgba(255,200,77,.12); } .synth { color: #ff9aa4; background: rgba(255,95,109,.12); }
+  .s1 { top: 270px; animation: slide .8s .3s var(--ease) both; } .s2 { top: 420px; animation: slide .8s .55s var(--ease) both; }
+  .s3 { top: 570px; animation: slide .8s .8s var(--ease) both; } .s4 { top: 720px; animation: slide .8s 1.05s var(--ease) both; }
+  @keyframes slide { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
+  .s1 .ic { background: rgba(91,140,255,.18); color: #a9c3ff; } .s2 .ic { background: rgba(79,227,193,.16); color: var(--teal); }
+  .s3 .ic { background: rgba(255,200,77,.14); color: var(--warn); } .s4 .ic { background: rgba(255,154,77,.16); color: #ffc49a; }
+  .s5 { top: 900px; left: 120px; width: 620px; opacity: .8; animation: slide .8s 1.4s var(--ease) both; padding: 16px 22px; }
+  .s5 b { font-size: 23px; } .s5 span { font-size: 18px; } .s5 .ic { width: 46px; height: 46px; font-size: 16px; background: rgba(255,255,255,.06); color: var(--muted); }
+  svg.wires { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  .w { fill: none; stroke-width: 3; stroke-dasharray: 8 10; animation: flow 1s linear infinite; opacity: .75; }
+  @keyframes flow { to { stroke-dashoffset: -18; } }
+  .wires { animation: fade .8s 1.3s both; }
+  .hub { position: absolute; left: 920px; top: 430px; width: 360px; height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center;
+    border-color: rgba(143,123,255,.6); box-shadow: 0 0 60px rgba(143,123,255,.35), 0 30px 80px rgba(0,0,0,.45); animation: pop .8s 1.6s var(--spring) both; }
+  .hub .k { font-family: var(--mono); font-size: 18px; letter-spacing: .16em; color: var(--accent-text); }
+  .hub b { font-family: var(--display); font-size: 58px; font-weight: 750; letter-spacing: -0.03em; }
+  .hub span { color: var(--muted); font-size: 22px; }
+  .crowd { position: absolute; left: 1430px; top: 360px; width: 400px; height: 400px; animation: fade .8s 2.4s both; }
+  .crowd i { position: absolute; width: 16px; height: 16px; border-radius: 50%; animation: pop .5s var(--spring) both; }
+  .cap { position: absolute; left: 1380px; top: 790px; width: 500px; text-align: center; font-size: 23px; color: var(--muted); animation: up .8s 3s var(--ease) both; }
+  .cap b { color: var(--text); font-family: var(--mono); font-size: 21px; }
+</style></head>
+<body><div class="grain"></div>
+<div class="title"><div class="kicker">Where the crowd comes from</div><h2 class="display">Four sources, one federated query layer</h2></div>
+<svg class="wires" viewBox="0 0 1920 1080">
+  <path class="w" stroke="#5b8cff" d="M740 320 C 840 320, 840 520, 920 530"/>
+  <path class="w" stroke="#4fe3c1" d="M740 470 C 830 470, 840 545, 920 550"/>
+  <path class="w" stroke="#ffc84d" d="M740 620 C 830 620, 840 575, 920 580"/>
+  <path class="w" stroke="#ff9a4d" d="M740 770 C 840 770, 840 610, 920 600"/>
+  <path class="w" stroke="#8f7bff" d="M1280 560 C 1350 560, 1370 560, 1440 560" style="animation-duration:.7s"/>
+</svg>
+<div class="card src s1"><div class="ic">ACS</div><b>US Census ACS</b><span>age, income, education by ZIP, via Census Reporter</span><i class="lab real">public data</i></div>
+<div class="card src s2"><div class="ic">PEW</div><b>Pew Research Center</b><span>Instagram use by age · public fact sheet, CSV</span><i class="lab real">public data</i></div>
+<div class="card src s3"><div class="ic">PRI</div><b>Behaviour priors</b><span>how often people speak up, share, hide</span><i class="lab model">modeled · labelled</i></div>
+<div class="card src s4"><div class="ic">CRM</div><b>Customer list</b><span>the business's own customers, uploaded as CSV</span><i class="lab synth">synthetic demo</i></div>
+<div class="card src s5"><div class="ic">UP</div><b>Upworthy archive</b><span>real historical A/B tests, CC BY 4.0 · used for the backtest</span></div>
+<div class="card hub"><div class="k">FEDERATED SQL</div><b>Zetaris</b><span>Lightning REST API · every query gets an id</span></div>
+<div class="crowd" id="crowd"></div>
+<div class="cap">a crowd sampled from the rows<br><b>each person carries its query ids</b></div>
+<script>
+  // deterministic dot crowd (seeded), two shells like the app's sphere
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const box = document.getElementById('crowd'), cols = ['#5b8cff', '#8f7bff', '#4fe3c1', '#ff9a4d', '#b9adff'];
+  for (let i = 0; i < 90; i++) {
+    const a = rnd() * Math.PI * 2, r = (i < 50 ? 0.55 : 0.95) * Math.sqrt(rnd()) * 190;
+    const d = document.createElement('i');
+    d.style.left = (200 + Math.cos(a) * r - 8) + 'px'; d.style.top = (200 + Math.sin(a) * r - 8) + 'px';
+    d.style.background = cols[i % cols.length]; d.style.opacity = i < 50 ? 1 : .55;
+    d.style.animationDelay = (2.5 + i * 0.022).toFixed(3) + 's';
+    box.appendChild(d);
+  }
+</script>
+</body></html>

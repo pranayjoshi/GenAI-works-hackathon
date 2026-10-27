@@ -1,0 +1,7 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Placeholder</title>
+<link rel="stylesheet" href="base.css">
+<style>.c { position: absolute; inset: 0; display: grid; place-items: center; } .c div { font-family: var(--mono); font-size: 34px; color: var(--warn); border: 2px dashed var(--warn); padding: 30px 44px; border-radius: 18px; }</style>
+</head><body><div class="c"><div id="t"></div></div>
+<script>document.getElementById('t').textContent = new URLSearchParams(location.search).get('title') || 'placeholder';</script>
+</body></html>

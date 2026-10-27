@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Overlay</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* transparent page: screenshot with omitBackground gives a PNG with alpha */
+  html, body { background: transparent !important; } body::before { display: none; }
+  .lt { position: absolute; left: 44px; bottom: 40px; display: flex; align-items: stretch; border-radius: 18px; overflow: hidden;
+    background: rgba(10,12,19,.84); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 18px 50px rgba(0,0,0,.5); backdrop-filter: blur(10px); }
+  .lt .act { padding: 16px 22px; background: linear-gradient(135deg, #8f7bff, #6a52ff); font-family: var(--mono); font-weight: 700; font-size: 22px; letter-spacing: .06em; color: #fff; display: flex; align-items: center; }
+  .lt .t { padding: 14px 26px; font-family: var(--display); font-weight: 650; font-size: 32px; letter-spacing: -0.02em; display: flex; align-items: center; color: #eef0f7; }
+  .br { position: absolute; right: 44px; bottom: 40px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .row { display: flex; gap: 10px; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 12px; font-family: var(--mono); font-size: 19px; font-weight: 500; letter-spacing: .04em;
+    background: rgba(10,12,19,.84); border: 1px solid rgba(255,255,255,.16); color: #eef0f7; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  .pill i { width: 11px; height: 11px; border-radius: 50%; }
+  .live i { background: #ff5f6d; box-shadow: 0 0 10px #ff5f6d; } .saved i { background: #ffc84d; } .speed { color: #ffc84d; }
+  .badge { display: flex; align-items: center; gap: 16px; padding: 12px 20px 12px 14px; border-radius: 16px; background: rgba(10,12,19,.86); border: 1px solid rgba(118,185,0,.55); box-shadow: 0 14px 40px rgba(0,0,0,.5); }
+  .badge .nv { width: 46px; height: 46px; border-radius: 12px; background: #76b900; display: grid; place-items: center; color: #0a0c12; font-family: var(--mono); font-weight: 700; font-size: 15px; }
+  .badge b { display: block; font-size: 24px; font-weight: 650; letter-spacing: -0.01em; color: #eef0f7; }
+  .badge span { font-size: 18px; color: #9196ab; font-family: var(--mono); }
+  .badge.hmem { border-color: rgba(143,123,255,.6); } .badge.hmem .nv { background: #8f7bff; color: #fff; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+  const q = new URLSearchParams(location.search), o = JSON.parse(q.get('o') || '{}');
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  let html = '';
+  if (o.act) html += `<div class="lt"><div class="act">${esc(o.act)}</div>${o.title ? `<div class="t">${esc(o.title)}</div>` : ''}</div>`;
+  const pills = [];
+  if (o.live) pills.push(`<span class="pill live"><i></i>LIVE</span>`);
+  if (o.saved) pills.push(`<span class="pill saved"><i></i>SAVED RUN · ${esc(o.saved)}</span>`);
+  if (o.chip) pills.push(`<span class="pill speed">${esc(o.chip)}</span>`);
+  const badges = (o.badges || []).map((b) => `<div class="badge ${b.kind || ''}"><div class="nv">${b.kind === 'hmem' ? 'MEM' : 'NV'}</div><div><b>${esc(b.model)}</b><span>${esc(b.job)} · ${esc(b.route)}</span></div></div>`);
+  html += `<div class="br">${badges.join('')}${pills.length ? `<div class="row">${pills.join('')}</div>` : ''}</div>`;
+  document.getElementById('root').innerHTML = html;
+</script>
+</body></html>

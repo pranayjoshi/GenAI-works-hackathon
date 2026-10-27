@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Impact</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  .wrap { position: absolute; left: 160px; right: 160px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 34px; }
+  .kicker { animation: up .8s var(--ease) both; }
+  .ln { font-family: var(--display); font-weight: 750; font-size: 82px; letter-spacing: -0.035em; line-height: 1.05; display: flex; gap: 28px; align-items: baseline; animation: up 1s var(--ease) both; }
+  .ln i { font-style: normal; font-family: var(--mono); font-size: 28px; color: var(--accent-text); font-weight: 500; letter-spacing: 0; width: 60px; flex: none; }
+  .ln:nth-child(2) { animation-delay: .4s; } .ln:nth-child(3) { animation-delay: var(--d2, 2.4s); } .ln:nth-child(4) { animation-delay: var(--d3, 4.4s); }
+  .ln:nth-child(3) span { color: #ffc49a; } .ln:nth-child(4) span { color: var(--teal); }
+</style></head>
+<body><div class="grain"></div>
+<div class="wrap" id="wrap"><div class="kicker">What Ripple did for one café</div></div>
+<script>
+  const q = new URLSearchParams(location.search), dur = Number(q.get('dur') || 8);
+  const lines = (q.get('lines') || 'Line one|Line two|Line three').split('|');
+  const wrap = document.getElementById('wrap');
+  lines.forEach((t, i) => { const d = document.createElement('div'); d.className = 'ln'; d.innerHTML = `<i>0${i + 1}</i><span></span>`; d.querySelector('span').textContent = t; wrap.appendChild(d); });
+  document.documentElement.style.setProperty('--d2', (dur * 0.30).toFixed(2) + 's');
+  document.documentElement.style.setProperty('--d3', (dur * 0.58).toFixed(2) + 's');
+</script>
+</body></html>

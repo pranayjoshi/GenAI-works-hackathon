@@ -25,3 +25,6 @@ data/cache/census_all.csv
 # agent trace (see logs/README.md)
 logs/*
 !logs/README.md
+
+# demo video build outputs (scripts/video/ builds them)
+media/

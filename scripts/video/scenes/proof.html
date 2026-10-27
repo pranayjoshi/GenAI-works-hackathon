@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Proof: the trace</title>
+<link rel="stylesheet" href="base.css">
+<!-- TRACE_LINES and TRACE_CMD are the real output of the command, written by scripts/video/build.mjs -->
+<script src="../../../media/scenes/proof-data.js"></script>
+<style>
+  .top { position: absolute; left: 140px; right: 140px; top: 56px; display: flex; align-items: flex-end; justify-content: space-between; animation: up .8s var(--ease) both; }
+  .top h2 { font-size: 50px; } .top .kicker { margin-bottom: 10px; font-size: 19px; }
+  .legend { display: flex; gap: 12px; }
+  .legend .chip { font-size: 19px; padding: 6px 14px; white-space: nowrap; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .term { position: absolute; left: 140px; right: 140px; top: 186px; height: 768px; border-radius: 18px; overflow: hidden; background: #0a0c12; border: 1px solid var(--line-2);
+    box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03) inset; animation: up .9s .15s var(--ease) both; }
+  .bar { height: 46px; display: flex; align-items: center; gap: 9px; padding: 0 18px; background: #151823; border-bottom: 1px solid var(--line); }
+  .bar i { width: 14px; height: 14px; border-radius: 50%; } .bar i:nth-child(1) { background: #ff5f57; } .bar i:nth-child(2) { background: #febc2e; } .bar i:nth-child(3) { background: #28c840; }
+  .bar span { margin-left: 14px; color: var(--muted); font-family: var(--mono); font-size: 16px; }
+  .body { font-variant-ligatures: none; position: absolute; top: 46px; left: 0; right: 0; bottom: 0; padding: 18px 26px; font-family: var(--mono); font-size: 19px; line-height: 27px; overflow: hidden; }
+  .scroll { position: absolute; left: 26px; right: 26px; top: 18px; }
+  .cmd { color: #eef0f7; white-space: pre-wrap; word-break: break-all; margin-bottom: 8px; }
+  .cmd .ps { color: var(--teal); }
+  .ln { white-space: pre; display: flex; gap: 0; height: 27px; border-radius: 6px; }
+  .ln .ag { color: #eef0f7; width: 400px; flex: none; } .ln .act { width: 450px; flex: none; color: #c9cce0; }
+  .ok { color: var(--good); } .fb { color: var(--warn); } .rv { color: #ff8a95; }
+  .lt { color: #9be15d; } .ul { color: #c4b5ff; } .su { color: #8fb3ff; } .no { color: var(--faint); }
+  .ln.hl { background: rgba(255,95,109,.13); box-shadow: inset 3px 0 0 #ff5f6d; }
+  .ln.ns { background: rgba(118,185,0,.06); }
+  .cursor { display: inline-block; width: 11px; height: 22px; background: var(--teal); vertical-align: -4px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .callout { position: absolute; right: 180px; top: 300px; width: 470px; padding: 22px 26px; border-color: rgba(255,95,109,.55); opacity: 0; }
+  .callout b { display: block; font-size: 27px; margin-bottom: 8px; } .callout span { color: var(--muted); font-size: 21px; line-height: 1.4; }
+</style></head>
+<body><div class="grain"></div>
+<div class="top">
+  <div><div class="kicker">a live run · unedited trace</div><h2 class="display">Every agent, every hand-off, every model</h2></div>
+  <div class="legend"><span class="chip"><i class="dot" style="background:#9be15d"></i>Lightning · Nightshift</span><span class="chip"><i class="dot" style="background:#c4b5ff"></i>Ultra · Nightshift</span><span class="chip"><i class="dot" style="background:#8fb3ff"></i>Super · NVIDIA</span></div>
+</div>
+<div class="term"><div class="bar"><i></i><i></i><i></i><span>zsh — GenAI-works-hackathon</span></div>
+  <div class="body"><div class="scroll" id="scroll"><div class="cmd" id="cmd"></div><div id="lines"></div></div></div>
+</div>
+<div class="card callout" id="callout"><b>The critic sends it back</b><span>Code checks fail on the draft, Nemotron Ultra reviews it, and ReportCritic asks ReportWriter for a revision.</span></div>
+<script>
+  const dur = Number(new URLSearchParams(location.search).get('dur') || 16) * 1000;
+  const L = window.TRACE_LINES || [], CMD = window.TRACE_CMD || '';
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const cls = (st) => /success/.test(st) ? 'ok' : /revision/.test(st) ? 'rv' : /fallback/.test(st) ? 'fb' : '';
+  const model = (m) => /lightning/.test(m) ? 'lt' : /ultra/.test(m) ? 'ul' : /super/.test(m) ? 'su' : 'no';
+  const rows = L.map((l) => {
+    const [a, act, m] = l.split(' | ');
+    const parts = (act || '').trim().split(' '), st = parts.pop();
+    const crit = /ReportCritic|ReportWriter/.test(a);
+    return `<div class="ln${crit && /revision/.test(l) ? ' hl' : ''}"><span class="ag">${esc(a.trim())}</span><span class="act"><span class="no">| </span>${esc(parts.join(' '))} <span class="${cls(st)}">${esc(st)}</span></span><span class="no">|&nbsp;</span><span class="${model(m || '')}">${esc((m || '').trim() || '·')}</span></div>`;
+  });
+  const cmdEl = document.getElementById('cmd'), linesEl = document.getElementById('lines'), scroller = document.getElementById('scroll'), callout = document.getElementById('callout');
+  const T_TYPE0 = 600, T_TYPE1 = 2400, T_OUT0 = 2700, T_OUT1 = Math.min(dur - 4200, 2700 + L.length * 120);
+  const VIEW = 27 * 27;  // visible px for lines below the command
+  let lastN = -1, lastC = -1;
+  window.seek = (t) => {
+    const c = Math.max(0, Math.min(CMD.length, Math.round((t - T_TYPE0) / (T_TYPE1 - T_TYPE0) * CMD.length)));
+    if (c !== lastC) { cmdEl.innerHTML = `<span class="ps">~/GenAI-works-hackathon %</span> ${esc(CMD.slice(0, c))}${t < T_OUT0 ? '<span class="cursor"></span>' : ''}`; lastC = c; }
+    const n = t < T_OUT0 ? 0 : Math.min(L.length, Math.floor((t - T_OUT0) / (T_OUT1 - T_OUT0) * L.length) + 1);
+    if (n !== lastN) { linesEl.innerHTML = rows.slice(0, n).join(''); lastN = n; }
+    const h = cmdEl.offsetHeight + 8 + n * 27, view = 768 - 46 - 36;
+    scroller.style.transform = `translateY(${-Math.max(0, h - view)}px)`;
+    const k = Math.max(0, Math.min(1, (t - T_OUT1 - 300) / 600));
+    callout.style.opacity = k; callout.style.transform = `translateY(${(1 - k) * 24}px)`;
+  };
+  seek(0);
+</script>
+</body></html>
