@@ -1,1995 +1,1997 @@
 {
- "partial": false,
- "started": "2026-10-27T04:59:44.210Z",
- "finished": "2026-10-27T07:33:46.148Z",
- "config": {
-  "slice": "scored",
-  "n_tests": 50,
-  "crowd_size": 40,
-  "rounds": 4,
-  "seeds": [
-   1
+  "partial": false,
+  "started": "2026-10-27T04:59:44.210Z",
+  "finished": "2026-10-27T07:33:46.148Z",
+  "config": {
+    "slice": "scored",
+    "n_tests": 50,
+    "crowd_size": 40,
+    "rounds": 4,
+    "seeds": [
+      1
+    ],
+    "platform": "facebook",
+    "baselines_only": false,
+    "headline_only": true,
+    "models": {
+      "crowd_hosted": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "reason_hosted": "nvidia/nemotron-3-super-120b-a12b",
+      "crowd_local": "nemotron-3-nano:4b",
+      "reason_local": "nemotron-3-nano:4b"
+    }
+  },
+  "selection": {
+    "query_ids": [
+      "q_3fac3a94_1"
+    ],
+    "excluded_window": {
+      "from": "2013-06-25",
+      "to": "2014-01-10",
+      "reason": "archive randomization caveat (no `problem` column in the exploratory file)"
+    },
+    "filters": {
+      "min_impressions": 1000,
+      "min_rel_gap": 0.3,
+      "min_z": 2.58,
+      "same_eyecatcher_and_lede": true,
+      "headline_must_differ": true,
+      "one_pair_per_test": "group with most total impressions",
+      "order": "md5(clickability_test_id)",
+      "dev_n": 20
+    },
+    "qualifying": 982,
+    "dev_n": 20
+  },
+  "scores": {
+    "crowd": {
+      "correct": 22.5,
+      "n": 50,
+      "rate": 0.45,
+      "ci": [
+        0.32063195143496265,
+        0.5865030519824692
+      ]
+    },
+    "single_reason": {
+      "correct": 24,
+      "n": 50,
+      "rate": 0.48,
+      "ci": [
+        0.347969123955057,
+        0.6148848774119157
+      ]
+    },
+    "single_crowd": {
+      "correct": 25,
+      "n": 50,
+      "rate": 0.5,
+      "ci": [
+        0.36644286412332855,
+        0.6335571358766715
+      ]
+    },
+    "coin": {
+      "rate": 0.5
+    }
+  },
+  "mcnemar": {
+    "crowd_vs_single_reason": {
+      "b": 10,
+      "c": 12,
+      "p": 0.8318119049072266,
+      "excluded_ties": 3
+    },
+    "crowd_vs_single_crowd": {
+      "b": 10,
+      "c": 12,
+      "p": 0.8318119049072266,
+      "excluded_ties": 3
+    }
+  },
+  "tests": [
+    {
+      "test_id": "547e21c46161330012150000",
+      "created_at": "2014-12-02 20:38:57",
+      "a": {
+        "headline": "A Cop Stops A Black Man For Walking With His Hands In His Pockets. Reasonableness Happens Next.",
+        "ctr": 0.04548387096774194,
+        "impressions": 3100
+      },
+      "b": {
+        "headline": "A Cop Stops A Black Man For Walking With His Hands In His Pockets. Seriously.",
+        "ctr": 0.021255396878113585,
+        "impressions": 3011
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-01-150000",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more concise and impactful, using a period to create a stronger, punchier statement that is more likely to generate curiosity and clicks in a general US audience on Facebook.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more concise and less likely to trigger negative emotions or controversy, making it more likely to be read and clicked by a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3611,
+        "b_tap": 0.4167,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 13,
+        "b_taps": 15,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "5409d307c994ef07b9000092",
+      "created_at": "2014-09-05 15:13:11",
+      "a": {
+        "headline": "This Famous Women *Knows* About Bullies. But She Cares About Those Hurt By Them More.",
+        "ctr": 0.007588075880758808,
+        "impressions": 5535
+      },
+      "b": {
+        "headline": "They Tried To Humilate America's Sweetheart, But She's Been Gunning For Them All Along",
+        "ctr": 0.018281535648994516,
+        "impressions": 5470
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-02-000092",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses stronger, more provocative language with a clear conflict and emotional appeal, which typically drives higher engagement on social media platforms like Facebook.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses stronger, more emotionally charged language ('Humilate', 'Gunning For') and a more dramatic narrative structure, which tends to generate higher engagement and curiosity in a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4595,
+        "b_tap": 0.3514,
+        "a_n": 37,
+        "b_n": 37,
+        "a_taps": 17,
+        "b_taps": 13,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "515db1c9683d3f000200112c",
+      "created_at": "2013-04-04 17:17:27",
+      "a": {
+        "headline": "Why Voldemort's Mom Could Have Been The Hero Of The Harry Potter Books",
+        "ctr": 0.028532608695652172,
+        "impressions": 2944
+      },
+      "b": {
+        "headline": "One Of The Wrongest Harry Potter Related Anti-Abortion Signs You'll Ever See",
+        "ctr": 0.04131102765448959,
+        "impressions": 2929
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-03-00112c",
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses stronger emotional triggers like 'wrongest' and 'anti-abortion', which are more likely to provoke curiosity and outrage in a general US audience, leading to higher click-through rates on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses stronger emotional language ('Wrongest') and addresses a current social issue (anti-abortion signs), which typically generates higher engagement on social media compared to a speculative or fictional question like A.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3636,
+        "b_tap": 0.1515,
+        "a_n": 33,
+        "b_n": 33,
+        "a_taps": 12,
+        "b_taps": 5,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "54d43b8f39326600199d0000",
+      "created_at": "2015-02-06 03:57:54",
+      "a": {
+        "headline": "Ball Players Are Checking, Well, Their B***S On Tv To Help Men Out",
+        "ctr": 0.005389514943655071,
+        "impressions": 2041
+      },
+      "b": {
+        "headline": "A Football Team Is Taking Their Towels Off To Show Men How To Check For Cancer",
+        "ctr": 0.021696252465483234,
+        "impressions": 2028
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-04-9d0000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses shock humor and a crude reference to a sensitive topic, which is more likely to generate attention and clicks on Facebook among a general US audience due to its provocative nature. Headline B is less likely to provoke a reaction and may be perceived as odd or irrelevant.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses shock humor and crude language that is more likely to provoke attention and clicks among a general US audience, while B is more serious and less likely to generate the same level of engagement.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4,
+        "b_tap": 0.4,
+        "a_n": 40,
+        "b_n": 40,
+        "a_taps": 16,
+        "b_taps": 16,
+        "pick": "tie",
+        "correct": 0.5
+      }
+    },
+    {
+      "test_id": "54f9c72e613164000c790000",
+      "created_at": "2015-03-06 15:38:14",
+      "a": {
+        "headline": "At first 2 only kids wanted to go under the bridge. But then 140 showed up and I was floored.",
+        "ctr": 0.013595166163141994,
+        "impressions": 1986
+      },
+      "b": {
+        "headline": "When it was just 2 children, I was happy. But then he said 140 — wowsers.",
+        "ctr": 0.0039081582804103565,
+        "impressions": 2047
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-05-790000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a more vivid and unexpected contrast ('2 only kids... but then 140 showed up') which creates stronger curiosity and emotional engagement, likely leading to higher click-through rates on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a more vivid and unexpected contrast ('2 only kids... but then 140 showed up') which creates stronger curiosity and emotional engagement, likely driving more clicks in a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4324,
+        "b_tap": 0.2162,
+        "a_n": 37,
+        "b_n": 37,
+        "a_taps": 16,
+        "b_taps": 8,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "5449e79738e5ae996c000015",
+      "created_at": "2014-10-24 05:46:06",
+      "a": {
+        "headline": "So Mr. Captain Fancyman High School Dropout Doesn't Even Need To Try?!",
+        "ctr": 0.006367109332363107,
+        "impressions": 5497
+      },
+      "b": {
+        "headline": "Face-palm Levels Of Wow When You See That Rich Kids Don't Even Need To Try",
+        "ctr": 0.016457826818776885,
+        "impressions": 5347
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-06-000015",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a more surprising and unexpected phrasing that creates curiosity and a sense of disbelief, which tends to generate higher engagement. Headline B is more generic and less provocative, lacking the same level of intrigue.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a more unexpected and slightly absurd scenario that may generate curiosity and humor, which often drives higher engagement on social media. Headline B is more vague and potentially less impactful.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4474,
+        "b_tap": 0.3158,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 17,
+        "b_taps": 12,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "51c258575245fa4328001869",
+      "created_at": "2013-06-20 01:19:29",
+      "a": {
+        "headline": "HIV Vs. Cancer — One Will SAVE This Girl’s Life",
+        "ctr": 0.006386066763425254,
+        "impressions": 3445
+      },
+      "b": {
+        "headline": "Doctors Take A Long Shot And Inject HIV Into Dying Girl. The Reason Why Might Amaze You.",
+        "ctr": 0.0332466030644695,
+        "impressions": 3459
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-07-001869",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a positive, emotionally compelling narrative about saving a life, which is more likely to generate clicks from a general US audience on Facebook. Headline B is sensational and potentially misleading, which may reduce trust and clicks despite its shock value.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a positive, emotionally compelling phrase 'SAVE This Girl’s Life' which is more likely to generate curiosity and clicks from a general US audience on Facebook, while B's wording is more sensational and potentially off-putting.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4474,
+        "b_tap": 0.3158,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 17,
+        "b_taps": 12,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "552c6c82393664001c1f0000",
+      "created_at": "2015-04-14 01:32:06",
+      "a": {
+        "headline": "When Dave was 22, his dad came out to him. Here's how that story helped others tell their own.",
+        "ctr": 0.012291052114060964,
+        "impressions": 2034
+      },
+      "b": {
+        "headline": "Every family has a story. And these unique, everyday, beautiful stories can now be told with an app.",
+        "ctr": 0.0015082956259426848,
+        "impressions": 1989
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-08-1f0000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A is more specific and emotionally engaging, focusing on a personal anecdote that sparks curiosity and relatability, which typically drives higher click-through rates on Facebook compared to the more generic and vague appeal of Headline B.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A is more specific, emotionally resonant, and story-driven, which tends to perform better in A/B tests for general audiences on Facebook. Headline B is vague and generic, lacking a clear hook or emotional trigger.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3333,
+        "b_tap": 0.5385,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 13,
+        "b_taps": 21,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "5457995ace7a2906a000001d",
+      "created_at": "2014-11-03 15:17:41",
+      "a": {
+        "headline": "For The Sake Of Everyone's Dignity, A Fake Obnoxious Child Star Spits Out Some Terrible Pastry",
+        "ctr": 0.006255864873318737,
+        "impressions": 3197
+      },
+      "b": {
+        "headline": "Watch A Child Star Condescend A Woman Who's Trying To Help In The Most Obnoxious Way Possible",
+        "ctr": 0.019956345494231368,
+        "impressions": 3207
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-09-00001d",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses more emotionally charged language ('Condescend', 'Obnoxious') and creates a stronger narrative conflict, which typically drives higher engagement on social media.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses more emotionally charged and sensational language ('condescend', 'obnoxious') which tends to generate higher curiosity and clicks in general US audiences on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2632,
+        "b_tap": 0.2895,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 10,
+        "b_taps": 11,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "53e8c7571fdb204023000028",
+      "created_at": "2014-08-11 13:43:06",
+      "a": {
+        "headline": "Screw The Predatory Lending Guy, I Want To Know Who This Lady Is That Just Shut Him All The Way Down",
+        "ctr": 0.021696252465483234,
+        "impressions": 3042
+      },
+      "b": {
+        "headline": "Have You Heard About The 100% Legal Way To Become A Loan Shark In America?",
+        "ctr": 0.00943089430894309,
+        "impressions": 3075
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-10-000028",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A is more emotionally charged and sensational, using strong language like 'Screw The Predatory Lending Guy' and 'Shut Him All The Way Down', which is likely to generate higher curiosity and clicks from a general US audience on Facebook. Headline B is more factual and less engaging, focusing on a '100% Legal Way To Become A Loan Shark', which may not provoke the same level of interest or C",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A is more sensational, emotionally charged, and uses a dramatic phrase like 'Screw The Predatory Lending Guy' which is likely to generate curiosity and clicks from a general US audience on Facebook, whereas B is more factual and less engaging.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4722,
+        "b_tap": 0.2222,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 17,
+        "b_taps": 8,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "53a1af910a0cb881b500003f",
+      "created_at": "2014-06-18 17:41:24",
+      "a": {
+        "headline": "A Teacher In Hong Kong Reads His Class A Suicide Note From Holland. It Hit Close To Home For Her.",
+        "ctr": 0.021215043394406944,
+        "impressions": 3111
+      },
+      "b": {
+        "headline": "A Teacher Read His Class A Suicide Note From Far Away. One Of His Students Heard More Than Others.",
+        "ctr": 0.037705446342249434,
+        "impressions": 3103
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-11-00003f",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses more emotionally charged and specific language ('Hong Kong', 'Suicide Note', 'Hit Close To Home') which tends to generate stronger curiosity and empathy, leading to higher click-through rates in general US audiences on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses more emotionally charged and specific language ('Hong Kong', 'Suicide Note', 'Hit Close To Home') which tends to generate stronger curiosity and empathy, likely increasing click-through rates among a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2632,
+        "b_tap": 0.3684,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 10,
+        "b_taps": 14,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "536173ab29b7aff8d800002e",
+      "created_at": "2014-04-30 22:18:07",
+      "a": {
+        "headline": "They Calling It 'Reweaving', But The Plan Is Basically Just To Let Kids Be Incredible",
+        "ctr": 0.010982306284319707,
+        "impressions": 3278
+      },
+      "b": {
+        "headline": "One Organization's Plan To Reweave The World Around In Quite An Interesting Way",
+        "ctr": 0.003274784161952962,
+        "impressions": 3359
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-12-00002e",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses more emotionally engaging language ('Incredible') and a more intriguing, slightly absurd phrasing that sparks curiosity, which tends to perform better in click-through rates for a general US audience on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses more emotionally evocative language ('Incredible') and a more relatable, conversational tone ('They Calling It') that likely resonates better with a general US audience on Facebook, while B is more abstract and less engaging.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2973,
+        "b_tap": 0.3514,
+        "a_n": 37,
+        "b_n": 37,
+        "a_taps": 11,
+        "b_taps": 13,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "51b9fdd3bbb4a25e900008f7",
+      "created_at": "2013-06-13 17:15:52",
+      "a": {
+        "headline": "Move Over, Mean Girls. Today's Tweens And Teens Want To Help. (And That's Pretty Fetch.)",
+        "ctr": 0.008679333802486512,
+        "impressions": 4263
+      },
+      "b": {
+        "headline": "Want To Know How Adolescent Girls Are The Most Powerful Catalyst For Change On Earth? Watch This.",
+        "ctr": 0.01751109035722624,
+        "impressions": 4283
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-13-0008f7",
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses curiosity-driven language and a strong promise of impact, which tends to perform better with a general US audience on Facebook. It also includes a clickbait element ('Watch This') that increases engagement. Headline A is more niche and less likely to resonate broadly.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses curiosity-driven language and a strong promise of impact, which typically performs better in click-through rates for a general US audience on Facebook. It also avoids niche references like 'tweens' and 'mean girls' that may limit relatability.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4103,
+        "b_tap": 0.3846,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 16,
+        "b_taps": 15,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "542c55a534120f16c0000061",
+      "created_at": "2014-10-01 20:15:41",
+      "a": {
+        "headline": "1 Shocking Photo Is Evidence That It May Be Too Late To Save The World From Catastrophe",
+        "ctr": 0.007899507899507899,
+        "impressions": 7722
+      },
+      "b": {
+        "headline": "You See All 35,000 Of Them Just Lying There, And It's Impossible To Ignore Anymore",
+        "ctr": 0.004071447333858682,
+        "impressions": 7614
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-14-000061",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses a vivid, specific number (35,000) and a strong visual metaphor ('lying there') that creates immediate curiosity and urgency, which typically drives higher click-through rates on social media compared to the more abstract and dramatic phrasing of A.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses a more direct, emotionally charged, and visually suggestive phrase ('You See All 35,000 Of Them Just Lying There') that creates immediate curiosity and a sense of urgency, which tends to perform better in click-through rates on social media platforms like Facebook. Headline A is more abstract and less specific, which may not resonate as strongly with a general audience.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.325,
+        "b_tap": 0.45,
+        "a_n": 40,
+        "b_n": 40,
+        "a_taps": 13,
+        "b_taps": 18,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "51707d7711362200020065a4",
+      "created_at": "2013-04-18 23:12:09",
+      "a": {
+        "headline": "And Now For Something That Will Make You Exuberant And Happy After A Horrible Week Of Tragedy",
+        "ctr": 0.022719204827831026,
+        "impressions": 2817
+      },
+      "b": {
+        "headline": "A Whole Country Decided To Legalize Gay Marriage. In Response, They Got What They Deserved.",
+        "ctr": 0.036213696665471494,
+        "impressions": 2789
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-15-0065a4",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses positive, emotionally charged language ('Exuberant', 'Happy') that aligns with general US audience preferences for uplifting, feel-good content, while B contains negative, polarizing language ('What They Deserved') that may deter clicks due to potential controversy or negativity.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses positive, emotionally charged language ('Exuberant', 'Happy', 'Horrible Week of Tragedy') that evokes strong reactions and curiosity, likely driving higher engagement. Headline B contains negative, divisive phrasing ('What They Deserved') that may provoke backlash or reduce shares, especially on a general US audience.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4118,
+        "b_tap": 0.1765,
+        "a_n": 34,
+        "b_n": 34,
+        "a_taps": 14,
+        "b_taps": 6,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "539887f973acb6f3d2000054",
+      "created_at": "2014-06-11 16:48:51",
+      "a": {
+        "headline": "A Comedian Saw The Largest Diamond In The World And Got Furious. Historically Furious.",
+        "ctr": 0.017432321575061527,
+        "impressions": 4876
+      },
+      "b": {
+        "headline": "His Hilarious Rant About Diamonds And Colonialism Is Totally NSFHC (Not Safe For History Class)",
+        "ctr": 0.005923202614379085,
+        "impressions": 4896
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-16-000054",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses more provocative language ('Totally NSFHC') and references colonialism, which is more likely to generate curiosity and clicks among a general US audience on Facebook, while A is more subdued and less likely to stand out.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses stronger, more provocative language ('Totally NSFHC') that triggers curiosity and controversy, likely increasing clicks among a general US audience on Facebook, while A is more subdued and less engaging.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2703,
+        "b_tap": 0.5135,
+        "a_n": 37,
+        "b_n": 37,
+        "a_taps": 10,
+        "b_taps": 19,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "54066a1cb650ed1828000073",
+      "created_at": "2014-09-03 01:17:33",
+      "a": {
+        "headline": "Think Climate Change Can't Be Stopped? Well, With That Attitude, You're Probably Right.",
+        "ctr": 0.0007055171440666008,
+        "impressions": 7087
+      },
+      "b": {
+        "headline": "This May Be The Most Important Battle Of Our Time. So Why Haven't We Taken To The Streets?",
+        "ctr": 0.0026403557531962203,
+        "impressions": 7196
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-17-000073",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a provocative, emotionally charged question that invites engagement and curiosity, which tends to perform better in click-through rates for a general US audience on Facebook. Headline B is more abstract and less directly relatable, making it less likely to drive clicks.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a provocative, emotionally charged question that invites engagement and curiosity, which typically drives higher click-through rates on social media platforms like Facebook. Headline B is more vague and less specific, lacking a clear hook that would resonate strongly with a general audience.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2368,
+        "b_tap": 0.3947,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 9,
+        "b_taps": 15,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "54b2a7fc32653500151a0000",
+      "created_at": "2015-01-11 16:49:55",
+      "a": {
+        "headline": "Meet The 17-Year-Old Whizz Who Thinks Failing Is Awesome. I'm Pretty Sure You'll Agree.",
+        "ctr": 0.005637773079633545,
+        "impressions": 2838
+      },
+      "b": {
+        "headline": "At 17 He Goes To School, Gets Picked Up By His Mom - Oh And Saves Lives (Maybe Even Yours)",
+        "ctr": 0.01327116212338594,
+        "impressions": 2788
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-18-1a0000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses sensational language like 'Whizz' and 'Failing Is Awesome' which triggers curiosity and emotional reaction, likely increasing clicks among a general US audience on Facebook. Headline B is more factual and less engaging.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses sensational language like 'Whizz', 'Failing Is Awesome', and 'You'll Agree' which triggers curiosity and emotional reaction, common in clickbait strategies. Headline B is more factual and less likely to provoke immediate emotional engagement.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2703,
+        "b_tap": 0.5676,
+        "a_n": 37,
+        "b_n": 37,
+        "a_taps": 10,
+        "b_taps": 21,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "5400adb3f27b21d27d000052",
+      "created_at": "2014-08-29 16:50:04",
+      "a": {
+        "headline": "Why This Boat Is So Important To A Whole Community — No, They're Not Pirates",
+        "ctr": 0.0007801833430856252,
+        "impressions": 5127
+      },
+      "b": {
+        "headline": "One Of The Most Inspiring Things I've Ever Seen Happen To A Place That Some Won't Even Visit",
+        "ctr": 0.007138607971445568,
+        "impressions": 5043
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-19-000052",
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a familiar cultural reference (pirates) and a clear, intriguing question that sparks curiosity, making it more likely to engage a general US audience on Facebook. Headline B is more abstract and emotionally charged but less immediately relatable or shareable.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a clear, curiosity-driven question format that sparks immediate engagement and is more relatable to a broad US audience, while B is vague and less specific about the event or location, reducing its appeal.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3611,
+        "b_tap": 0.4167,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 13,
+        "b_taps": 15,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "53bef3e2f8df064c3e00004a",
+      "created_at": "2014-07-10 20:14:19",
+      "a": {
+        "headline": "What Would Abraham Lincoln Think Of Labor Unions?",
+        "ctr": 0.0031267765776009098,
+        "impressions": 3518
+      },
+      "b": {
+        "headline": "One Quote From Abraham Lincoln Might Just Surprise You, But It’s Real",
+        "ctr": 0.010679323642835954,
+        "impressions": 3371
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-20-00004a",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B includes a promise of surprise and emphasizes that the quote is real, which creates curiosity and a sense of authenticity. Headline A is more abstract and may not immediately engage a general audience as effectively on Facebook.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B is more emotionally engaging and curiosity-driven, using 'Surprise You' and 'Real' to create intrigue, which typically performs better in click-through rates for general audiences on social media.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4474,
+        "b_tap": 0.4211,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 17,
+        "b_taps": 16,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "541ef87088aa4b688f000062",
+      "created_at": "2014-09-21 16:10:24",
+      "a": {
+        "headline": "Looks Like They Finally Figured Out It's Too Hard To Watch Those Tear-jerker Pet Videos",
+        "ctr": 0.003543406732472792,
+        "impressions": 3951
+      },
+      "b": {
+        "headline": "There's 1 Crucial Thing You Need To Know To Be A *True* Cat Or Dog Person",
+        "ctr": 0.008893280632411068,
+        "impressions": 4048
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-21-000062",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses curiosity and relatability around pet videos, which are widely popular on Facebook, while B is more niche and uses a potentially polarizing term 'True' that may alienate some audiences.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses curiosity and relatability around pet videos, which are highly engaging on Facebook, while B is more niche and uses a loaded term 'True' that may alienate some users.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3947,
+        "b_tap": 0.4737,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 15,
+        "b_taps": 18,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "54538df05bc2317d29000042",
+      "created_at": "2014-10-31 13:54:07",
+      "a": {
+        "headline": "A Bunch Of Baby Sea Turtles Are About To Steal Your Heart. Guaranteed.",
+        "ctr": 0.017579617834394906,
+        "impressions": 3925
+      },
+      "b": {
+        "headline": "10 Tagged Baby Turtles Might Help Save The Future Of Their Species. But They Need Your Help, Too.",
+        "ctr": 0.0036363636363636364,
+        "impressions": 3850
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-22-000042",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses a more urgent, cause-related framing with a call to action ('But They Need Your Help, Too'), which typically drives higher engagement on social media by creating a sense of responsibility and immediacy, whereas A is more sensational and less actionable.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses a more urgent and impactful call to action, appealing to both curiosity and responsibility, which typically drives higher engagement in general audiences.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3333,
+        "b_tap": 0.4167,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 12,
+        "b_taps": 15,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "5429f4d95f7828ebff00007c",
+      "created_at": "2014-09-30 00:10:02",
+      "a": {
+        "headline": "Should More Teachers Be Like This? God, No. But Still, It's Pretty Cool.",
+        "ctr": 0.008897876643073812,
+        "impressions": 4945
+      },
+      "b": {
+        "headline": "Some Very Strange Teachers Are Behind This Bizarro Project. I Hope It Works.",
+        "ctr": 0.004493065051767923,
+        "impressions": 5119
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-23-00007c",
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a relatable, slightly humorous tone with a clear question and a strong emotional hook ('God, No') that resonates with a general US audience, making it more likely to generate clicks on Facebook.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a relatable, slightly humorous tone with a clear question and a strong emotional hook ('God, No') that resonates with a general US audience, making it more likely to generate clicks on Facebook. Headline B is more sensational and vague, which may not appeal as effectively to a broad audience.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4737,
+        "b_tap": 0.4474,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 18,
+        "b_taps": 17,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "53990fb7d5d900b82500002d",
+      "created_at": "2014-06-12 02:26:11",
+      "a": {
+        "headline": "They're Calling This \"Invisible Scars.\" Sounds Accurate.",
+        "ctr": 0.012847588877155931,
+        "impressions": 5682
+      },
+      "b": {
+        "headline": "When The Worst Stuff Happens, Sometimes It Feels Like It Will Never End",
+        "ctr": 0.006205826581623858,
+        "impressions": 5801
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-24-00002d",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses stronger emotional language and a sense of urgency, which typically drives higher engagement on social media platforms like Facebook.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses more emotionally charged language ('worst stuff', 'never end') which typically drives higher engagement on social media, while A is more descriptive and less urgent.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.5429,
+        "b_tap": 0.4857,
+        "a_n": 35,
+        "b_n": 35,
+        "a_taps": 19,
+        "b_taps": 17,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "546f4e0387942a3efd000029",
+      "created_at": "2014-11-21 14:36:51",
+      "a": {
+        "headline": "Kim Jong Un Would Really Hate For You To Watch This Which Is Exactly Why You Should",
+        "ctr": 0.04291163382072473,
+        "impressions": 3146
+      },
+      "b": {
+        "headline": "This Dictator Would Really Hate For You To Watch This Which Is Exactly Why You Should",
+        "ctr": 0.028495692511597084,
+        "impressions": 3018
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-25-000029",
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "The use of 'Kim Jong Un' is more specific and likely to generate curiosity and relevance for a general US audience, while 'This Dictator' is vague and less engaging.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "The headline A is more specific and personal, mentioning Kim Jong Un, which creates a stronger emotional hook and curiosity for a general US audience, likely resulting in higher click-through rates compared to the generic version B.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4722,
+        "b_tap": 0.4444,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 17,
+        "b_taps": 16,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "53c8124e4273de1af700005d",
+      "created_at": "2014-07-17 19:14:14",
+      "a": {
+        "headline": "She Got All The Fame For Her Amazing Journey, But She Wants You To Know She Didn't Do It Alone",
+        "ctr": 0.0030615084887280824,
+        "impressions": 3593
+      },
+      "b": {
+        "headline": "You May Already Know About Her Epic Swim From Cuba To Florida, But Do You Know What Happened After?",
+        "ctr": 0.010869565217391304,
+        "impressions": 3588
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-26-00005d",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses curiosity gap and a more intriguing question, which typically drives higher click-through rates on social media by prompting engagement. Headline A is more self-focused and less likely to spark immediate interest.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses emotional language like 'amazing journey' and 'didn't do it alone', which creates a sense of admiration and personal connection, likely appealing to a general US audience on Facebook. Headline B is more factual and less emotionally engaging, making it less likely to drive clicks.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.6316,
+        "b_tap": 0.5263,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 24,
+        "b_taps": 20,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "53bff270f8df0616600000ac",
+      "created_at": "2014-07-11 14:38:21",
+      "a": {
+        "headline": "Watch How Their Gay Rights Volunteers Make Other Volunteers Wish They Were These Volunteers",
+        "ctr": 0.01639344262295082,
+        "impressions": 3477
+      },
+      "b": {
+        "headline": "Why Does It Take A Million People To Show That There’s No Fight In L.O.V.E.?",
+        "ctr": 0.006438396254023998,
+        "impressions": 3417
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-27-0000ac",
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a relatable, emotional contrast ('Wish They Were These Volunteers') that sparks curiosity and empathy, making it more engaging for a general US audience on Facebook. Headline B is more abstract and less immediately compelling.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a relatable, emotional narrative about personal transformation and social issues, which tends to generate higher engagement on Facebook. Headline B is more abstract and less immediately compelling, making it less likely to drive clicks.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3846,
+        "b_tap": 0.5385,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 15,
+        "b_taps": 21,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "53ea19e7bf31227b8c000016",
+      "created_at": "2014-08-12 14:10:37",
+      "a": {
+        "headline": "An Important Message For The Depressed",
+        "ctr": 0.007625826131164209,
+        "impressions": 1967
+      },
+      "b": {
+        "headline": "In Response To Robin William's Death, This Guy Sent This Powerful Message Out To The World",
+        "ctr": 0.022524882137244632,
+        "impressions": 1909
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-28-000016",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B is more specific, emotionally charged, and includes a real person (Robin Williams) and a dramatic event, which typically generates higher engagement on Facebook compared to a more generic or less vivid headline like A.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "The headline B is more emotionally charged and specific, involving a real person (Robin Williams) and a dramatic event, which typically generates higher curiosity and engagement among a general US audience on Facebook. Headline A is vague and less compelling.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2308,
+        "b_tap": 0.4103,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 9,
+        "b_taps": 16,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "5390b09bbe300632ee000010",
+      "created_at": "2014-06-05 19:08:07",
+      "a": {
+        "headline": "Creams, Lotions And Potions —Maintaining A Vagina Should NOT Be This Intense",
+        "ctr": 0.018301982714794104,
+        "impressions": 3934
+      },
+      "b": {
+        "headline": "Wow, I Didn’t Realize That My Vagina Had A Shelf Life Until Now ... ?",
+        "ctr": 0.03457920162725655,
+        "impressions": 3933
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-29-000010",
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses a more relatable, curiosity-driven question that sparks intrigue and personal relevance, likely generating higher engagement on Facebook among a general US audience.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses curiosity and a relatable, slightly humorous tone that is more likely to generate clicks from a general US audience on Facebook, especially given the personal and taboo subject matter. Headline A is more sensational and potentially polarizing, which may reduce engagement or be perceived as clickbait.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.5,
+        "b_tap": 0.3421,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 19,
+        "b_taps": 13,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "51436081220cb8000200097d",
+      "created_at": "2013-02-26 21:48:16",
+      "a": {
+        "headline": "College-Age Republicans And Democrats Aren't Fighting Over Everything?",
+        "ctr": 0.010192937750273025,
+        "impressions": 2747
+      },
+      "b": {
+        "headline": "College-Age Republicans Don't Seem Much Like Regular Republicans",
+        "ctr": 0.02132435465768799,
+        "impressions": 2673
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-30-00097d",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A is more curiosity-driven and inclusive, appealing to a broader audience by suggesting a surprising unity among college-age Republicans and Democrats, which is more likely to generate clicks than the more niche or potentially divisive tone of B.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "A is more curiosity-driven and inclusive, appealing to a broader audience by suggesting a lack of conflict among young Republicans and Democrats, which is more engaging than B's more specific and potentially divisive comparison.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3889,
+        "b_tap": 0.3333,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 14,
+        "b_taps": 12,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "545a68b8a09e023493000079",
+      "created_at": "2014-11-05 18:13:59",
+      "a": {
+        "headline": "Not-Straight People Get The Treatment They Deserve At Church",
+        "ctr": 0.014758937356510331,
+        "impressions": 3049
+      },
+      "b": {
+        "headline": "Here's A Church That Treats Not-Straight People The Way They Deserve",
+        "ctr": 0.005817711700064641,
+        "impressions": 3094
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-31-000079",
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more positive and less confrontational, which tends to generate higher engagement from a general US audience on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more neutral and less confrontational, which is more likely to be shared and clicked by a general US audience on Facebook. Headline A uses polarizing language ('Not-Straight People') that may provoke backlash or be perceived as biased, reducing its appeal.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4103,
+        "b_tap": 0.3333,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 16,
+        "b_taps": 13,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "53e516736286023422000014",
+      "created_at": "2014-08-08 18:27:41",
+      "a": {
+        "headline": "Whether Or Not To Have Children Is 100% Your Business And Nobody Else's",
+        "ctr": 0.005703422053231939,
+        "impressions": 2630
+      },
+      "b": {
+        "headline": "A Perfectly Reasonable Request For People To Stop Talking About Women's 'Maternal Instincts'",
+        "ctr": 0.012790697674418604,
+        "impressions": 2580
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-32-000014",
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A is more provocative and controversial, which tends to generate higher engagement and clicks from a general US audience on Facebook due to its strong emotional appeal and debate-worthy nature.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a provocative, personal framing that sparks curiosity and debate, which tends to generate higher engagement on social media. Headline B is more abstract and less emotionally charged, likely resulting in lower click-through rates.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4324,
+        "b_tap": 0.3784,
+        "a_n": 37,
+        "b_n": 37,
+        "a_taps": 16,
+        "b_taps": 14,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "54b7276a6565620016180000",
+      "created_at": "2015-01-15 04:52:07",
+      "a": {
+        "headline": "The People In This Video Will Realize You're Watching Them. How Will You React?",
+        "ctr": 0.012436224489795918,
+        "impressions": 3136
+      },
+      "b": {
+        "headline": "They Deserve The Same Basic, Fundamental Right Everyone Has: Love",
+        "ctr": 0.004154682007031001,
+        "impressions": 3129
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-33-180000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses curiosity and self-awareness, which typically drives higher engagement on social media platforms like Facebook, whereas Headline B is more abstract and less likely to provoke immediate emotional reaction or clicks.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses curiosity and social interaction, which typically drives higher engagement on social media platforms like Facebook, whereas Headline B is more abstract and less likely to provoke immediate emotional reaction or sharing.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3611,
+        "b_tap": 0.3333,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 13,
+        "b_taps": 12,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "546ff5410e78bdd64600000f",
+      "created_at": "2014-11-22 02:58:21",
+      "a": {
+        "headline": "A Reading Of 'Dinner With Monoliths' By Joseph Lamour",
+        "ctr": 0.001949317738791423,
+        "impressions": 3078
+      },
+      "b": {
+        "headline": "How It Feels To Make The Parents Who Love You More Uncomfortable Than They've Ever Been Before",
+        "ctr": 0.00999000999000999,
+        "impressions": 3003
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-34-00000f",
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses emotionally charged language that evokes strong reactions, which typically drives higher engagement on social media platforms like Facebook. Headline A is more obscure and less likely to resonate with a general audience.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses emotionally charged language and a personal, relatable scenario that is more likely to provoke curiosity and clicks in a general US audience on Facebook, whereas A is more niche and abstract.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3846,
+        "b_tap": 0.3333,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 15,
+        "b_taps": 13,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "540006e5bd37b6e551000030",
+      "created_at": "2014-08-29 04:53:40",
+      "a": {
+        "headline": "This Kid's Chilling Personification Of Depression Explains Everything",
+        "ctr": 0.01451378809869376,
+        "impressions": 4134
+      },
+      "b": {
+        "headline": "This Haunting Personification Of Depression Explains Everything",
+        "ctr": 0.007780209093119377,
+        "impressions": 4113
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-35-000030",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "The word 'Chilling' is more emotionally charged and vivid than 'Haunting', likely increasing curiosity and engagement among a general US audience.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "The word 'Chilling' is more emotionally evocative and attention-grabbing than 'Haunting' for a general US audience, likely increasing curiosity and clicks on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3333,
+        "b_tap": 0.3611,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 12,
+        "b_taps": 13,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "548f98923834330012090000",
+      "created_at": "2014-12-16 04:45:46",
+      "a": {
+        "headline": "Vaginas And Sharks Have Something In Common? Can't Say I Saw That Coming.",
+        "ctr": 0.01066477070742979,
+        "impressions": 2813
+      },
+      "b": {
+        "headline": "10 Things You Probably Didn't Know About Vaginas",
+        "ctr": 0.0390961262553802,
+        "impressions": 2788
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-36-090000",
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B is more curiosity-driven and less sensational, which tends to perform better with a general US audience on Facebook by avoiding shock value while still being engaging.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B is more curiosity-driven and less sensational, which tends to perform better with a general US audience on Facebook by avoiding shock value and focusing on informative content.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.5556,
+        "b_tap": 0.5556,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 20,
+        "b_taps": 20,
+        "pick": "tie",
+        "correct": 0.5
+      }
+    },
+    {
+      "test_id": "5447f567cdf193ffc1000089",
+      "created_at": "2014-10-22 18:22:48",
+      "a": {
+        "headline": "A Female Journalist Has A Priceless Reply To Comments That Are Definitely Not 'Newsy'",
+        "ctr": 0.0045871559633027525,
+        "impressions": 3052
+      },
+      "b": {
+        "headline": "A Female News Anchor Has A Priceless Reply To Comments That Would Never Be Made About A Male Anchor",
+        "ctr": 0.013444302176696543,
+        "impressions": 3124
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-37-000089",
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses gender contrast and implies a more provocative or surprising reaction, which tends to generate higher engagement on social media, especially among a general US audience on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a relatable, gender-specific scenario that is less likely to trigger negative bias or controversy, making it more appealing to a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3429,
+        "b_tap": 0.3714,
+        "a_n": 35,
+        "b_n": 35,
+        "a_taps": 12,
+        "b_taps": 13,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "5485bf3f38316100181a0000",
+      "created_at": "2014-12-08 18:30:13",
+      "a": {
+        "headline": "Country Music Is Actually Pretty Progressive, And These 11 Moments In 2014 Prove It",
+        "ctr": 0.01075565361279647,
+        "impressions": 3626
+      },
+      "b": {
+        "headline": "11 Best Moments Of Country Music Making Progress In 2014",
+        "ctr": 0.00507311250373023,
+        "impressions": 3351
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-38-1a0000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A is more intriguing and uses a question-like structure that sparks curiosity, which typically drives higher click-through rates on social media platforms like Facebook. It also includes a specific time frame (2014) and a list of moments, making it more engaging than the more generic phrasing of B.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A is more intriguing and uses a stronger hook with 'Actually Progressive' and '11 Moments In 2014 Prove It', which creates curiosity and a sense of revelation, likely driving more clicks from a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4412,
+        "b_tap": 0.3235,
+        "a_n": 34,
+        "b_n": 34,
+        "a_taps": 15,
+        "b_taps": 11,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "544fdbcf64ab56ad04000068",
+      "created_at": "2014-10-28 18:18:45",
+      "a": {
+        "headline": "Politicians Are Making It Harder For This Group To Vote. 3 Words. Rhymes With 'Bleeple Of Blolor.'",
+        "ctr": 0.003991020204539786,
+        "impressions": 4009
+      },
+      "b": {
+        "headline": "'Can I See Some ID?' Is A Totally Reasonable Question, Except In 1 Situation",
+        "ctr": 0.022732828159374236,
+        "impressions": 4091
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-39-000068",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A is more concise, uses a rhyme, and creates a sense of urgency and controversy, which tends to perform better in click-through rates on Facebook for a general US audience.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "The headline A uses a rhyme and a memorable phrase that stands out, making it more engaging and shareable on Facebook, which tends to favor creative, attention-grabbing content over more complex or less punchy phrasing.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3611,
+        "b_tap": 0.6111,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 13,
+        "b_taps": 22,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "5367bda621525a2933000084",
+      "created_at": "2014-05-05 16:54:17",
+      "a": {
+        "headline": "How Bullets United These HIV Positive Women And Gave Them Fair Wage Jobs",
+        "ctr": 0.006222547584187409,
+        "impressions": 2732
+      },
+      "b": {
+        "headline": "10 Women + 42 Bullets + 14 Hours = Something Beautiful",
+        "ctr": 0.019700839109813937,
+        "impressions": 2741
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-40-000084",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "The headline A uses a clear, human-centered story about fair wages and dignity, which is more relatable and emotionally resonant for a general US audience. Headline B is more abstract and uses numbers in a way that may seem gimmicky or less meaningful, potentially reducing engagement.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses a more intriguing and visually evocative phrase with numbers and a poetic structure, which tends to generate higher curiosity and engagement among a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4286,
+        "b_tap": 0.4286,
+        "a_n": 35,
+        "b_n": 35,
+        "a_taps": 15,
+        "b_taps": 15,
+        "pick": "tie",
+        "correct": 0.5
+      }
+    },
+    {
+      "test_id": "536bb7a7c02b17e9880000ac",
+      "created_at": "2014-05-08 17:07:03",
+      "a": {
+        "headline": "Her Girlfriend Never Tells Her How Her Day Went. It's Hard Enough Without Reliving Daily Tragedy.",
+        "ctr": 0.03344343517753923,
+        "impressions": 2422
+      },
+      "b": {
+        "headline": "Her Girlfriend Never Tells Her How Her Day Went. You Wouldn't Either If You Saw What She Did.",
+        "ctr": 0.05343213728549142,
+        "impressions": 2564
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-41-0000ac",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A is more intriguing and emotionally engaging, using a rhetorical question that invites curiosity about the girlfriend's day, which is more likely to generate clicks from a general audience.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A is more emotionally evocative and uses a stronger contrast, making it more likely to generate curiosity and clicks from a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3684,
+        "b_tap": 0.2632,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 14,
+        "b_taps": 10,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "548768a63031360961020000",
+      "created_at": "2014-12-09 21:30:13",
+      "a": {
+        "headline": "It Doesn't Take Much To Make Someone Cry. Tears Of Joy Are Trickier.",
+        "ctr": 0.003672719853091206,
+        "impressions": 4901
+      },
+      "b": {
+        "headline": "Some People Came Out With A Cool New Kind Of Poster. When You Hang It, People Cry From Happiness.",
+        "ctr": 0.00851063829787234,
+        "impressions": 4935
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-42-020000",
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a more universal and emotionally resonant phrase 'Tears Of Joy' which is likely to be more intriguing and shareable among a general US audience on Facebook, while B's 'Poster' and 'Happiness' are less commonly used and may not generate as much curiosity or emotional response.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses more emotionally charged and relatable language ('Tears Of Joy Are Trickier') that evokes curiosity and emotional response, which typically drives higher engagement on social media platforms like Facebook. Headline B is more abstract and less directly engaging.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3333,
+        "b_tap": 0.5641,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 13,
+        "b_taps": 22,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "549832ea663661001e4c0000",
+      "created_at": "2014-12-22 15:37:32",
+      "a": {
+        "headline": "Ever Wonder What Really Happens To That Water Bottle After You Recycle It? Here's The Truth.",
+        "ctr": 0.015535827520608751,
+        "impressions": 3154
+      },
+      "b": {
+        "headline": "Tired Of Hearing About Depressing Climate Change? Here's 1 Super Easy Way To Make A Big Difference.",
+        "ctr": 0.004289013526888816,
+        "impressions": 3031
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-43-4c0000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses curiosity and a specific, tangible question about recycling, which tends to generate higher engagement on Facebook due to its intrigue and relevance to everyday actions. Headline B is more abstract and focuses on climate change, which may be less immediately relatable or actionable for a general audience.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses curiosity and a relatable everyday scenario (recycling a water bottle), which typically generates higher engagement on Facebook. Headline B focuses on climate change, which may be less emotionally resonant or actionable for a general audience, leading to lower click-through rates.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3077,
+        "b_tap": 0.4359,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 12,
+        "b_taps": 17,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "53da9ad331693d3a3500001d",
+      "created_at": "2014-07-31 19:37:22",
+      "a": {
+        "headline": "These 3 Posters About Sexual Assault Are Worth The Share",
+        "ctr": 0.012293507491356128,
+        "impressions": 2603
+      },
+      "b": {
+        "headline": "3 Posters About Rape Culture That Are Totally Worth Sharing",
+        "ctr": 0.024576954069298954,
+        "impressions": 2482
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-44-00001d",
+      "single_crowd": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses stronger, more emotionally charged language ('Totally Worth Sharing') and avoids the potentially triggering term 'Sexual Assault', which may reduce clicks from a general audience. It also frames the content as a cultural discussion rather than a graphic subject, making it more palatable for broader Facebook engagement.",
+        "failed": false
+      },
+      "single_reason": {
+        "pick": "B",
+        "correct": 1,
+        "reason": "Headline B uses stronger, more emotionally charged language ('Totally Worth Sharing') and avoids the potentially triggering term 'Sexual Assault', which may reduce clicks from a general audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4,
+        "b_tap": 0.4857,
+        "a_n": 35,
+        "b_n": 35,
+        "a_taps": 14,
+        "b_taps": 17,
+        "pick": "B",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "52fd2421d624103664000055",
+      "created_at": "2014-02-13 19:59:56",
+      "a": {
+        "headline": "What Happens To Some Kids When They Go To Work In This Famous Industry Is Awful",
+        "ctr": 0.02384464110127827,
+        "impressions": 4068
+      },
+      "b": {
+        "headline": "When You Think ‘Fashion Model,’ You Might Think Privilege And Glamour. But They Can Be Victims, Too.",
+        "ctr": 0.015809284818067756,
+        "impressions": 3985
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-45-000055",
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more emotionally engaging and socially relevant, likely to generate higher clicks from a general US audience on Facebook due to its focus on fashion model privilege and victimhood, which taps into current cultural conversations.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more emotionally engaging and relevant to a broader audience, leveraging social awareness of privilege and glamour, which tends to drive higher click-through rates on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3889,
+        "b_tap": 0.4444,
+        "a_n": 36,
+        "b_n": 36,
+        "a_taps": 14,
+        "b_taps": 16,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "540088475c360384ce000050",
+      "created_at": "2014-08-29 14:03:51",
+      "a": {
+        "headline": "I Hope You Like S'mores Because The U.S. Is Turning Into A Giant Bonfire",
+        "ctr": 0.0013042060645582002,
+        "impressions": 3067
+      },
+      "b": {
+        "headline": "It's The End Of The World As We Know. OK, It's Not. But Watching This Made That Song Come To Mind.",
+        "ctr": 0.007640878701050621,
+        "impressions": 3141
+      },
+      "real_winner": "B",
+      "run_id": "bt-261027045944-46-000050",
+      "single_reason": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a vivid, relatable metaphor (s'mores and bonfire) that evokes curiosity and emotional engagement, making it more likely to intrigue a general US audience on Facebook. Headline B is more abstract and less immediately understandable, reducing its appeal.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 0,
+        "reason": "Headline A uses a vivid, relatable metaphor (s'mores and bonfire) that evokes curiosity and emotional engagement, making it more likely to intrigue a general US audience on Facebook. Headline B is vague and relies on a song reference, which may not resonate as strongly with a broad audience.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3429,
+        "b_tap": 0.3143,
+        "a_n": 35,
+        "b_n": 35,
+        "a_taps": 12,
+        "b_taps": 11,
+        "pick": "A",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "549444f23732320024420000",
+      "created_at": "2014-12-19 15:43:26",
+      "a": {
+        "headline": "Everybody Does It Around The Holidays. Here's Why Everyone Should Stop.",
+        "ctr": 0.012186865267433988,
+        "impressions": 2954
+      },
+      "b": {
+        "headline": "Some LOL And A Whole Lot Of Truth About All Of Those Stupid Holiday Jokes",
+        "ctr": 0.004287598944591029,
+        "impressions": 3032
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-47-420000",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a clear, curiosity-driven question that appeals to a broad audience by suggesting a surprising reason to stop a common behavior, which is more likely to generate clicks than the more sarcastic and less structured headline B.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses more provocative, emotionally charged language ('stupid holiday jokes') that is likely to generate curiosity and controversy, leading to higher click-through rates among a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.2105,
+        "b_tap": 0.2895,
+        "a_n": 38,
+        "b_n": 38,
+        "a_taps": 8,
+        "b_taps": 11,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "546a68186f06eeb606000053",
+      "created_at": "2014-11-17 21:26:48",
+      "a": {
+        "headline": "When The Holidays Become All About Spending Money, Some People Push Back",
+        "ctr": 0.011795543905635648,
+        "impressions": 3052
+      },
+      "b": {
+        "headline": "How To Take Back Thanksgiving Weekend And Actually Enjoy It",
+        "ctr": 0.004588659455916093,
+        "impressions": 3051
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-48-000053",
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B is more positive, solution-oriented, and emotionally engaging, which tends to perform better in terms of clicks for a general US audience on Facebook. It promises a benefit (enjoying Thanksgiving) rather than highlighting a problem, making it more appealing and less negative.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B focuses on a positive, personal benefit (enjoying Thanksgiving) which is more emotionally engaging and less polarizing than the spending-focused, potentially negative tone of A, making it more likely to attract clicks from a general US audience.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.1714,
+        "b_tap": 0.4,
+        "a_n": 35,
+        "b_n": 35,
+        "a_taps": 6,
+        "b_taps": 14,
+        "pick": "B",
+        "correct": 0
+      }
+    },
+    {
+      "test_id": "5418777d93f6337819000071",
+      "created_at": "2014-09-16 17:46:51",
+      "a": {
+        "headline": "I Was Ready To Be Offended By This 'Ray Rice Makeup Tutorial', Until She Put On Her Foundation",
+        "ctr": 0.021899736147757257,
+        "impressions": 3790
+      },
+      "b": {
+        "headline": "This Video Makes Some Important Points About Domestic Violence And Then Covers The Points In Makeup",
+        "ctr": 0.010821953104869879,
+        "impressions": 3881
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-49-000071",
+      "single_reason": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a strong emotional hook with a personal story and a controversial topic ('Ray Rice'), which is more likely to generate curiosity and clicks in a general US audience on Facebook. Headline B is more neutral and less attention-grabbing, focusing on makeup and domestic violence in a way that may not stand out as effectively.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "Headline A uses a sensational, emotionally charged scenario involving a potentially offensive makeup tutorial, which is more likely to generate curiosity and clicks among a general US audience on Facebook. Headline B is more neutral and informative, which may not provoke the same level of engagement.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.4412,
+        "b_tap": 0.4118,
+        "a_n": 34,
+        "b_n": 34,
+        "a_taps": 15,
+        "b_taps": 14,
+        "pick": "A",
+        "correct": 1
+      }
+    },
+    {
+      "test_id": "5458da6604bb8e70ec000010",
+      "created_at": "2014-11-04 13:53:58",
+      "a": {
+        "headline": "A Bunch Of People Out There Are *Not* Washing Their Hands, And This Is Why",
+        "ctr": 0.01741608613046232,
+        "impressions": 3158
+      },
+      "b": {
+        "headline": "It's Such An Easy Way To Keep Kids Alive, You've Probably Already Done It For Yourself Today",
+        "ctr": 0.00688360450563204,
+        "impressions": 3196
+      },
+      "real_winner": "A",
+      "run_id": "bt-261027045944-50-000010",
+      "single_reason": {
+        "pick": "B",
+        "correct": 0,
+        "reason": "Headline B uses a positive, relatable message about helping kids, which is more emotionally engaging and less negative, likely resulting in higher click-through rates from a general US audience on Facebook.",
+        "failed": false
+      },
+      "single_crowd": {
+        "pick": "A",
+        "correct": 1,
+        "reason": "The headline A uses a more neutral, curiosity-driven tone that is less likely to trigger negative emotions or be perceived as clickbait, making it more suitable for a general US audience on Facebook.",
+        "failed": false
+      },
+      "crowd": {
+        "a_tap": 0.3846,
+        "b_tap": 0.359,
+        "a_n": 39,
+        "b_n": 39,
+        "a_taps": 15,
+        "b_taps": 14,
+        "pick": "A",
+        "correct": 1
+      }
+    }
   ],
-  "platform": "facebook",
-  "baselines_only": false,
-  "headline_only": true,
-  "models": {
-   "crowd_hosted": "nvidia/nemotron-3.5-lightning-30b-a3b",
-   "reason_hosted": "nvidia/nemotron-3-super-120b-a12b",
-   "crowd_local": "nemotron-3-nano:4b",
-   "reason_local": "nemotron-3-nano:4b"
-  }
- },
- "selection": {
-  "query_ids": [
-   "q_3fac3a94_1"
-  ],
-  "excluded_window": {
-   "from": "2013-06-25",
-   "to": "2014-01-10",
-   "reason": "archive randomization caveat (no `problem` column in the exploratory file)"
+  "served_by": {
+    "ollama-local:nemotron-3-nano:4b": 892
   },
-  "filters": {
-   "min_impressions": 1000,
-   "min_rel_gap": 0.3,
-   "min_z": 2.58,
-   "same_eyecatcher_and_lede": true,
-   "headline_must_differ": true,
-   "one_pair_per_test": "group with most total impressions",
-   "order": "md5(clickability_test_id)",
-   "dev_n": 20
-  },
-  "qualifying": 982,
-  "dev_n": 20
- },
- "scores": {
-  "crowd": {
-   "correct": 22.5,
-   "n": 50,
-   "rate": 0.45,
-   "ci": [
-    0.32063195143496265,
-    0.5865030519824692
-   ]
-  },
-  "single_reason": {
-   "correct": 24,
-   "n": 50,
-   "rate": 0.48,
-   "ci": [
-    0.347969123955057,
-    0.6148848774119157
-   ]
-  },
-  "single_crowd": {
-   "correct": 25,
-   "n": 50,
-   "rate": 0.5,
-   "ci": [
-    0.36644286412332855,
-    0.6335571358766715
-   ]
-  },
-  "coin": {
-   "rate": 0.5
-  }
- },
- "mcnemar": {
-  "crowd_vs_single_reason": {
-   "b": 11,
-   "c": 12.5,
-   "p": 0.8388197422027599
-  },
-  "crowd_vs_single_crowd": {
-   "b": 10.5,
-   "c": 13,
-   "p": 0.8388197422027599
-  }
- },
- "tests": [
-  {
-   "test_id": "547e21c46161330012150000",
-   "created_at": "2014-12-02 20:38:57",
-   "a": {
-    "headline": "A Cop Stops A Black Man For Walking With His Hands In His Pockets. Reasonableness Happens Next.",
-    "ctr": 0.04548387096774194,
-    "impressions": 3100
-   },
-   "b": {
-    "headline": "A Cop Stops A Black Man For Walking With His Hands In His Pockets. Seriously.",
-    "ctr": 0.021255396878113585,
-    "impressions": 3011
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-01-150000",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more concise and impactful, using a period to create a stronger, punchier statement that is more likely to generate curiosity and clicks in a general US audience on Facebook.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more concise and less likely to trigger negative emotions or controversy, making it more likely to be read and clicked by a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3611,
-    "b_tap": 0.4167,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 13,
-    "b_taps": 15,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "5409d307c994ef07b9000092",
-   "created_at": "2014-09-05 15:13:11",
-   "a": {
-    "headline": "This Famous Women *Knows* About Bullies. But She Cares About Those Hurt By Them More.",
-    "ctr": 0.007588075880758808,
-    "impressions": 5535
-   },
-   "b": {
-    "headline": "They Tried To Humilate America's Sweetheart, But She's Been Gunning For Them All Along",
-    "ctr": 0.018281535648994516,
-    "impressions": 5470
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-02-000092",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses stronger, more provocative language with a clear conflict and emotional appeal, which typically drives higher engagement on social media platforms like Facebook.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses stronger, more emotionally charged language ('Humilate', 'Gunning For') and a more dramatic narrative structure, which tends to generate higher engagement and curiosity in a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4595,
-    "b_tap": 0.3514,
-    "a_n": 37,
-    "b_n": 37,
-    "a_taps": 17,
-    "b_taps": 13,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "515db1c9683d3f000200112c",
-   "created_at": "2013-04-04 17:17:27",
-   "a": {
-    "headline": "Why Voldemort's Mom Could Have Been The Hero Of The Harry Potter Books",
-    "ctr": 0.028532608695652172,
-    "impressions": 2944
-   },
-   "b": {
-    "headline": "One Of The Wrongest Harry Potter Related Anti-Abortion Signs You'll Ever See",
-    "ctr": 0.04131102765448959,
-    "impressions": 2929
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-03-00112c",
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses stronger emotional triggers like 'wrongest' and 'anti-abortion', which are more likely to provoke curiosity and outrage in a general US audience, leading to higher click-through rates on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses stronger emotional language ('Wrongest') and addresses a current social issue (anti-abortion signs), which typically generates higher engagement on social media compared to a speculative or fictional question like A.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3636,
-    "b_tap": 0.1515,
-    "a_n": 33,
-    "b_n": 33,
-    "a_taps": 12,
-    "b_taps": 5,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "54d43b8f39326600199d0000",
-   "created_at": "2015-02-06 03:57:54",
-   "a": {
-    "headline": "Ball Players Are Checking, Well, Their B***S On Tv To Help Men Out",
-    "ctr": 0.005389514943655071,
-    "impressions": 2041
-   },
-   "b": {
-    "headline": "A Football Team Is Taking Their Towels Off To Show Men How To Check For Cancer",
-    "ctr": 0.021696252465483234,
-    "impressions": 2028
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-04-9d0000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses shock humor and a crude reference to a sensitive topic, which is more likely to generate attention and clicks on Facebook among a general US audience due to its provocative nature. Headline B is less likely to provoke a reaction and may be perceived as odd or irrelevant.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses shock humor and crude language that is more likely to provoke attention and clicks among a general US audience, while B is more serious and less likely to generate the same level of engagement.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4,
-    "b_tap": 0.4,
-    "a_n": 40,
-    "b_n": 40,
-    "a_taps": 16,
-    "b_taps": 16,
-    "pick": "tie",
-    "correct": 0.5
-   }
-  },
-  {
-   "test_id": "54f9c72e613164000c790000",
-   "created_at": "2015-03-06 15:38:14",
-   "a": {
-    "headline": "At first 2 only kids wanted to go under the bridge. But then 140 showed up and I was floored.",
-    "ctr": 0.013595166163141994,
-    "impressions": 1986
-   },
-   "b": {
-    "headline": "When it was just 2 children, I was happy. But then he said 140 — wowsers.",
-    "ctr": 0.0039081582804103565,
-    "impressions": 2047
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-05-790000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a more vivid and unexpected contrast ('2 only kids... but then 140 showed up') which creates stronger curiosity and emotional engagement, likely leading to higher click-through rates on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a more vivid and unexpected contrast ('2 only kids... but then 140 showed up') which creates stronger curiosity and emotional engagement, likely driving more clicks in a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4324,
-    "b_tap": 0.2162,
-    "a_n": 37,
-    "b_n": 37,
-    "a_taps": 16,
-    "b_taps": 8,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "5449e79738e5ae996c000015",
-   "created_at": "2014-10-24 05:46:06",
-   "a": {
-    "headline": "So Mr. Captain Fancyman High School Dropout Doesn't Even Need To Try?!",
-    "ctr": 0.006367109332363107,
-    "impressions": 5497
-   },
-   "b": {
-    "headline": "Face-palm Levels Of Wow When You See That Rich Kids Don't Even Need To Try",
-    "ctr": 0.016457826818776885,
-    "impressions": 5347
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-06-000015",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a more surprising and unexpected phrasing that creates curiosity and a sense of disbelief, which tends to generate higher engagement. Headline B is more generic and less provocative, lacking the same level of intrigue.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a more unexpected and slightly absurd scenario that may generate curiosity and humor, which often drives higher engagement on social media. Headline B is more vague and potentially less impactful.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4474,
-    "b_tap": 0.3158,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 17,
-    "b_taps": 12,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "51c258575245fa4328001869",
-   "created_at": "2013-06-20 01:19:29",
-   "a": {
-    "headline": "HIV Vs. Cancer — One Will SAVE This Girl’s Life",
-    "ctr": 0.006386066763425254,
-    "impressions": 3445
-   },
-   "b": {
-    "headline": "Doctors Take A Long Shot And Inject HIV Into Dying Girl. The Reason Why Might Amaze You.",
-    "ctr": 0.0332466030644695,
-    "impressions": 3459
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-07-001869",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a positive, emotionally compelling narrative about saving a life, which is more likely to generate clicks from a general US audience on Facebook. Headline B is sensational and potentially misleading, which may reduce trust and clicks despite its shock value.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a positive, emotionally compelling phrase 'SAVE This Girl’s Life' which is more likely to generate curiosity and clicks from a general US audience on Facebook, while B's wording is more sensational and potentially off-putting.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4474,
-    "b_tap": 0.3158,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 17,
-    "b_taps": 12,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "552c6c82393664001c1f0000",
-   "created_at": "2015-04-14 01:32:06",
-   "a": {
-    "headline": "When Dave was 22, his dad came out to him. Here's how that story helped others tell their own.",
-    "ctr": 0.012291052114060964,
-    "impressions": 2034
-   },
-   "b": {
-    "headline": "Every family has a story. And these unique, everyday, beautiful stories can now be told with an app.",
-    "ctr": 0.0015082956259426848,
-    "impressions": 1989
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-08-1f0000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A is more specific and emotionally engaging, focusing on a personal anecdote that sparks curiosity and relatability, which typically drives higher click-through rates on Facebook compared to the more generic and vague appeal of Headline B.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A is more specific, emotionally resonant, and story-driven, which tends to perform better in A/B tests for general audiences on Facebook. Headline B is vague and generic, lacking a clear hook or emotional trigger.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3333,
-    "b_tap": 0.5385,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 13,
-    "b_taps": 21,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "5457995ace7a2906a000001d",
-   "created_at": "2014-11-03 15:17:41",
-   "a": {
-    "headline": "For The Sake Of Everyone's Dignity, A Fake Obnoxious Child Star Spits Out Some Terrible Pastry",
-    "ctr": 0.006255864873318737,
-    "impressions": 3197
-   },
-   "b": {
-    "headline": "Watch A Child Star Condescend A Woman Who's Trying To Help In The Most Obnoxious Way Possible",
-    "ctr": 0.019956345494231368,
-    "impressions": 3207
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-09-00001d",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses more emotionally charged language ('Condescend', 'Obnoxious') and creates a stronger narrative conflict, which typically drives higher engagement on social media.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses more emotionally charged and sensational language ('condescend', 'obnoxious') which tends to generate higher curiosity and clicks in general US audiences on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2632,
-    "b_tap": 0.2895,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 10,
-    "b_taps": 11,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "53e8c7571fdb204023000028",
-   "created_at": "2014-08-11 13:43:06",
-   "a": {
-    "headline": "Screw The Predatory Lending Guy, I Want To Know Who This Lady Is That Just Shut Him All The Way Down",
-    "ctr": 0.021696252465483234,
-    "impressions": 3042
-   },
-   "b": {
-    "headline": "Have You Heard About The 100% Legal Way To Become A Loan Shark In America?",
-    "ctr": 0.00943089430894309,
-    "impressions": 3075
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-10-000028",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A is more emotionally charged and sensational, using strong language like 'Screw The Predatory Lending Guy' and 'Shut Him All The Way Down', which is likely to generate higher curiosity and clicks from a general US audience on Facebook. Headline B is more factual and less engaging, focusing on a '100% Legal Way To Become A Loan Shark', which may not provoke the same level of interest or C",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A is more sensational, emotionally charged, and uses a dramatic phrase like 'Screw The Predatory Lending Guy' which is likely to generate curiosity and clicks from a general US audience on Facebook, whereas B is more factual and less engaging.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4722,
-    "b_tap": 0.2222,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 17,
-    "b_taps": 8,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "53a1af910a0cb881b500003f",
-   "created_at": "2014-06-18 17:41:24",
-   "a": {
-    "headline": "A Teacher In Hong Kong Reads His Class A Suicide Note From Holland. It Hit Close To Home For Her.",
-    "ctr": 0.021215043394406944,
-    "impressions": 3111
-   },
-   "b": {
-    "headline": "A Teacher Read His Class A Suicide Note From Far Away. One Of His Students Heard More Than Others.",
-    "ctr": 0.037705446342249434,
-    "impressions": 3103
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-11-00003f",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses more emotionally charged and specific language ('Hong Kong', 'Suicide Note', 'Hit Close To Home') which tends to generate stronger curiosity and empathy, leading to higher click-through rates in general US audiences on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses more emotionally charged and specific language ('Hong Kong', 'Suicide Note', 'Hit Close To Home') which tends to generate stronger curiosity and empathy, likely increasing click-through rates among a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2632,
-    "b_tap": 0.3684,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 10,
-    "b_taps": 14,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "536173ab29b7aff8d800002e",
-   "created_at": "2014-04-30 22:18:07",
-   "a": {
-    "headline": "They Calling It 'Reweaving', But The Plan Is Basically Just To Let Kids Be Incredible",
-    "ctr": 0.010982306284319707,
-    "impressions": 3278
-   },
-   "b": {
-    "headline": "One Organization's Plan To Reweave The World Around In Quite An Interesting Way",
-    "ctr": 0.003274784161952962,
-    "impressions": 3359
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-12-00002e",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses more emotionally engaging language ('Incredible') and a more intriguing, slightly absurd phrasing that sparks curiosity, which tends to perform better in click-through rates for a general US audience on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses more emotionally evocative language ('Incredible') and a more relatable, conversational tone ('They Calling It') that likely resonates better with a general US audience on Facebook, while B is more abstract and less engaging.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2973,
-    "b_tap": 0.3514,
-    "a_n": 37,
-    "b_n": 37,
-    "a_taps": 11,
-    "b_taps": 13,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "51b9fdd3bbb4a25e900008f7",
-   "created_at": "2013-06-13 17:15:52",
-   "a": {
-    "headline": "Move Over, Mean Girls. Today's Tweens And Teens Want To Help. (And That's Pretty Fetch.)",
-    "ctr": 0.008679333802486512,
-    "impressions": 4263
-   },
-   "b": {
-    "headline": "Want To Know How Adolescent Girls Are The Most Powerful Catalyst For Change On Earth? Watch This.",
-    "ctr": 0.01751109035722624,
-    "impressions": 4283
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-13-0008f7",
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses curiosity-driven language and a strong promise of impact, which tends to perform better with a general US audience on Facebook. It also includes a clickbait element ('Watch This') that increases engagement. Headline A is more niche and less likely to resonate broadly.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses curiosity-driven language and a strong promise of impact, which typically performs better in click-through rates for a general US audience on Facebook. It also avoids niche references like 'tweens' and 'mean girls' that may limit relatability.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4103,
-    "b_tap": 0.3846,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 16,
-    "b_taps": 15,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "542c55a534120f16c0000061",
-   "created_at": "2014-10-01 20:15:41",
-   "a": {
-    "headline": "1 Shocking Photo Is Evidence That It May Be Too Late To Save The World From Catastrophe",
-    "ctr": 0.007899507899507899,
-    "impressions": 7722
-   },
-   "b": {
-    "headline": "You See All 35,000 Of Them Just Lying There, And It's Impossible To Ignore Anymore",
-    "ctr": 0.004071447333858682,
-    "impressions": 7614
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-14-000061",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses a vivid, specific number (35,000) and a strong visual metaphor ('lying there') that creates immediate curiosity and urgency, which typically drives higher click-through rates on social media compared to the more abstract and dramatic phrasing of A.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses a more direct, emotionally charged, and visually suggestive phrase ('You See All 35,000 Of Them Just Lying There') that creates immediate curiosity and a sense of urgency, which tends to perform better in click-through rates on social media platforms like Facebook. Headline A is more abstract and less specific, which may not resonate as strongly with a general audience.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.325,
-    "b_tap": 0.45,
-    "a_n": 40,
-    "b_n": 40,
-    "a_taps": 13,
-    "b_taps": 18,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "51707d7711362200020065a4",
-   "created_at": "2013-04-18 23:12:09",
-   "a": {
-    "headline": "And Now For Something That Will Make You Exuberant And Happy After A Horrible Week Of Tragedy",
-    "ctr": 0.022719204827831026,
-    "impressions": 2817
-   },
-   "b": {
-    "headline": "A Whole Country Decided To Legalize Gay Marriage. In Response, They Got What They Deserved.",
-    "ctr": 0.036213696665471494,
-    "impressions": 2789
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-15-0065a4",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses positive, emotionally charged language ('Exuberant', 'Happy') that aligns with general US audience preferences for uplifting, feel-good content, while B contains negative, polarizing language ('What They Deserved') that may deter clicks due to potential controversy or negativity.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses positive, emotionally charged language ('Exuberant', 'Happy', 'Horrible Week of Tragedy') that evokes strong reactions and curiosity, likely driving higher engagement. Headline B contains negative, divisive phrasing ('What They Deserved') that may provoke backlash or reduce shares, especially on a general US audience.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4118,
-    "b_tap": 0.1765,
-    "a_n": 34,
-    "b_n": 34,
-    "a_taps": 14,
-    "b_taps": 6,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "539887f973acb6f3d2000054",
-   "created_at": "2014-06-11 16:48:51",
-   "a": {
-    "headline": "A Comedian Saw The Largest Diamond In The World And Got Furious. Historically Furious.",
-    "ctr": 0.017432321575061527,
-    "impressions": 4876
-   },
-   "b": {
-    "headline": "His Hilarious Rant About Diamonds And Colonialism Is Totally NSFHC (Not Safe For History Class)",
-    "ctr": 0.005923202614379085,
-    "impressions": 4896
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-16-000054",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses more provocative language ('Totally NSFHC') and references colonialism, which is more likely to generate curiosity and clicks among a general US audience on Facebook, while A is more subdued and less likely to stand out.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses stronger, more provocative language ('Totally NSFHC') that triggers curiosity and controversy, likely increasing clicks among a general US audience on Facebook, while A is more subdued and less engaging.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2703,
-    "b_tap": 0.5135,
-    "a_n": 37,
-    "b_n": 37,
-    "a_taps": 10,
-    "b_taps": 19,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "54066a1cb650ed1828000073",
-   "created_at": "2014-09-03 01:17:33",
-   "a": {
-    "headline": "Think Climate Change Can't Be Stopped? Well, With That Attitude, You're Probably Right.",
-    "ctr": 0.0007055171440666008,
-    "impressions": 7087
-   },
-   "b": {
-    "headline": "This May Be The Most Important Battle Of Our Time. So Why Haven't We Taken To The Streets?",
-    "ctr": 0.0026403557531962203,
-    "impressions": 7196
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-17-000073",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a provocative, emotionally charged question that invites engagement and curiosity, which tends to perform better in click-through rates for a general US audience on Facebook. Headline B is more abstract and less directly relatable, making it less likely to drive clicks.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a provocative, emotionally charged question that invites engagement and curiosity, which typically drives higher click-through rates on social media platforms like Facebook. Headline B is more vague and less specific, lacking a clear hook that would resonate strongly with a general audience.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2368,
-    "b_tap": 0.3947,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 9,
-    "b_taps": 15,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "54b2a7fc32653500151a0000",
-   "created_at": "2015-01-11 16:49:55",
-   "a": {
-    "headline": "Meet The 17-Year-Old Whizz Who Thinks Failing Is Awesome. I'm Pretty Sure You'll Agree.",
-    "ctr": 0.005637773079633545,
-    "impressions": 2838
-   },
-   "b": {
-    "headline": "At 17 He Goes To School, Gets Picked Up By His Mom - Oh And Saves Lives (Maybe Even Yours)",
-    "ctr": 0.01327116212338594,
-    "impressions": 2788
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-18-1a0000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses sensational language like 'Whizz' and 'Failing Is Awesome' which triggers curiosity and emotional reaction, likely increasing clicks among a general US audience on Facebook. Headline B is more factual and less engaging.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses sensational language like 'Whizz', 'Failing Is Awesome', and 'You'll Agree' which triggers curiosity and emotional reaction, common in clickbait strategies. Headline B is more factual and less likely to provoke immediate emotional engagement.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2703,
-    "b_tap": 0.5676,
-    "a_n": 37,
-    "b_n": 37,
-    "a_taps": 10,
-    "b_taps": 21,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "5400adb3f27b21d27d000052",
-   "created_at": "2014-08-29 16:50:04",
-   "a": {
-    "headline": "Why This Boat Is So Important To A Whole Community — No, They're Not Pirates",
-    "ctr": 0.0007801833430856252,
-    "impressions": 5127
-   },
-   "b": {
-    "headline": "One Of The Most Inspiring Things I've Ever Seen Happen To A Place That Some Won't Even Visit",
-    "ctr": 0.007138607971445568,
-    "impressions": 5043
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-19-000052",
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a familiar cultural reference (pirates) and a clear, intriguing question that sparks curiosity, making it more likely to engage a general US audience on Facebook. Headline B is more abstract and emotionally charged but less immediately relatable or shareable.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a clear, curiosity-driven question format that sparks immediate engagement and is more relatable to a broad US audience, while B is vague and less specific about the event or location, reducing its appeal.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3611,
-    "b_tap": 0.4167,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 13,
-    "b_taps": 15,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "53bef3e2f8df064c3e00004a",
-   "created_at": "2014-07-10 20:14:19",
-   "a": {
-    "headline": "What Would Abraham Lincoln Think Of Labor Unions?",
-    "ctr": 0.0031267765776009098,
-    "impressions": 3518
-   },
-   "b": {
-    "headline": "One Quote From Abraham Lincoln Might Just Surprise You, But It’s Real",
-    "ctr": 0.010679323642835954,
-    "impressions": 3371
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-20-00004a",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B includes a promise of surprise and emphasizes that the quote is real, which creates curiosity and a sense of authenticity. Headline A is more abstract and may not immediately engage a general audience as effectively on Facebook.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B is more emotionally engaging and curiosity-driven, using 'Surprise You' and 'Real' to create intrigue, which typically performs better in click-through rates for general audiences on social media.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4474,
-    "b_tap": 0.4211,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 17,
-    "b_taps": 16,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "541ef87088aa4b688f000062",
-   "created_at": "2014-09-21 16:10:24",
-   "a": {
-    "headline": "Looks Like They Finally Figured Out It's Too Hard To Watch Those Tear-jerker Pet Videos",
-    "ctr": 0.003543406732472792,
-    "impressions": 3951
-   },
-   "b": {
-    "headline": "There's 1 Crucial Thing You Need To Know To Be A *True* Cat Or Dog Person",
-    "ctr": 0.008893280632411068,
-    "impressions": 4048
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-21-000062",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses curiosity and relatability around pet videos, which are widely popular on Facebook, while B is more niche and uses a potentially polarizing term 'True' that may alienate some audiences.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses curiosity and relatability around pet videos, which are highly engaging on Facebook, while B is more niche and uses a loaded term 'True' that may alienate some users.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3947,
-    "b_tap": 0.4737,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 15,
-    "b_taps": 18,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "54538df05bc2317d29000042",
-   "created_at": "2014-10-31 13:54:07",
-   "a": {
-    "headline": "A Bunch Of Baby Sea Turtles Are About To Steal Your Heart. Guaranteed.",
-    "ctr": 0.017579617834394906,
-    "impressions": 3925
-   },
-   "b": {
-    "headline": "10 Tagged Baby Turtles Might Help Save The Future Of Their Species. But They Need Your Help, Too.",
-    "ctr": 0.0036363636363636364,
-    "impressions": 3850
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-22-000042",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses a more urgent, cause-related framing with a call to action ('But They Need Your Help, Too'), which typically drives higher engagement on social media by creating a sense of responsibility and immediacy, whereas A is more sensational and less actionable.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses a more urgent and impactful call to action, appealing to both curiosity and responsibility, which typically drives higher engagement in general audiences.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3333,
-    "b_tap": 0.4167,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 12,
-    "b_taps": 15,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "5429f4d95f7828ebff00007c",
-   "created_at": "2014-09-30 00:10:02",
-   "a": {
-    "headline": "Should More Teachers Be Like This? God, No. But Still, It's Pretty Cool.",
-    "ctr": 0.008897876643073812,
-    "impressions": 4945
-   },
-   "b": {
-    "headline": "Some Very Strange Teachers Are Behind This Bizarro Project. I Hope It Works.",
-    "ctr": 0.004493065051767923,
-    "impressions": 5119
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-23-00007c",
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a relatable, slightly humorous tone with a clear question and a strong emotional hook ('God, No') that resonates with a general US audience, making it more likely to generate clicks on Facebook.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a relatable, slightly humorous tone with a clear question and a strong emotional hook ('God, No') that resonates with a general US audience, making it more likely to generate clicks on Facebook. Headline B is more sensational and vague, which may not appeal as effectively to a broad audience.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4737,
-    "b_tap": 0.4474,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 18,
-    "b_taps": 17,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "53990fb7d5d900b82500002d",
-   "created_at": "2014-06-12 02:26:11",
-   "a": {
-    "headline": "They're Calling This \"Invisible Scars.\" Sounds Accurate.",
-    "ctr": 0.012847588877155931,
-    "impressions": 5682
-   },
-   "b": {
-    "headline": "When The Worst Stuff Happens, Sometimes It Feels Like It Will Never End",
-    "ctr": 0.006205826581623858,
-    "impressions": 5801
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-24-00002d",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses stronger emotional language and a sense of urgency, which typically drives higher engagement on social media platforms like Facebook.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses more emotionally charged language ('worst stuff', 'never end') which typically drives higher engagement on social media, while A is more descriptive and less urgent.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.5429,
-    "b_tap": 0.4857,
-    "a_n": 35,
-    "b_n": 35,
-    "a_taps": 19,
-    "b_taps": 17,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "546f4e0387942a3efd000029",
-   "created_at": "2014-11-21 14:36:51",
-   "a": {
-    "headline": "Kim Jong Un Would Really Hate For You To Watch This Which Is Exactly Why You Should",
-    "ctr": 0.04291163382072473,
-    "impressions": 3146
-   },
-   "b": {
-    "headline": "This Dictator Would Really Hate For You To Watch This Which Is Exactly Why You Should",
-    "ctr": 0.028495692511597084,
-    "impressions": 3018
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-25-000029",
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "The use of 'Kim Jong Un' is more specific and likely to generate curiosity and relevance for a general US audience, while 'This Dictator' is vague and less engaging.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "The headline A is more specific and personal, mentioning Kim Jong Un, which creates a stronger emotional hook and curiosity for a general US audience, likely resulting in higher click-through rates compared to the generic version B.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4722,
-    "b_tap": 0.4444,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 17,
-    "b_taps": 16,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "53c8124e4273de1af700005d",
-   "created_at": "2014-07-17 19:14:14",
-   "a": {
-    "headline": "She Got All The Fame For Her Amazing Journey, But She Wants You To Know She Didn't Do It Alone",
-    "ctr": 0.0030615084887280824,
-    "impressions": 3593
-   },
-   "b": {
-    "headline": "You May Already Know About Her Epic Swim From Cuba To Florida, But Do You Know What Happened After?",
-    "ctr": 0.010869565217391304,
-    "impressions": 3588
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-26-00005d",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses curiosity gap and a more intriguing question, which typically drives higher click-through rates on social media by prompting engagement. Headline A is more self-focused and less likely to spark immediate interest.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses emotional language like 'amazing journey' and 'didn't do it alone', which creates a sense of admiration and personal connection, likely appealing to a general US audience on Facebook. Headline B is more factual and less emotionally engaging, making it less likely to drive clicks.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.6316,
-    "b_tap": 0.5263,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 24,
-    "b_taps": 20,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "53bff270f8df0616600000ac",
-   "created_at": "2014-07-11 14:38:21",
-   "a": {
-    "headline": "Watch How Their Gay Rights Volunteers Make Other Volunteers Wish They Were These Volunteers",
-    "ctr": 0.01639344262295082,
-    "impressions": 3477
-   },
-   "b": {
-    "headline": "Why Does It Take A Million People To Show That There’s No Fight In L.O.V.E.?",
-    "ctr": 0.006438396254023998,
-    "impressions": 3417
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-27-0000ac",
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a relatable, emotional contrast ('Wish They Were These Volunteers') that sparks curiosity and empathy, making it more engaging for a general US audience on Facebook. Headline B is more abstract and less immediately compelling.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a relatable, emotional narrative about personal transformation and social issues, which tends to generate higher engagement on Facebook. Headline B is more abstract and less immediately compelling, making it less likely to drive clicks.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3846,
-    "b_tap": 0.5385,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 15,
-    "b_taps": 21,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "53ea19e7bf31227b8c000016",
-   "created_at": "2014-08-12 14:10:37",
-   "a": {
-    "headline": "An Important Message For The Depressed",
-    "ctr": 0.007625826131164209,
-    "impressions": 1967
-   },
-   "b": {
-    "headline": "In Response To Robin William's Death, This Guy Sent This Powerful Message Out To The World",
-    "ctr": 0.022524882137244632,
-    "impressions": 1909
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-28-000016",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B is more specific, emotionally charged, and includes a real person (Robin Williams) and a dramatic event, which typically generates higher engagement on Facebook compared to a more generic or less vivid headline like A.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "The headline B is more emotionally charged and specific, involving a real person (Robin Williams) and a dramatic event, which typically generates higher curiosity and engagement among a general US audience on Facebook. Headline A is vague and less compelling.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2308,
-    "b_tap": 0.4103,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 9,
-    "b_taps": 16,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "5390b09bbe300632ee000010",
-   "created_at": "2014-06-05 19:08:07",
-   "a": {
-    "headline": "Creams, Lotions And Potions —Maintaining A Vagina Should NOT Be This Intense",
-    "ctr": 0.018301982714794104,
-    "impressions": 3934
-   },
-   "b": {
-    "headline": "Wow, I Didn’t Realize That My Vagina Had A Shelf Life Until Now ... ?",
-    "ctr": 0.03457920162725655,
-    "impressions": 3933
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-29-000010",
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses a more relatable, curiosity-driven question that sparks intrigue and personal relevance, likely generating higher engagement on Facebook among a general US audience.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses curiosity and a relatable, slightly humorous tone that is more likely to generate clicks from a general US audience on Facebook, especially given the personal and taboo subject matter. Headline A is more sensational and potentially polarizing, which may reduce engagement or be perceived as clickbait.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.5,
-    "b_tap": 0.3421,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 19,
-    "b_taps": 13,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "51436081220cb8000200097d",
-   "created_at": "2013-02-26 21:48:16",
-   "a": {
-    "headline": "College-Age Republicans And Democrats Aren't Fighting Over Everything?",
-    "ctr": 0.010192937750273025,
-    "impressions": 2747
-   },
-   "b": {
-    "headline": "College-Age Republicans Don't Seem Much Like Regular Republicans",
-    "ctr": 0.02132435465768799,
-    "impressions": 2673
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-30-00097d",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A is more curiosity-driven and inclusive, appealing to a broader audience by suggesting a surprising unity among college-age Republicans and Democrats, which is more likely to generate clicks than the more niche or potentially divisive tone of B.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "A is more curiosity-driven and inclusive, appealing to a broader audience by suggesting a lack of conflict among young Republicans and Democrats, which is more engaging than B's more specific and potentially divisive comparison.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3889,
-    "b_tap": 0.3333,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 14,
-    "b_taps": 12,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "545a68b8a09e023493000079",
-   "created_at": "2014-11-05 18:13:59",
-   "a": {
-    "headline": "Not-Straight People Get The Treatment They Deserve At Church",
-    "ctr": 0.014758937356510331,
-    "impressions": 3049
-   },
-   "b": {
-    "headline": "Here's A Church That Treats Not-Straight People The Way They Deserve",
-    "ctr": 0.005817711700064641,
-    "impressions": 3094
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-31-000079",
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more positive and less confrontational, which tends to generate higher engagement from a general US audience on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more neutral and less confrontational, which is more likely to be shared and clicked by a general US audience on Facebook. Headline A uses polarizing language ('Not-Straight People') that may provoke backlash or be perceived as biased, reducing its appeal.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4103,
-    "b_tap": 0.3333,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 16,
-    "b_taps": 13,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "53e516736286023422000014",
-   "created_at": "2014-08-08 18:27:41",
-   "a": {
-    "headline": "Whether Or Not To Have Children Is 100% Your Business And Nobody Else's",
-    "ctr": 0.005703422053231939,
-    "impressions": 2630
-   },
-   "b": {
-    "headline": "A Perfectly Reasonable Request For People To Stop Talking About Women's 'Maternal Instincts'",
-    "ctr": 0.012790697674418604,
-    "impressions": 2580
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-32-000014",
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A is more provocative and controversial, which tends to generate higher engagement and clicks from a general US audience on Facebook due to its strong emotional appeal and debate-worthy nature.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a provocative, personal framing that sparks curiosity and debate, which tends to generate higher engagement on social media. Headline B is more abstract and less emotionally charged, likely resulting in lower click-through rates.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4324,
-    "b_tap": 0.3784,
-    "a_n": 37,
-    "b_n": 37,
-    "a_taps": 16,
-    "b_taps": 14,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "54b7276a6565620016180000",
-   "created_at": "2015-01-15 04:52:07",
-   "a": {
-    "headline": "The People In This Video Will Realize You're Watching Them. How Will You React?",
-    "ctr": 0.012436224489795918,
-    "impressions": 3136
-   },
-   "b": {
-    "headline": "They Deserve The Same Basic, Fundamental Right Everyone Has: Love",
-    "ctr": 0.004154682007031001,
-    "impressions": 3129
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-33-180000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses curiosity and self-awareness, which typically drives higher engagement on social media platforms like Facebook, whereas Headline B is more abstract and less likely to provoke immediate emotional reaction or clicks.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses curiosity and social interaction, which typically drives higher engagement on social media platforms like Facebook, whereas Headline B is more abstract and less likely to provoke immediate emotional reaction or sharing.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3611,
-    "b_tap": 0.3333,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 13,
-    "b_taps": 12,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "546ff5410e78bdd64600000f",
-   "created_at": "2014-11-22 02:58:21",
-   "a": {
-    "headline": "A Reading Of 'Dinner With Monoliths' By Joseph Lamour",
-    "ctr": 0.001949317738791423,
-    "impressions": 3078
-   },
-   "b": {
-    "headline": "How It Feels To Make The Parents Who Love You More Uncomfortable Than They've Ever Been Before",
-    "ctr": 0.00999000999000999,
-    "impressions": 3003
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-34-00000f",
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses emotionally charged language that evokes strong reactions, which typically drives higher engagement on social media platforms like Facebook. Headline A is more obscure and less likely to resonate with a general audience.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses emotionally charged language and a personal, relatable scenario that is more likely to provoke curiosity and clicks in a general US audience on Facebook, whereas A is more niche and abstract.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3846,
-    "b_tap": 0.3333,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 15,
-    "b_taps": 13,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "540006e5bd37b6e551000030",
-   "created_at": "2014-08-29 04:53:40",
-   "a": {
-    "headline": "This Kid's Chilling Personification Of Depression Explains Everything",
-    "ctr": 0.01451378809869376,
-    "impressions": 4134
-   },
-   "b": {
-    "headline": "This Haunting Personification Of Depression Explains Everything",
-    "ctr": 0.007780209093119377,
-    "impressions": 4113
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-35-000030",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "The word 'Chilling' is more emotionally charged and vivid than 'Haunting', likely increasing curiosity and engagement among a general US audience.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "The word 'Chilling' is more emotionally evocative and attention-grabbing than 'Haunting' for a general US audience, likely increasing curiosity and clicks on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3333,
-    "b_tap": 0.3611,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 12,
-    "b_taps": 13,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "548f98923834330012090000",
-   "created_at": "2014-12-16 04:45:46",
-   "a": {
-    "headline": "Vaginas And Sharks Have Something In Common? Can't Say I Saw That Coming.",
-    "ctr": 0.01066477070742979,
-    "impressions": 2813
-   },
-   "b": {
-    "headline": "10 Things You Probably Didn't Know About Vaginas",
-    "ctr": 0.0390961262553802,
-    "impressions": 2788
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-36-090000",
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B is more curiosity-driven and less sensational, which tends to perform better with a general US audience on Facebook by avoiding shock value while still being engaging.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B is more curiosity-driven and less sensational, which tends to perform better with a general US audience on Facebook by avoiding shock value and focusing on informative content.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.5556,
-    "b_tap": 0.5556,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 20,
-    "b_taps": 20,
-    "pick": "tie",
-    "correct": 0.5
-   }
-  },
-  {
-   "test_id": "5447f567cdf193ffc1000089",
-   "created_at": "2014-10-22 18:22:48",
-   "a": {
-    "headline": "A Female Journalist Has A Priceless Reply To Comments That Are Definitely Not 'Newsy'",
-    "ctr": 0.0045871559633027525,
-    "impressions": 3052
-   },
-   "b": {
-    "headline": "A Female News Anchor Has A Priceless Reply To Comments That Would Never Be Made About A Male Anchor",
-    "ctr": 0.013444302176696543,
-    "impressions": 3124
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-37-000089",
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses gender contrast and implies a more provocative or surprising reaction, which tends to generate higher engagement on social media, especially among a general US audience on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a relatable, gender-specific scenario that is less likely to trigger negative bias or controversy, making it more appealing to a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3429,
-    "b_tap": 0.3714,
-    "a_n": 35,
-    "b_n": 35,
-    "a_taps": 12,
-    "b_taps": 13,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "5485bf3f38316100181a0000",
-   "created_at": "2014-12-08 18:30:13",
-   "a": {
-    "headline": "Country Music Is Actually Pretty Progressive, And These 11 Moments In 2014 Prove It",
-    "ctr": 0.01075565361279647,
-    "impressions": 3626
-   },
-   "b": {
-    "headline": "11 Best Moments Of Country Music Making Progress In 2014",
-    "ctr": 0.00507311250373023,
-    "impressions": 3351
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-38-1a0000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A is more intriguing and uses a question-like structure that sparks curiosity, which typically drives higher click-through rates on social media platforms like Facebook. It also includes a specific time frame (2014) and a list of moments, making it more engaging than the more generic phrasing of B.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A is more intriguing and uses a stronger hook with 'Actually Progressive' and '11 Moments In 2014 Prove It', which creates curiosity and a sense of revelation, likely driving more clicks from a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4412,
-    "b_tap": 0.3235,
-    "a_n": 34,
-    "b_n": 34,
-    "a_taps": 15,
-    "b_taps": 11,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "544fdbcf64ab56ad04000068",
-   "created_at": "2014-10-28 18:18:45",
-   "a": {
-    "headline": "Politicians Are Making It Harder For This Group To Vote. 3 Words. Rhymes With 'Bleeple Of Blolor.'",
-    "ctr": 0.003991020204539786,
-    "impressions": 4009
-   },
-   "b": {
-    "headline": "'Can I See Some ID?' Is A Totally Reasonable Question, Except In 1 Situation",
-    "ctr": 0.022732828159374236,
-    "impressions": 4091
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-39-000068",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A is more concise, uses a rhyme, and creates a sense of urgency and controversy, which tends to perform better in click-through rates on Facebook for a general US audience.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "The headline A uses a rhyme and a memorable phrase that stands out, making it more engaging and shareable on Facebook, which tends to favor creative, attention-grabbing content over more complex or less punchy phrasing.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3611,
-    "b_tap": 0.6111,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 13,
-    "b_taps": 22,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "5367bda621525a2933000084",
-   "created_at": "2014-05-05 16:54:17",
-   "a": {
-    "headline": "How Bullets United These HIV Positive Women And Gave Them Fair Wage Jobs",
-    "ctr": 0.006222547584187409,
-    "impressions": 2732
-   },
-   "b": {
-    "headline": "10 Women + 42 Bullets + 14 Hours = Something Beautiful",
-    "ctr": 0.019700839109813937,
-    "impressions": 2741
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-40-000084",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "The headline A uses a clear, human-centered story about fair wages and dignity, which is more relatable and emotionally resonant for a general US audience. Headline B is more abstract and uses numbers in a way that may seem gimmicky or less meaningful, potentially reducing engagement.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses a more intriguing and visually evocative phrase with numbers and a poetic structure, which tends to generate higher curiosity and engagement among a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4286,
-    "b_tap": 0.4286,
-    "a_n": 35,
-    "b_n": 35,
-    "a_taps": 15,
-    "b_taps": 15,
-    "pick": "tie",
-    "correct": 0.5
-   }
-  },
-  {
-   "test_id": "536bb7a7c02b17e9880000ac",
-   "created_at": "2014-05-08 17:07:03",
-   "a": {
-    "headline": "Her Girlfriend Never Tells Her How Her Day Went. It's Hard Enough Without Reliving Daily Tragedy.",
-    "ctr": 0.03344343517753923,
-    "impressions": 2422
-   },
-   "b": {
-    "headline": "Her Girlfriend Never Tells Her How Her Day Went. You Wouldn't Either If You Saw What She Did.",
-    "ctr": 0.05343213728549142,
-    "impressions": 2564
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-41-0000ac",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A is more intriguing and emotionally engaging, using a rhetorical question that invites curiosity about the girlfriend's day, which is more likely to generate clicks from a general audience.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A is more emotionally evocative and uses a stronger contrast, making it more likely to generate curiosity and clicks from a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3684,
-    "b_tap": 0.2632,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 14,
-    "b_taps": 10,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "548768a63031360961020000",
-   "created_at": "2014-12-09 21:30:13",
-   "a": {
-    "headline": "It Doesn't Take Much To Make Someone Cry. Tears Of Joy Are Trickier.",
-    "ctr": 0.003672719853091206,
-    "impressions": 4901
-   },
-   "b": {
-    "headline": "Some People Came Out With A Cool New Kind Of Poster. When You Hang It, People Cry From Happiness.",
-    "ctr": 0.00851063829787234,
-    "impressions": 4935
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-42-020000",
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a more universal and emotionally resonant phrase 'Tears Of Joy' which is likely to be more intriguing and shareable among a general US audience on Facebook, while B's 'Poster' and 'Happiness' are less commonly used and may not generate as much curiosity or emotional response.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses more emotionally charged and relatable language ('Tears Of Joy Are Trickier') that evokes curiosity and emotional response, which typically drives higher engagement on social media platforms like Facebook. Headline B is more abstract and less directly engaging.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3333,
-    "b_tap": 0.5641,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 13,
-    "b_taps": 22,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "549832ea663661001e4c0000",
-   "created_at": "2014-12-22 15:37:32",
-   "a": {
-    "headline": "Ever Wonder What Really Happens To That Water Bottle After You Recycle It? Here's The Truth.",
-    "ctr": 0.015535827520608751,
-    "impressions": 3154
-   },
-   "b": {
-    "headline": "Tired Of Hearing About Depressing Climate Change? Here's 1 Super Easy Way To Make A Big Difference.",
-    "ctr": 0.004289013526888816,
-    "impressions": 3031
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-43-4c0000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses curiosity and a specific, tangible question about recycling, which tends to generate higher engagement on Facebook due to its intrigue and relevance to everyday actions. Headline B is more abstract and focuses on climate change, which may be less immediately relatable or actionable for a general audience.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses curiosity and a relatable everyday scenario (recycling a water bottle), which typically generates higher engagement on Facebook. Headline B focuses on climate change, which may be less emotionally resonant or actionable for a general audience, leading to lower click-through rates.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3077,
-    "b_tap": 0.4359,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 12,
-    "b_taps": 17,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "53da9ad331693d3a3500001d",
-   "created_at": "2014-07-31 19:37:22",
-   "a": {
-    "headline": "These 3 Posters About Sexual Assault Are Worth The Share",
-    "ctr": 0.012293507491356128,
-    "impressions": 2603
-   },
-   "b": {
-    "headline": "3 Posters About Rape Culture That Are Totally Worth Sharing",
-    "ctr": 0.024576954069298954,
-    "impressions": 2482
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-44-00001d",
-   "single_crowd": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses stronger, more emotionally charged language ('Totally Worth Sharing') and avoids the potentially triggering term 'Sexual Assault', which may reduce clicks from a general audience. It also frames the content as a cultural discussion rather than a graphic subject, making it more palatable for broader Facebook engagement.",
-    "failed": false
-   },
-   "single_reason": {
-    "pick": "B",
-    "correct": 1,
-    "reason": "Headline B uses stronger, more emotionally charged language ('Totally Worth Sharing') and avoids the potentially triggering term 'Sexual Assault', which may reduce clicks from a general audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4,
-    "b_tap": 0.4857,
-    "a_n": 35,
-    "b_n": 35,
-    "a_taps": 14,
-    "b_taps": 17,
-    "pick": "B",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "52fd2421d624103664000055",
-   "created_at": "2014-02-13 19:59:56",
-   "a": {
-    "headline": "What Happens To Some Kids When They Go To Work In This Famous Industry Is Awful",
-    "ctr": 0.02384464110127827,
-    "impressions": 4068
-   },
-   "b": {
-    "headline": "When You Think ‘Fashion Model,’ You Might Think Privilege And Glamour. But They Can Be Victims, Too.",
-    "ctr": 0.015809284818067756,
-    "impressions": 3985
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-45-000055",
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more emotionally engaging and socially relevant, likely to generate higher clicks from a general US audience on Facebook due to its focus on fashion model privilege and victimhood, which taps into current cultural conversations.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more emotionally engaging and relevant to a broader audience, leveraging social awareness of privilege and glamour, which tends to drive higher click-through rates on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3889,
-    "b_tap": 0.4444,
-    "a_n": 36,
-    "b_n": 36,
-    "a_taps": 14,
-    "b_taps": 16,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "540088475c360384ce000050",
-   "created_at": "2014-08-29 14:03:51",
-   "a": {
-    "headline": "I Hope You Like S'mores Because The U.S. Is Turning Into A Giant Bonfire",
-    "ctr": 0.0013042060645582002,
-    "impressions": 3067
-   },
-   "b": {
-    "headline": "It's The End Of The World As We Know. OK, It's Not. But Watching This Made That Song Come To Mind.",
-    "ctr": 0.007640878701050621,
-    "impressions": 3141
-   },
-   "real_winner": "B",
-   "run_id": "bt-261027045944-46-000050",
-   "single_reason": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a vivid, relatable metaphor (s'mores and bonfire) that evokes curiosity and emotional engagement, making it more likely to intrigue a general US audience on Facebook. Headline B is more abstract and less immediately understandable, reducing its appeal.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 0,
-    "reason": "Headline A uses a vivid, relatable metaphor (s'mores and bonfire) that evokes curiosity and emotional engagement, making it more likely to intrigue a general US audience on Facebook. Headline B is vague and relies on a song reference, which may not resonate as strongly with a broad audience.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3429,
-    "b_tap": 0.3143,
-    "a_n": 35,
-    "b_n": 35,
-    "a_taps": 12,
-    "b_taps": 11,
-    "pick": "A",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "549444f23732320024420000",
-   "created_at": "2014-12-19 15:43:26",
-   "a": {
-    "headline": "Everybody Does It Around The Holidays. Here's Why Everyone Should Stop.",
-    "ctr": 0.012186865267433988,
-    "impressions": 2954
-   },
-   "b": {
-    "headline": "Some LOL And A Whole Lot Of Truth About All Of Those Stupid Holiday Jokes",
-    "ctr": 0.004287598944591029,
-    "impressions": 3032
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-47-420000",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a clear, curiosity-driven question that appeals to a broad audience by suggesting a surprising reason to stop a common behavior, which is more likely to generate clicks than the more sarcastic and less structured headline B.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses more provocative, emotionally charged language ('stupid holiday jokes') that is likely to generate curiosity and controversy, leading to higher click-through rates among a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.2105,
-    "b_tap": 0.2895,
-    "a_n": 38,
-    "b_n": 38,
-    "a_taps": 8,
-    "b_taps": 11,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "546a68186f06eeb606000053",
-   "created_at": "2014-11-17 21:26:48",
-   "a": {
-    "headline": "When The Holidays Become All About Spending Money, Some People Push Back",
-    "ctr": 0.011795543905635648,
-    "impressions": 3052
-   },
-   "b": {
-    "headline": "How To Take Back Thanksgiving Weekend And Actually Enjoy It",
-    "ctr": 0.004588659455916093,
-    "impressions": 3051
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-48-000053",
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B is more positive, solution-oriented, and emotionally engaging, which tends to perform better in terms of clicks for a general US audience on Facebook. It promises a benefit (enjoying Thanksgiving) rather than highlighting a problem, making it more appealing and less negative.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B focuses on a positive, personal benefit (enjoying Thanksgiving) which is more emotionally engaging and less polarizing than the spending-focused, potentially negative tone of A, making it more likely to attract clicks from a general US audience.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.1714,
-    "b_tap": 0.4,
-    "a_n": 35,
-    "b_n": 35,
-    "a_taps": 6,
-    "b_taps": 14,
-    "pick": "B",
-    "correct": 0
-   }
-  },
-  {
-   "test_id": "5418777d93f6337819000071",
-   "created_at": "2014-09-16 17:46:51",
-   "a": {
-    "headline": "I Was Ready To Be Offended By This 'Ray Rice Makeup Tutorial', Until She Put On Her Foundation",
-    "ctr": 0.021899736147757257,
-    "impressions": 3790
-   },
-   "b": {
-    "headline": "This Video Makes Some Important Points About Domestic Violence And Then Covers The Points In Makeup",
-    "ctr": 0.010821953104869879,
-    "impressions": 3881
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-49-000071",
-   "single_reason": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a strong emotional hook with a personal story and a controversial topic ('Ray Rice'), which is more likely to generate curiosity and clicks in a general US audience on Facebook. Headline B is more neutral and less attention-grabbing, focusing on makeup and domestic violence in a way that may not stand out as effectively.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "Headline A uses a sensational, emotionally charged scenario involving a potentially offensive makeup tutorial, which is more likely to generate curiosity and clicks among a general US audience on Facebook. Headline B is more neutral and informative, which may not provoke the same level of engagement.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.4412,
-    "b_tap": 0.4118,
-    "a_n": 34,
-    "b_n": 34,
-    "a_taps": 15,
-    "b_taps": 14,
-    "pick": "A",
-    "correct": 1
-   }
-  },
-  {
-   "test_id": "5458da6604bb8e70ec000010",
-   "created_at": "2014-11-04 13:53:58",
-   "a": {
-    "headline": "A Bunch Of People Out There Are *Not* Washing Their Hands, And This Is Why",
-    "ctr": 0.01741608613046232,
-    "impressions": 3158
-   },
-   "b": {
-    "headline": "It's Such An Easy Way To Keep Kids Alive, You've Probably Already Done It For Yourself Today",
-    "ctr": 0.00688360450563204,
-    "impressions": 3196
-   },
-   "real_winner": "A",
-   "run_id": "bt-261027045944-50-000010",
-   "single_reason": {
-    "pick": "B",
-    "correct": 0,
-    "reason": "Headline B uses a positive, relatable message about helping kids, which is more emotionally engaging and less negative, likely resulting in higher click-through rates from a general US audience on Facebook.",
-    "failed": false
-   },
-   "single_crowd": {
-    "pick": "A",
-    "correct": 1,
-    "reason": "The headline A uses a more neutral, curiosity-driven tone that is less likely to trigger negative emotions or be perceived as clickbait, making it more suitable for a general US audience on Facebook.",
-    "failed": false
-   },
-   "crowd": {
-    "a_tap": 0.3846,
-    "b_tap": 0.359,
-    "a_n": 39,
-    "b_n": 39,
-    "a_taps": 15,
-    "b_taps": 14,
-    "pick": "A",
-    "correct": 1
-   }
-  }
- ],
- "served_by": {
-  "ollama-local:nemotron-3-nano:4b": 892
- },
- "wall_ms": 9241938
+  "wall_ms": 9241938
 }

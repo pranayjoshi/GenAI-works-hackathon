@@ -56,7 +56,7 @@ function waitDone(st: ReturnType<typeof startRun>): Promise<void> {
   });
 }
 
-function summarize(tests: TestResult[]) {
+export function summarize(tests: TestResult[]) {
   const col = <K extends 'crowd' | 'single_reason' | 'single_crowd'>(k: K) => tests.filter((t) => t[k]).map((t) => ({ id: t.test_id, v: t[k]!.correct }));
   const sc = (k: 'crowd' | 'single_reason' | 'single_crowd'): Score | null => { const c = col(k); return c.length ? score(c.map((x) => x.v)) : null; };
   const mc = (k: 'single_reason' | 'single_crowd') => {

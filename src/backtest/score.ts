@@ -30,9 +30,15 @@ export function binomTwoSided(k: number, m: number): number {
  * so b, c may be fractional. The p-value uses the exact binomial on round(b + c) trials with round(b) successes; the
  * rounding only matters when ties occur, and the raw b, c are reported.
  */
-export function mcnemar(x: number[], y: number[]): { b: number; c: number; p: number } {
-  let b = 0, c = 0;
-  for (let i = 0; i < Math.min(x.length, y.length); i++) { const d = x[i] - y[i]; if (d > 0) b += d; else if (d < 0) c += -d; }
-  const m = Math.round(b + c);
-  return { b, c, p: binomTwoSided(Math.min(m, Math.round(b)), m) };
+/**
+ * Exact McNemar on paired 0/1 outcomes. A pair where either side is a tie (0.5) is excluded rather than
+ * split, so the counts stay whole numbers and no rounding enters the p-value.
+ */
+export function mcnemar(x: number[], y: number[]): { b: number; c: number; p: number; excluded_ties: number } {
+  let b = 0, c = 0, excluded_ties = 0;
+  for (let i = 0; i < Math.min(x.length, y.length); i++) {
+    if (x[i] === 0.5 || y[i] === 0.5) { excluded_ties++; continue; }
+    if (x[i] > y[i]) b++; else if (x[i] < y[i]) c++;
+  }
+  return { b, c, p: binomTwoSided(Math.min(b, c), b + c), excluded_ties };
 }
