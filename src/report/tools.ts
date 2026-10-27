@@ -90,7 +90,9 @@ export async function crowdVsCensus(st: RunState): Promise<ToolResult> {
 /** Free SQL for the chat box: read-only, limited to this run's tables and the public sources. */
 export async function queryActions(st: RunState, sql: string): Promise<ToolResult> {
   const s = sql.trim().replace(/;+\s*$/, '');
-  if (!/^(select|with)\b/i.test(s) || /;|\b(insert|update|delete|drop|create|alter|attach|copy|pragma|install|load)\b/i.test(s)) throw new Error('Only a single read-only SELECT is allowed');
+  if (!/^(select|with)\b/i.test(s) || /;|\b(insert|update|delete|drop|create|alter|attach|detach|copy|export|import|pragma|install|load|set|call)\b/i.test(s)) throw new Error('Only a single read-only SELECT is allowed');
+  // no file or environment access from the chat box: DuckDB table functions and path literals are refused
+  if (/\b(read_\w+|glob|getenv|sniff_csv|parquet_\w+|duckdb_\w+|current_setting|httpfs)\b|'[^']*[\/\\.][^']*\.\w{1,5}'|'\/|'~/i.test(s)) throw new Error('File and environment access is not allowed in this box');
   const t = tableIds(st);
   const r = await query(s.replace(/\bactions\b(?!_)/g, t.actions).replace(/\bpersonas\b(?!_)/g, t.personas) + (/\blimit\b/i.test(s) ? '' : ' LIMIT 200'), 'query_actions');
   return { tool: 'query_actions', query_id: r.query_id, engine: r.engine, args: { sql: s }, rows: r.rows };

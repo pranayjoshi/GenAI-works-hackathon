@@ -37,12 +37,14 @@ export class WorldRunner {
   readonly worldId: string;
   private personas: Map<string, Persona>;
   private feeds = new Map<string, FeedItem[]>();
-  private memories = new Map<string, AgentMemory>();
+  readonly memories = new Map<string, AgentMemory>();
   private stance = new Map<string, number>();
   private intent = new Map<string, boolean>();
   private deciders = new Set<string>();
   private exposures = 0;
-  private records: ActionRecord[] = [];
+  readonly records: ActionRecord[] = [];
+  currentRound = -1;
+  private seen = new Map<string, number>(); // ad-related exposures per agent (first time vs repeat)
   private comments: { agent: string; text: string; round: number }[] = [];
   private timeline: WorldCounters[] = [];
   private carryovers: string[] = [];
@@ -63,7 +65,7 @@ export class WorldRunner {
     this.personas = new Map(base.personas.map((p) => [p.id, p]));
     for (const p of base.personas) {
       this.feeds.set(p.id, []);
-      this.memories.set(p.id, new AgentMemory(p.id, this.worldId, base.startMs));
+      this.memories.set(p.id, new AgentMemory(p.id, this.worldId, base.startMs, spec.hourStep));
       this.stance.set(p.id, 0);
     }
     this.events = [];
@@ -110,6 +112,7 @@ export class WorldRunner {
 
   private async round(r: number, carry: string): Promise<string> {
     const sched = this.base.schedule;
+    this.currentRound = r;
     // 1. deliver
     for (const [pid, sr] of sched.servedAt) if (sr === r) this.feeds.get(pid)!.push({ item_id: 'ad', kind: 'ad', delivered_round: r, via: null });
     for (const ev of this.liveEvents()) {
@@ -126,7 +129,7 @@ export class WorldRunner {
     const turns: AgentTurn[] = active.map((id) => {
       const visible = this.feeds.get(id)!.filter((it) => it.delivered_round <= r).slice(0, 3);
       const mem = this.memories.get(id)!;
-      return { persona: this.personas.get(id)!, items: visible, memories: mem.recall(`${this.post.business} post ${this.post.text}`, 3) };
+      return { persona: this.personas.get(id)!, items: visible, memories: mem.recall(`${this.post.business} post ${this.post.text}`, 3), seenBefore: this.seen.get(id) ?? 0 };
     });
     // 3. batched calls
     const batches: AgentTurn[][] = [];
@@ -163,9 +166,12 @@ export class WorldRunner {
           const prev = this.stance.get(p.id) ?? 0;
           const next = rnd(clamp(prev + p.susceptibility * (feeling / 2 - prev), -1, 1), 3);
           this.stance.set(p.id, next);
-          const wouldVisit = this.spec.mode === 'backtest' ? false : Boolean(d?.would_visit);
-          if (it.kind !== 'event' || this.deciders.has(p.id)) this.intent.set(p.id, wouldVisit);
-          if (it.kind !== 'event') { this.deciders.add(p.id); this.exposures++; }
+          // a defaulted (missing) decision keeps the person's earlier intent instead of resetting it to false
+          const prevIntent = this.intent.get(p.id) ?? false;
+          const wouldVisit = this.spec.mode === 'backtest' ? false : d ? Boolean(d.would_visit) : prevIntent;
+          // event items may change the intent of people who already decided on the post (e.g. a competitor's deal)
+          if (d && (it.kind !== 'event' || this.deciders.has(p.id))) this.intent.set(p.id, wouldVisit);
+          if (it.kind !== 'event') { this.deciders.add(p.id); this.exposures++; this.seen.set(p.id, (this.seen.get(p.id) ?? 0) + 1); }
 
           const what = it.kind === 'event' ? `saw news: "${it.text}"` : it.kind === 'share' ? `saw @${it.via} share ${this.post.business}'s post` : `saw ${this.post.business}'s sponsored post "${this.post.text.slice(0, 80)}"`;
           const memText = `${hl}: ${what}. I ${action.replace('_', ' ')}${text ? ` and wrote "${text}"` : ''}${unsaid ? ` (thought "${unsaid}" but kept it to myself)` : ''}. Felt ${feeling > 0 ? 'positive' : feeling < 0 ? 'negative' : 'neutral'}${d?.reason ? `: ${d.reason}` : ''}.`;
@@ -183,7 +189,7 @@ export class WorldRunner {
           if (action === 'comment' && text) this.comments.push({ agent: p.id, text, round: r });
           if (action === 'share') {
             for (const f of this.base.graph.followers.get(p.id) ?? []) {
-              deliveries.push({ from: p.id, to: f, item: { item_id: `sh_${p.id}_${r}`, kind: 'share', delivered_round: r + 1, via: p.id, caption: text } });
+              deliveries.push({ from: p.id, to: f, item: { item_id: `sh_${p.id}_${r}_${t.items.indexOf(it)}`, kind: 'share', delivered_round: r + 1, via: p.id, caption: text } });
             }
           }
         }

@@ -33,7 +33,9 @@ Make every voice different in rhythm and content.`;
     const user = `Context: ${context}\nPeople:\n${batch.map(describe).join('\n')}\n\nReturn {"voices":[{"id":..., "voice":...}]} with one entry per person.`;
     try {
       const r = await chat({ role: 'voice', system, user, schema: VoiceBatch, schemaName: 'VoiceBatch', tag, maxTokens: 60 * batch.length });
+      const inBatch = new Set(batch.map((p) => p.id));
       if (r.ok && r.data) for (const v of r.data.voices) {
+        if (!inBatch.has(v.id) || voices.has(v.id)) continue; // only this batch's people, first answer wins
         if (FORBIDDEN.test(v.voice)) { rejected++; continue; }
         voices.set(v.id, v.voice.trim());
       }

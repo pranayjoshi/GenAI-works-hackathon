@@ -11,10 +11,10 @@ export class AgentMemory {
   readonly hmem: HMEM;
   private lines: MemoryLine[] = [];
   private now = 0;
-  constructor(readonly agentId: string, readonly worldId: string, readonly startMs: number) {
+  constructor(readonly agentId: string, readonly worldId: string, readonly startMs: number, readonly hourStep = 1) {
     this.hmem = new HMEM({ clock: () => this.now, actor: agentId });
   }
-  setHour(round: number) { this.now = this.startMs + round * 3_600_000; }
+  setHour(round: number) { this.now = this.startMs + round * this.hourStep * 3_600_000; }
 
   private byHmemId = new Map<string, MemoryLine>();
 

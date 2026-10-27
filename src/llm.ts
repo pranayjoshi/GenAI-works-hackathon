@@ -90,14 +90,17 @@ function rec() {
     recDb.pragma('busy_timeout = 10000');
     try { recDb.pragma('journal_mode = WAL'); } catch { /* another process holds it; keep its mode */ }
     recDb.exec('CREATE TABLE IF NOT EXISTS llm (key TEXT PRIMARY KEY, role TEXT, provider TEXT, model TEXT, served_by TEXT, text TEXT, tokens_in INT, tokens_out INT, created TEXT)');
+    try { recDb.exec('ALTER TABLE llm ADD COLUMN repaired INT DEFAULT 0'); } catch { /* column exists */ }
   }
   return recDb;
 }
 const occurrences = new Map<string, number>();
+/** Identical prompts within one run are numbered #1, #2...; the counter is per run so a second replay starts at #1. */
 function recordKey(o: ChatOpts<unknown>) {
   const base = sha(JSON.stringify([o.role, o.system, o.user, o.schemaName ?? '', o.temperature ?? null]), 24);
-  const n = (occurrences.get(base) ?? 0) + 1;
-  occurrences.set(base, n);
+  const scope = `${(o.tag ?? 'misc').split(':')[0]}|${base}`;
+  const n = (occurrences.get(scope) ?? 0) + 1;
+  occurrences.set(scope, n);
   return `${base}#${n}`;
 }
 
@@ -261,7 +264,7 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
   if (replayRow) {
     const row = replayRow;
     if (o.role === 'crowd' && config.replayCrowdMs > 0) await sleep(config.replayCrowdMs);
-    const r = finish({ text: row.text, tokens_in: row.tokens_in, tokens_out: row.tokens_out, served_by: row.served_by, model: row.model, provider: 'replay' }, false);
+    const r = finish({ text: row.text, tokens_in: row.tokens_in, tokens_out: row.tokens_out, served_by: row.served_by, model: row.model, provider: 'replay' }, Boolean(row.repaired));
     trace({ ts: new Date().toISOString(), tag, role: o.role, provider: 'replay', model: row.model, served_by: `replay(${row.served_by})`, ms: 0, tokens_in: row.tokens_in, tokens_out: row.tokens_out, ok: r.ok, repaired: false });
     return r;
   }
@@ -293,7 +296,7 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
 
   if (config.record) {
     try {
-      rec().prepare('INSERT OR REPLACE INTO llm VALUES (?,?,?,?,?,?,?,?,?)').run(key, o.role, raw.provider, raw.model, raw.served_by, raw.text, tokensIn, tokensOut, new Date().toISOString());
+      rec().prepare('INSERT OR REPLACE INTO llm (key, role, provider, model, served_by, text, tokens_in, tokens_out, created, repaired) VALUES (?,?,?,?,?,?,?,?,?,?)').run(key, o.role, raw.provider, raw.model, raw.served_by, raw.text, tokensIn, tokensOut, new Date().toISOString(), result.repaired ? 1 : 0);
     } catch (e) { console.warn(`[llm] recording skipped: ${(e as Error).message}`); }
   }
   trace({ ts: new Date().toISOString(), tag, role: o.role, provider: raw.provider, model: raw.model, served_by: raw.served_by, ms: Date.now() - t0, tokens_in: tokensIn, tokens_out: tokensOut, ok: result.ok, repaired: result.repaired });

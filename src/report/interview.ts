@@ -43,7 +43,8 @@ If asked about something that is not in your memory (another ad, another version
 Never invent conversations, visits or purchases that are not in memory. Talk like a normal person, not a marketer. Do not mention numbers like "price sensitivity".`;
   const user = `YOUR MEMORY (things you saw and did):\n${memText}\n\n${history.length ? `Earlier in this interview:\n${history.map((h) => `Q: ${h.q}\nA: ${h.a}`).join('\n')}\n\n` : ''}Interviewer: ${question}`;
   const r = await chat({ role: 'interview', system, user, schema: Answer, schemaName: 'InterviewAnswer', tag: `${st.spec.run_id}:interview`, maxTokens: 350, temperature: 0.6 });
-  const data = r.data ?? { answer: r.text.slice(0, 500) || "Sorry, I don't really remember.", cited: [], saw_it: lines.length > 0 };
+  // an unvalidated reply is never shown in the agent's voice
+  const data = r.data ?? { answer: '(No grounded answer: the reply could not be validated against this person\'s memory. Try asking again.)', cited: [], saw_it: false };
   const valid = data.cited.filter((c) => alias.has(c));
   const invalid = data.cited.filter((c) => !alias.has(c));
   // H-MEM feedback: cited memories were helpful for answering
@@ -68,14 +69,18 @@ export async function askSegment(st: RunState, segment: string, question: string
   const [dim, val] = segment.split(':');
   const match = (p: Persona) => (dim === 'role' ? p.role === val : dim === 'age' ? p.age_band === val : dim === 'income' ? p.income_band === val : dim === 'customer' ? Boolean(p.customer) === (val === 'yes') : true);
   const recs = allRecords(st).filter((r) => r.item_kind !== 'event' && (!variant || r.variant === variant) && r.seed === st.spec.seeds[0]);
-  const byAgent = new Map<string, { world: string; vocal: boolean }>();
+  const rng = new Rng(`${st.spec.crowd_seed ?? st.spec.run_id}:${segment}:${question}`);
+  const byAgent = new Map<string, { worlds: Set<string>; vocal: boolean; world: string }>();
   for (const r of recs) {
     const p = st.personas.find((x) => x.id === r.agent_id);
     if (!p || !match(p)) continue;
-    const cur = byAgent.get(r.agent_id);
-    byAgent.set(r.agent_id, { world: r.world_id, vocal: Boolean(cur?.vocal || r.action === 'comment' || r.action === 'share' || r.unsaid) });
+    const cur = byAgent.get(r.agent_id) ?? { worlds: new Set<string>(), vocal: false, world: '' };
+    cur.worlds.add(r.world_id);
+    cur.vocal = cur.vocal || r.action === 'comment' || r.action === 'share' || Boolean(r.unsaid);
+    byAgent.set(r.agent_id, cur);
   }
-  const rng = new Rng(`${st.spec.run_id}:${segment}:${question}`);
+  // each person is interviewed in one of the worlds they acted in, chosen by the seeded rng (balanced A/B, replay-stable)
+  for (const [, v] of [...byAgent.entries()].sort(([a], [b]) => a.localeCompare(b))) v.world = rng.pick([...v.worlds].sort());
   const entries = rng.shuffle([...byAgent.entries()]);
   const chosen = [...entries.filter(([, v]) => v.vocal).slice(0, 3), ...entries.filter(([, v]) => !v.vocal)].slice(0, 6);
   const answers = await Promise.all(chosen.map(([id, v]) => interview(st, v.world, id, question).catch(() => null)));
@@ -86,7 +91,7 @@ export async function askSegment(st: RunState, segment: string, question: string
       role: 'reason',
       system: 'Summarize what a group of simulated people said, in 2-3 plain sentences. Name the common pattern and any disagreement. Do not add facts they did not say.',
       user: `Question: ${question}\nSegment: ${segment}\n${ok.map((a) => `${a.agent_id} (${a.world_id}): ${a.answer}`).join('\n')}`,
-      tag: `${st.spec.run_id}:segment`, maxTokens: 300, thinking: false,
+      tag: `${st.spec.run_id}:segment`, maxTokens: 300,
     });
     summary = s.text.trim();
   } catch { summary = ''; }
@@ -98,10 +103,12 @@ export async function focusGroup(st: RunState, opts: { size?: number; turns?: nu
   const size = Math.min(8, Math.max(3, opts.size ?? 6));
   const turns = Math.min(3, Math.max(1, opts.turns ?? 2));
   const seed = st.spec.seeds[0];
+  const rng = new Rng(`${st.spec.crowd_seed ?? st.spec.run_id}:focus:${opts.topic ?? ''}`);
+  const worldsOf = new Map<string, Set<string>>();
+  for (const r of allRecords(st)) if (r.seed === seed && r.item_kind !== 'event') { if (!worldsOf.has(r.agent_id)) worldsOf.set(r.agent_id, new Set()); worldsOf.get(r.agent_id)!.add(r.world_id); }
   const decided = new Map<string, string>();
-  for (const r of allRecords(st)) if (r.seed === seed && r.item_kind !== 'event' && !decided.has(r.agent_id)) decided.set(r.agent_id, r.world_id);
-  const rng = new Rng(`${st.spec.run_id}:focus:${opts.topic ?? ''}`);
-  const pool = rng.shuffle([...decided.keys()].map((id) => st.personas.find((p) => p.id === id)!).filter(Boolean));
+  for (const [id, ws] of [...worldsOf.entries()].sort(([a], [b]) => a.localeCompare(b))) decided.set(id, rng.pick([...ws].sort()));
+  const pool = rng.shuffle([...decided.keys()].sort().map((id) => st.personas.find((p) => p.id === id)!).filter(Boolean));
   const seats: Persona[] = [];
   const seen = new Set<string>();
   for (const p of pool) { const k = `${p.role}:${p.age_band}`; if (!seen.has(k)) { seats.push(p); seen.add(k); } if (seats.length >= size) break; }
@@ -125,11 +132,11 @@ You saw one version during the week (the one in your memory); the moderator is n
       say({ speaker: `${p.id} (${p.age}, ${p.role})`, text: r.text.replace(/^["\s]+|["\s]+$/g, '').slice(0, 400), agent_id: p.id });
     }
     if (t < turns - 1) {
-      const m = await chat({ role: 'reason', system: 'You are a focus-group moderator. Ask one short follow-up question that probes the main disagreement. One sentence.', user: transcript.slice(-seats.length).map((x) => `${x.speaker}: ${x.text}`).join('\n'), tag: `${st.spec.run_id}:focus`, maxTokens: 80, thinking: false });
+      const m = await chat({ role: 'reason', system: 'You are a focus-group moderator. Ask one short follow-up question that probes the main disagreement. One sentence.', user: transcript.slice(-seats.length).map((x) => `${x.speaker}: ${x.text}`).join('\n'), tag: `${st.spec.run_id}:focus`, maxTokens: 80 });
       say({ speaker: 'Moderator', text: m.text.trim() });
     }
   }
-  const wrap = await chat({ role: 'reason', system: 'Summarize this focus group in 2 sentences: where people agreed, where they split, and what would change minds. No new facts.', user: transcript.map((x) => `${x.speaker}: ${x.text}`).join('\n'), tag: `${st.spec.run_id}:focus`, maxTokens: 200, thinking: false });
+  const wrap = await chat({ role: 'reason', system: 'Summarize this focus group in 2 sentences: where people agreed, where they split, and what would change minds. No new facts.', user: transcript.map((x) => `${x.speaker}: ${x.text}`).join('\n'), tag: `${st.spec.run_id}:focus`, maxTokens: 200 });
   say({ speaker: 'Moderator summary', text: wrap.text.trim() });
   return { seats: seats.map((p) => p.id), transcript };
 }

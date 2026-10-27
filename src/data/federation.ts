@@ -144,7 +144,6 @@ export async function registerCsv(table: string, file: string, opts: { lightning
     try {
       await zetarisExec(`CREATE LIGHTNING DATABASE IF NOT EXISTS ${opts.lightningDb ?? db.toUpperCase()} DESCRIBE BY "Dry Run ${db}" OPTIONS ()`).catch(() => {});
       await zetarisExec(`CREATE LIGHTNING FILESTORE TABLE ${t} FROM ${opts.lightningDb ?? db.toUpperCase()} FORMAT CSV OPTIONS (path "${abs}", header "true", inferSchema "true")`);
-      return;
     } catch (e) { zetarisDown = true; console.warn(`[federation] Zetaris register failed: ${(e as Error).message}`); }
   }
   const c = await local();

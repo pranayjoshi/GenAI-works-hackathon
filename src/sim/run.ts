@@ -64,6 +64,7 @@ export interface RunState {
   recent: SimEvent[];
   abort: AbortController;
   usage?: ReturnType<typeof traceStats>;
+  live: WorldRunner[];   // runners of the seed in progress (interviews and records during a run)
   timing?: Record<string, number>;
 }
 
@@ -113,7 +114,7 @@ export function startRun(inp: RunInput, opts: StartOpts = {}): RunState {
   if (opts.parent) spec.parent_run = opts.parent;
   const st: RunState = {
     spec, status: 'queued', phase: 'queued', created: new Date().toISOString(), personas: [], worlds: [], summaries: [],
-    memories: new Map(), bus: new Bus(), recent: [], abort: new AbortController(),
+    memories: new Map(), bus: new Bus(), recent: [], abort: new AbortController(), live: [],
   };
   runs.set(spec.run_id, st);
   execute(st, inp, opts.crowd).catch((e) => {
@@ -182,12 +183,14 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
     const rng = new Rng(`${spec.crowd_seed ?? spec.run_id}:seed:${seed}`);
     const graph = buildGraph(st.personas, rng.fork('graph'));
     const schedule = buildSchedule(st.personas, rng.fork('schedule'), spec.rounds, spec.startHour, spec.hourStep);
-    const base = buildBase(seed, st.personas, graph, schedule, startMs);
+    const base = buildBase(seed, st.personas, graph, schedule, startMs, spec.hourStep);
     const worlds = await Promise.all(spec.posts.map((post) => SimWorld.fork(`s${seed}:${post.variant}`, base, post)));
     const shapes = Object.fromEntries(worlds.map((w) => [w.worldId, w.baseShape]));
     st.fairness.push({ seed, fingerprint: base.fingerprint, base_shapes: shapes, identical: new Set(Object.values(shapes)).size === 1 });
     phase(st, 'running', `Seed ${seed} of ${spec.seeds.length}: ${spec.rounds} rounds, ${st.personas.length} people per world`);
-    const res = await Promise.all(worlds.map((w, i) => new WorldRunner(spec, base, w, spec.posts[i], (e) => push(st, e), () => spec.events, st.abort.signal).run()));
+    const runners = worlds.map((w, i) => new WorldRunner(spec, base, w, spec.posts[i], (e) => push(st, e), () => spec.events, st.abort.signal));
+    st.live = runners;
+    const res = await Promise.all(runners.map((r) => r.run()));
     results.push(...res);
     for (const r of res) {
       const m = new Map<string, MemoryLine[]>();
@@ -199,6 +202,7 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   st.status = 'analyzing';
   phase(st, 'analyzing', 'Computing verdict, segments and validity panel');
   st.worlds = results.map(({ memories, ...rest }) => rest);
+  st.live = [];
   st.summaries = results.map((r) => summarizeWorld(r.world_id, r.variant, r.seed, r.records, r.stance, r.intent, st.personas));
   const vs = [spec.posts[0].variant, spec.posts[1].variant] as [string, string];
   st.verdict = verdict(st.summaries, vs, spec.mode === 'backtest' ? 'tap_rate' : 'intent_rate', spec.mode === 'backtest' ? 'click-through' : 'intent to visit');
@@ -228,8 +232,15 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   push(st, { type: 'done', run_id: spec.run_id });
 }
 
+/**
+ * Twin fairness: worlds run unsynchronised, so an event must land on a round that no world of the current seed
+ * has started yet. The requested round is bumped past the furthest world; if the run is too far along, it is refused.
+ */
 export function injectEvent(st: RunState, ev: { round: number; text: string; target?: 'all' | 'core' | 'spillover' }): InjectedEvent {
-  const e: InjectedEvent = { id: `ev_${st.spec.events.length + 1}`, round: ev.round, text: ev.text, target: ev.target ?? 'all', author: 'user' };
+  const furthest = Math.max(-1, ...st.live.map((r) => r.currentRound));
+  const round = Math.max(ev.round, furthest + 1);
+  if (st.status === 'done' || st.status === 'error' || round > st.spec.rounds - 1) throw Object.assign(new Error('Too late in the run for an event to reach both worlds.'), { statusCode: 409 });
+  const e: InjectedEvent = { id: `ev_${st.spec.events.length + 1}`, round, text: ev.text, target: ev.target ?? 'all', author: 'user' };
   st.spec.events.push(e);
   push(st, { type: 'event_injected', run_id: st.spec.run_id, event: e });
   return e;
@@ -237,7 +248,9 @@ export function injectEvent(st: RunState, ev: { round: number; text: string; tar
 
 // ------------------------------------------------------------------ persistence
 export function runDir(id: string) { return path.join(config.paths.runs, id); }
-export function allRecords(st: RunState): ActionRecord[] { return st.worlds.flatMap((w) => w.records); }
+export function allRecords(st: RunState): ActionRecord[] {
+  return [...st.worlds.flatMap((w) => w.records), ...st.live.flatMap((r) => r.records)];
+}
 
 export function persist(st: RunState) {
   const dir = runDir(st.spec.run_id);
@@ -293,10 +306,10 @@ export async function loadRun(id: string): Promise<RunState | undefined> {
   if (!fs.existsSync(file)) return undefined;
   const db = new Database(file, { readonly: true });
   const meta = Object.fromEntries((db.prepare('SELECT key, value FROM meta').all() as any[]).map((r) => [r.key, JSON.parse(r.value)]));
-  const personas = (db.prepare('SELECT json FROM personas').all() as any[]).map((r) => JSON.parse(r.json));
+  const personas = (db.prepare('SELECT json FROM personas ORDER BY id').all() as any[]).map((r) => JSON.parse(r.json));
   const actions = (db.prepare('SELECT * FROM actions ORDER BY rowid').all() as any[]).map((r) => ({ ...r, would_visit: !!r.would_visit, repaired: !!r.repaired, memory_ids: JSON.parse(r.memory_ids) })) as ActionRecord[];
   const memories = new Map<string, Map<string, MemoryLine[]>>();
-  for (const r of db.prepare('SELECT * FROM memories ORDER BY hour').all() as any[]) {
+  for (const r of db.prepare('SELECT * FROM memories ORDER BY hour, rowid').all() as any[]) {
     if (!memories.has(r.world_id)) memories.set(r.world_id, new Map());
     const m = memories.get(r.world_id)!;
     if (!m.has(r.agent_id)) m.set(r.agent_id, []);
@@ -307,7 +320,7 @@ export async function loadRun(id: string): Promise<RunState | undefined> {
     spec: meta.spec, status: meta.status, phase: meta.phase, error: meta.error, created: meta.created, proposal: meta.proposal, sampleReport: meta.sampleReport,
     personas, worlds: (meta.worlds ?? []).map((w: any) => ({ ...w, records: actions.filter((a) => a.world_id === w.world_id) })),
     summaries: meta.summaries ?? [], verdict: meta.verdict, tipping: meta.tipping, validity: meta.validity, fairness: meta.fairness, report: meta.report,
-    usage: meta.usage, timing: meta.timing, memories, bus: new Bus(), recent: [], abort: new AbortController(),
+    usage: meta.usage, timing: meta.timing, memories, bus: new Bus(), recent: [], abort: new AbortController(), live: [],
   };
   if (st.status !== 'done' && st.status !== 'error') {
     if (st.verdict) st.status = 'done';
@@ -329,8 +342,10 @@ export function listRunsOnDisk() {
 
 /** Rebuild an agent's H-MEM from its stored lines (for interviews after a restart). */
 export function memoryFor(st: RunState, worldId: string, agentId: string): AgentMemory {
+  const live = st.live.find((r) => r.worldId === worldId)?.memories.get(agentId);
+  if (live) return live;
   const lines = st.memories.get(worldId)?.get(agentId) ?? [];
-  const mem = new AgentMemory(agentId, worldId, 0);
+  const mem = new AgentMemory(agentId, worldId, 0, st.spec.hourStep);
   for (const l of lines) mem.remember(l.hour, l.text, l.tags, l.id);
   return mem;
 }

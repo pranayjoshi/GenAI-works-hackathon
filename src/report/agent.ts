@@ -56,7 +56,10 @@ Rules:
 - This is a simulation of AI personas sampled from Census and Pew data, not real customers. Do not say "customers said"; say "simulated people" or "the crowd".
 - Write rates as percentages with one decimal (0.1234 -> 12.3%). Never invent prices, products or offers; only the ones in the two versions exist.
 - Plain, specific language. No hype.`;
-  const toolText = tools.map((t) => `### ${t.tool} ${JSON.stringify(t.args)} query_id=${t.query_id}\n${compact(t.rows)}`).join('\n\n');
+  // The model sees stable aliases (Q1..Qn), not run-specific query ids, so recorded calls replay; aliases map back below.
+  const alias = new Map(tools.map((t, i) => [`Q${i + 1}`, t.query_id]));
+  const toolText = tools.map((t, i) => `### ${t.tool} ${JSON.stringify(t.args)} query_id=Q${i + 1}\n${compact(t.rows)}`).join('\n\n');
+  const unalias = (rep: Report): Report => ({ ...rep, claims: rep.claims.map((c) => ({ ...c, query_ids: c.query_ids.map((q) => alias.get(q.trim()) ?? q) })) });
   const user = `Business: ${st.spec.business}. Goal: ${st.spec.goal}.
 Version ${va}: "${st.spec.posts[0].text}"
 Version ${vb}: "${st.spec.posts[1].text}"
@@ -73,7 +76,7 @@ ${toolText}`;
   try {
     const r = await chat({ role: 'reason', system, user, schema: ReportSchema, schemaName: 'Report', tag: st.spec.run_id, maxTokens: 1400 });
     served.push(r.served_by);
-    if (r.ok && r.data) report = r.data;
+    if (r.ok && r.data) report = unalias(r.data);
   } catch { /* fallback below */ }
   if (!report) { report = fallbackReport(st, tools, samples); fallback = true; }
 
@@ -84,18 +87,23 @@ ${toolText}`;
     for (const c of rep.claims) {
       if (!c.query_ids.length) issues.push(`Claim without a query_id: "${c.text}"`);
       for (const q of c.query_ids) if (!known.has(q)) issues.push(`Unknown query_id ${q} in "${c.text}"`);
-      const nums = (c.text.match(/\d+(\.\d+)?%/g) ?? []).map((x) => parseFloat(x));
-      const pool = c.query_ids.flatMap((q) => tools.find((t) => t.query_id === q)?.rows ?? []).flatMap((row) => Object.values(row).filter((x) => typeof x === 'number') as number[]);
-      const extra = [v.pooled.a, v.pooled.b, v.pooled.ci_half, v.pooled.diff, ...Object.values(v.secondary).flatMap((s) => [s.a, s.b])];
-      for (const n of nums) if (![...pool, ...extra].some((x) => Math.abs(x * 100 - n) < 0.6 || Math.abs(x - n) < 0.6)) issues.push(`Number ${n}% in "${c.text}" is not in its cited results`);
+      // percentages must match a fraction column (|x| <= 1) of the cited rows or a verdict value; counts must match an integer cell
+      const cells = c.query_ids.flatMap((q) => tools.find((t) => t.query_id === q)?.rows ?? []).flatMap((row) => Object.values(row).filter((x) => typeof x === 'number') as number[]);
+      const fractions = [...cells.filter((x) => Math.abs(x) <= 1), v.pooled.a, v.pooled.b, v.pooled.ci_half, Math.abs(v.pooled.diff), ...Object.values(v.secondary).flatMap((s) => [s.a, s.b])];
+      for (const m of c.text.match(/\d+(\.\d+)?%/g) ?? []) {
+        const n = parseFloat(m);
+        if (!fractions.some((x) => Math.abs(x * 100 - n) < 0.15)) issues.push(`Number ${m} in "${c.text}" is not in its cited results`);
+      }
+      const ints = new Set(cells.filter((x) => Number.isInteger(x)));
+      for (const m of c.text.replace(/\d+(\.\d+)?%/g, '').match(/\b\d{2,}\b/g) ?? []) if (!ints.has(Number(m))) issues.push(`Count ${m} in "${c.text}" is not in its cited results`);
     }
     for (const th of [...rep.objections, ...rep.likes]) for (const id of th.action_ids) if (!recById.has(id)) issues.push(`Quote ${id} is not an action in this run`);
     // prices and offers must exist in the posts; headline percentages must match the verdict
     const postText = st.spec.posts.map((p) => p.text).join(' ');
     for (const field of [rep.summary, rep.recommendation, rep.tipping_note, ...rep.claims.map((c) => c.text)]) {
-      for (const m of field.match(/\$\d+(\.\d+)?/g) ?? []) if (!postText.includes(m)) issues.push(`Price ${m} does not appear in either version: "${field.slice(0, 80)}"`);
+      for (const m of field.match(/\$\d+(\.\d+)?/g) ?? []) if (!postText.includes(m)) issues.push(`Price ${m} does not appear in either version: "${field}"`);
     }
-    for (const field of [rep.summary, rep.recommendation]) {
+    for (const field of [rep.summary, rep.recommendation, rep.tipping_note]) {
       for (const m of field.match(/\d+(\.\d+)?%/g) ?? []) {
         const n = parseFloat(m);
         const ok = [v.pooled.a, v.pooled.b, v.pooled.ci_half, Math.abs(v.pooled.diff), ...Object.values(v.secondary).flatMap((s) => [s.a, s.b]), ...v.segments.flatMap((s) => [s.a, s.b])].some((x) => Math.abs(x * 100 - n) < 0.6) || postText.includes(m);
@@ -112,7 +120,7 @@ ${toolText}`;
       const rv = await chat({
         role: 'review',
         system: 'You are the Report Critic. Reject claims that overstate certainty, treat simulated people as real customers, or state numbers that do not match the tool results. Be brief.',
-        user: `Report:\n${JSON.stringify(report)}\n\nVerdict: ${v.headline}\nTool results:\n${toolText.slice(0, 12000)}\n\nCode checks found: ${issues.join('; ') || 'none'}`,
+        user: `Report:\n${JSON.stringify({ ...report, claims: report.claims.map((c) => ({ ...c, query_ids: c.query_ids.map((q) => [...alias.entries()].find(([, id]) => id === q)?.[0] ?? q) })) })}\n\nVerdict: ${v.headline}\nTool results:\n${toolText.slice(0, 12000)}\n\nCode checks found: ${issues.join('; ') || 'none'}`,
         schema: CriticSchema, schemaName: 'Critic', tag: st.spec.run_id, maxTokens: 500,
       });
       served.push(rv.served_by);
@@ -120,9 +128,9 @@ ${toolText}`;
     } catch { /* critic unavailable; code checks still apply */ }
     if (issues.length || (modelReview && !modelReview.ok)) {
       try {
-        const r2 = await chat({ role: 'reason', system, user: `${user}\n\nYour previous report:\n${JSON.stringify(report)}\n\nThe critic rejected it:\n- ${[...issues, ...(modelReview?.issues ?? [])].join('\n- ')}\nFix every issue and return the full corrected report.`, schema: ReportSchema, schemaName: 'Report', tag: st.spec.run_id, maxTokens: 1400 });
+        const r2 = await chat({ role: 'reason', system, user: `${user}\n\nYour previous report:\n${JSON.stringify(report)}\n\nThe critic rejected it:\n- ${[...issues, ...(modelReview?.issues ?? [])].join('\n- ')}\nFix every issue and return the full corrected report.`.replace(/q_[0-9a-f]{8}_[0-9a-z]+/g, (id) => [...alias.entries()].find(([, v]) => v === id)?.[0] ?? id), schema: ReportSchema, schemaName: 'Report', tag: st.spec.run_id, maxTokens: 1400 });
         served.push(r2.served_by);
-        if (r2.ok && r2.data) { report = r2.data; revised = true; issues = codeIssues(report); }
+        if (r2.ok && r2.data) { report = unalias(r2.data); revised = true; issues = codeIssues(report); }
       } catch { /* keep first report with notes */ }
     }
   }
@@ -139,7 +147,7 @@ ${toolText}`;
   report.claims = report.claims.filter((c) => c.text.trim().length >= 25);
   // drop claims that still fail the code checks rather than show them
   report.claims = report.claims.filter((c) => !issues.some((i) => i.includes(`"${c.text}"`)));
-  if (issues.some((i) => i.includes('summary or recommendation') || (i.startsWith('Price') && (i.includes(report!.summary.slice(0, 60)) || i.includes(report!.recommendation.slice(0, 60)))))) {
+  if (issues.some((i) => i.includes('summary or recommendation') || (i.startsWith('Price') && (i.includes(report!.summary) || i.includes(report!.recommendation))))) {
     report.summary = v.headline;
     report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C before spending.';
   }

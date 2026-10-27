@@ -12,6 +12,7 @@ export interface AgentTurn {
   persona: Persona;
   items: FeedItem[];
   memories: MemoryLine[];
+  seenBefore: number;   // times this person already saw the post (directly or via a share)
 }
 
 export interface RenderCtx {
@@ -46,7 +47,7 @@ const SYSTEM_AB = (place: string, business: string) => `You simulate real Instag
 How to decide:
 - Ground every decision in the person's numbers and voice. High price sensitivity reacts to price; high ad skepticism distrusts hype, urgency and discounts; few minutes per day means little attention.
 - Most people scroll past sponsored posts. Engage only when the post genuinely fits the person. Hiding is for posts that annoy them.
-- Memories are things this person already saw or did; stay consistent with them (seeing the same ad again often annoys people).
+- Memories are things this person already saw or did; stay consistent with them. Only mention seeing the post before if the person has actually seen it before (seeing the same ad again often annoys people).
 - feeling: -2 strongly negative, 0 indifferent, +2 strongly positive about ${business} after seeing the item.
 - would_visit: true only if this person would realistically go to or buy from ${business} this week.
 - reason: private, first person, about the post's actual wording, under 14 words. Never quote the person's numbers.
@@ -62,8 +63,9 @@ const SYSTEM_BT = `You simulate real people browsing a social feed in the United
 
 export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: string): Promise<{ decisions: Map<string, CrowdDecision>; repaired: boolean; served_by: string }> {
   const blocks = turns.map((t) => {
+    const seen = t.seenBefore === 0 ? 'first time seeing this post' : `has seen this post ${t.seenBefore} time${t.seenBefore > 1 ? 's' : ''} before`;
     const mem = t.memories.length ? `\n  memories: ${t.memories.map((m) => m.text).join(' | ')}` : '';
-    return `${personaLine(t.persona)}${mem}\n  feed:\n${t.items.map((it) => renderItem(it, ctx, t.persona.id)).join('\n')}`;
+    return `${personaLine(t.persona)}\n  (${seen})${mem}\n  feed:\n${t.items.map((it) => renderItem(it, ctx, t.persona.id)).join('\n')}`;
   });
   const expected = turns.flatMap((t) => t.items.map((it) => `${t.persona.id}/${it.item_id}`));
   const user = `${ctx.hourLabel}. ${ctx.worldNote}\n\n${blocks.join('\n\n')}\n\nReturn exactly ${expected.length} decisions, one per KEY, using these keys: ${expected.join(', ')}.`;

@@ -21,12 +21,13 @@ export interface BaseWorld {
   schedule: Schedule;
   ops: Op[];
   startMs: number;
+  hourStep: number;
   fingerprint: string;   // hash of the base ops: identical for every fork of this seed
 }
 
 const iso = (ms: number) => new Date(ms).toISOString();
 
-export function buildBase(seed: number, personas: Persona[], graph: Graph, schedule: Schedule, startMs: number): BaseWorld {
+export function buildBase(seed: number, personas: Persona[], graph: Graph, schedule: Schedule, startMs: number, hourStep = 1): BaseWorld {
   const at = iso(startMs);
   const src = { kind: 'pipeline', by: 'dryrun-base', at };
   const ops: Op[] = [];
@@ -43,7 +44,7 @@ export function buildBase(seed: number, personas: Persona[], graph: Graph, sched
   };
   ops.push({ kind: 'fact', input: { about: `person:${personas[0].id}`, predicate: 'schedule_fingerprint', value: sha(JSON.stringify(sched), 32), source: src } });
   const fingerprint = sha(JSON.stringify(ops.map((o) => [o.kind, o.input.externalKey?.id ?? o.input.from ?? o.input.about, o.input.to ?? o.input.value ?? ''])), 32);
-  return { seed, personas, graph, schedule, ops, startMs, fingerprint };
+  return { seed, personas, graph, schedule, ops, startMs, hourStep, fingerprint };
 }
 
 export class SimWorld {
@@ -73,7 +74,7 @@ export class SimWorld {
     const at = iso(base.startMs);
     const postEntity = await w.wm.upsertEntity({ type: 'post', name: 'sponsored-post', attrs: { variant: post.variant, text: post.text, business: post.business }, source: { kind: 'manual', by: 'dryrun-user', at } });
     for (const [pid, round] of [...base.schedule.servedAt.entries()].sort()) {
-      w.pending.push(w.wm.assertFact({ about: w.idOf.get(pid)!, predicate: 'ad_served', value: { round, post: postEntity.id }, source: { kind: 'pipeline', by: 'ad-server', at: iso(base.startMs + round * 3_600_000) } }));
+      w.pending.push(w.wm.assertFact({ about: w.idOf.get(pid)!, predicate: 'ad_served', value: { round, post: postEntity.id }, source: { kind: 'pipeline', by: 'ad-server', at: iso(base.startMs + round * base.hourStep * 3_600_000) } }));
     }
     return w;
   }

@@ -142,6 +142,7 @@ app.post('/api/runs/:id/version-c/run', async (req) => {
   const wpost = parent.spec.posts.find((p) => p.variant === winner)!;
   const spec = specFromInput({ business: parent.spec.business, handle: parent.spec.handle, place: parent.spec.place, zip: parent.spec.zip, goal: parent.spec.goal, postA: wpost.text, postB: b.text, crowdSize: parent.spec.crowdSize, rounds: parent.spec.rounds, seeds: b.seeds ?? parent.spec.seeds.length, useCustomers: parent.spec.useCustomers });
   spec.posts = [{ ...wpost }, { ...wpost, variant: 'C', text: b.text, image: undefined }];
+  spec.crowd_seed = parent.spec.crowd_seed; // same crowd, same follower graph, same schedules as the parent run
   const st = startRun({} as RunInput, { parent: parent.spec.run_id, spec, crowd: { personas: parent.personas, proposal: parent.proposal, sampleReport: parent.sampleReport } });
   return { run_id: st.spec.run_id };
 });

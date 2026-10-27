@@ -66,11 +66,13 @@ export function verdict(summaries: WorldSummary[], variants: [string, string], m
     const A = get(seed, va).overall, B = get(seed, vb).overall;
     return { seed, a: A[metric], b: B[metric], na: A.n, nb: B.n, leader: A[metric] === B[metric] ? 'tie' : A[metric] > B[metric] ? va : vb };
   });
+  // Every seed reuses the same crowd, so seeds are repeat measurements of the same people, not new people.
+  // The rate is pooled across seeds; the effective n for the interval is the mean per-seed decider count.
   const pool = (v: string, f: (m: Metrics) => number) => {
     const ws = summaries.filter((s) => s.variant === v);
-    const n = ws.reduce((s, w) => s + w.overall.n, 0);
+    const total = ws.reduce((s, w) => s + w.overall.n, 0);
     const k = ws.reduce((s, w) => s + f(w.overall) * w.overall.n, 0);
-    return { p: n ? k / n : 0, n };
+    return { p: total ? k / total : 0, n: ws.length ? Math.round(total / ws.length) : 0 };
   };
   const A = pool(va, (m) => m[metric]), B = pool(vb, (m) => m[metric]);
   const diff = A.p - B.p;
@@ -88,9 +90,10 @@ export function verdict(summaries: WorldSummary[], variants: [string, string], m
   const segments = segKeys.map((key) => {
     const sa = summaries.filter((s) => s.variant === va).map((s) => s.segments[key]);
     const sb = summaries.filter((s) => s.variant === vb).map((s) => s.segments[key]);
-    const na = sa.reduce((s, m) => s + m.n, 0), nb = sb.reduce((s, m) => s + m.n, 0);
-    const a = na ? sa.reduce((s, m) => s + m[metric] * m.n, 0) / na : 0;
-    const b = nb ? sb.reduce((s, m) => s + m[metric] * m.n, 0) / nb : 0;
+    const ta = sa.reduce((s, m) => s + m.n, 0), tb = sb.reduce((s, m) => s + m.n, 0);
+    const a = ta ? sa.reduce((s, m) => s + m[metric] * m.n, 0) / ta : 0;
+    const b = tb ? sb.reduce((s, m) => s + m[metric] * m.n, 0) / tb : 0;
+    const na = sa.length ? Math.round(ta / sa.length) : 0, nb = sb.length ? Math.round(tb / sb.length) : 0;
     const half = z * Math.sqrt((a * (1 - a)) / Math.max(1, na) + (b * (1 - b)) / Math.max(1, nb));
     return { key, a: round(a, 4), b: round(b, 4), na, nb, prefers: a === b ? null : a > b ? va : vb, clear: Math.abs(a - b) > half && na >= 20 && nb >= 20 };
   });
