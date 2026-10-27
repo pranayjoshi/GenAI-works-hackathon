@@ -46,6 +46,8 @@ function ageRange(bands: string[]): { age_min: number; age_max: number } {
 }
 
 const PAUSED = 'PAUSED';
+/** Overall budget across all Graph calls, so Approve cannot hang for minutes. */
+const LAUNCH_DEADLINE_MS = 60_000;
 function assertPaused(body: Record<string, unknown>) {
   if ('status' in body && body.status !== PAUSED) throw new Error('Dry Run only creates paused Meta objects');
 }
@@ -94,13 +96,15 @@ export function metaPayloads(inp: MetaLaunchInput): { path: string; body: Record
   return out;
 }
 
-async function graphPost(p: string, body: Record<string, unknown>): Promise<string> {
+async function graphPost(p: string, body: Record<string, unknown>, deadline: number): Promise<string> {
+  const left = deadline - Date.now();
+  if (left < 1000) throw new Error(`Meta launch timed out after ${LAUNCH_DEADLINE_MS / 1000} s in total; anything created so far is paused`);
   const m = config.meta;
   assertPaused(body);
   const form = new URLSearchParams();
   for (const [k, v] of Object.entries(body)) form.set(k, typeof v === 'string' ? v : JSON.stringify(v));
   form.set('access_token', m.accessToken);
-  const res = await fetch(`${m.graphUrl}/${m.apiVersion}/${p}`, { method: 'POST', body: form, signal: AbortSignal.timeout(30_000) });
+  const res = await fetch(`${m.graphUrl}/${m.apiVersion}/${p}`, { method: 'POST', body: form, signal: AbortSignal.timeout(Math.min(30_000, left)) });
   const j = (await res.json().catch(() => ({}))) as { id?: string; error?: { message?: string; error_user_msg?: string; code?: number } };
   if (!res.ok || !j.id) {
     const msg = (j.error?.error_user_msg || j.error?.message || `HTTP ${res.status}`).replaceAll(m.accessToken, '[token]');
@@ -124,12 +128,13 @@ async function launchOnMetaInner(inp: MetaLaunchInput): Promise<MetaLaunchResult
   const ids: Record<string, string> = {};
   const fill = (x: unknown): unknown => (typeof x === 'string' && ids[x] ? ids[x] : Array.isArray(x) ? x.map(fill) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, fill(v)])) : x);
   let campaign_id: string | undefined;
+  const deadline = Date.now() + LAUNCH_DEADLINE_MS;
   try {
     let i = -1;
     for (const p of payloads) {
       const kind = p.path.split('/').pop();
       if (kind === 'adsets') i++;
-      const id = await graphPost(p.path, fill(p.body) as Record<string, unknown>);
+      const id = await graphPost(p.path, fill(p.body) as Record<string, unknown>, deadline);
       if (kind === 'campaigns') { campaign_id = id; ids.$campaign = id; }
       if (kind === 'adsets') { ad_sets[i].ad_set_id = id; ids[`$adset:${i}`] = id; }
       if (kind === 'adcreatives') { ad_sets[i].creative_id = id; ids[`$creative:${i}`] = id; }
@@ -150,5 +155,6 @@ function adsManagerUrl(campaignId: string) {
 export function launchInputFromDecision(d: Decision, business: string): MetaLaunchInput {
   const variants = d.plan.variants.filter((v) => v.text && !v.text.startsWith('('));
   if (!variants.length) throw Object.assign(new Error('The launch plan has no finished variant text yet'), { statusCode: 400 });
+  if (d.actions.some((x) => x.kind === 'launch_test') && new Set(variants.map((v) => v.text)).size < 2) throw Object.assign(new Error('A split test needs two different finished variants; Version C has not been drafted (or the Rewriter returned nothing). Draft Version C first.'), { statusCode: 400 });
   return { run_id: d.run_id, business, zip: d.plan.targeting.zip, age_bands: d.plan.targeting.age_bands, variants, days: 7 };
 }

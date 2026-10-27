@@ -13,6 +13,7 @@ const CALL = {
   cancel_ab: ['bad', 'Do not run the A/B test'],
   run_ab: ['warn', 'A real test is affordable'],
   launch_winner: ['good', 'Launch the winner'],
+  cant_size: ['warn', 'Cannot size the test'],
 };
 const pctStr = (x, d = 0) => (x == null ? '-' : `${(x * 100).toFixed(d)}%`);
 const variantVar = (v) => { const k = String(v || '').toLowerCase(); return k === 'a' || k === 'b' || k === 'c' ? `var(--${k})` : 'var(--accent)'; };
@@ -145,6 +146,7 @@ export default {
           h('button.btn.primary', { onclick: () => decide(a, 'approve', box) }, 'Approve'),
           h('button.btn', { onclick: () => decide(a, 'reject', box) }, 'Reject')));
       }
+      if (!auto && a.status === 'proposed' && a.result && a.result.ok === false) box.append(h('div.dc-act-done', metaResult(a.result), h('p.muted', 'The launch failed; nothing was marked approved. You can approve again to retry.')));
       if (auto && a.kind === 'simulate_variant' && a.status === 'proposed') {
         const b = h('button.btn.primary', { title: 'Runs a new simulation on the local model; it can take a while' }, 'Simulate C on the same crowd');
         b.onclick = () => simulate(d, b);
@@ -189,6 +191,10 @@ export default {
       if (!D) return mount(root, h('div.banner.bad', loadErr ? `Could not load the decision: ${loadErr}` : 'No decision yet.'),
         h('p'), h('button.btn', { onclick: load }, 'Try again'));
       const d = D, [cls, label] = CALL[d.call] || ['', d.call];
+      if (d.call === 'verification') {
+        return mount(root, h('header.dc-head', h('div.dc-eyebrow', 'Decision', h('span.chip.warn', 'Verification run'), h('span.muted', 'no spend decision on this run')),
+          h('h2.dc-headline', d.headline)), sec('Why', 'Reasons', null, h('ul.dc-reasons', (d.reasons || []).map((r) => h('li', r)))));
+      }
       mount(root,
         h('header.dc-head',
           h('div.dc-eyebrow', 'Decision', h('span.chip.' + cls, label), h('span.muted', 'no model call, computed from the finished run')),

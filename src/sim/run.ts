@@ -248,9 +248,19 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
     const t3 = Date.now();
     try {
       agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'handoff', target_agent: 'DecisionAgent', status: 'started', input_summary: 'verdict, report and audience size' });
-      st.decision = await buildDecision(st, { draft: true });
+      st.decision = await buildDecision(st, { draft: false });
       writeLaunchPlan(runDir(spec.run_id), st.decision);
+      persist(st);
     } catch (e) { console.warn(`[run] decision skipped: ${(e as Error).message}`); }
+    // the Version C draft is separate: a provider failure here must not drop the decision above
+    if (st.decision && !spec.parent_run && st.decision.call !== 'launch_winner') {
+      try {
+        st.decision = await buildDecision(st, { draft: true });
+        writeLaunchPlan(runDir(spec.run_id), st.decision);
+      } catch (e) {
+        agentLog({ run_id: spec.run_id, agent_name: 'VersionCWriter', action: 'draft_version_c', target_agent: 'DecisionAgent', status: 'error', output_summary: `draft failed, decision kept without Version C: ${(e as Error).message.slice(0, 160)}` });
+      }
+    }
     timing.decision_ms = Date.now() - t3;
     st.usage = traceStats(spec.run_id);
   }
