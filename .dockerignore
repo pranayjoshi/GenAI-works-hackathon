@@ -5,6 +5,9 @@ node_modules
 !.env.example
 runs/*
 !runs/.gitkeep
+# the saved demo runs the UI opens (600-person A vs B, and its Version C check)
+!runs/20261027-south-congress-coffe-e52a
+!runs/20261027-south-congress-coffe-344c
 logs/*
 data/raw
 data/cache/census_all.*
