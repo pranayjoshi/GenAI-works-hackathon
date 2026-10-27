@@ -8,6 +8,7 @@ import { chat } from '../llm.js';
 import { agentLog } from '../util/agentlog.js';
 import type { Persona } from '../schemas/persona.js';
 import type { MemoryLine } from '../memory/hmem.js';
+import { ENGAGED, type ActionRecord } from '../schemas/action.js';
 import { allRecords, memoryFor, type RunState } from '../sim/run.js';
 import { Rng } from '../util/core.js';
 
@@ -100,42 +101,97 @@ export async function askSegment(st: RunState, segment: string, question: string
   return { segment, question, answers: ok, summary };
 }
 
-/** Focus group: a moderator seats agents from different segments, shows both posts, runs a short discussion. */
+const REGULAR_RX = /\b(regular|my usual|the usual|as usual|as always|every (day|morning|week)|come here (all the time|often)|already (a )?(customer|come|go))\b/i;
+const words = (t: string) => t.toLowerCase().replace(/[^a-z0-9$%\s']/g, ' ').split(/\s+/).filter(Boolean);
+const grams = (t: string, n = 5) => { const w = words(t); const g = new Set<string>(); for (let i = 0; i + n <= w.length; i++) g.add(w.slice(i, i + n).join(' ')); return g; };
+
+/** Deterministic anti-repeat guard: shared 5-grams or the same opener as an earlier seat, and "regular" claims from non-customers. */
+export function focusIssue(text: string, earlier: string[], isCustomer: boolean): string | null {
+  if (!isCustomer && REGULAR_RX.test(text)) return 'regular-claim';
+  const g = grams(text);
+  const open = words(text).slice(0, 2).join(' ');
+  for (const e of earlier) {
+    if (open && open === words(e).slice(0, 2).join(' ')) return 'same-opener';
+    const eg = grams(e);
+    let hit = 0; for (const x of g) if (eg.has(x)) hit++;
+    if (hit >= 2 || (g.size && hit / g.size > 0.25)) return 'overlap';
+  }
+  return null;
+}
+
+const priceWord = (v: number) => (v >= 0.66 ? 'very price-conscious' : v >= 0.4 ? 'moderately price-conscious' : 'not very price-conscious');
+const skepWord = (v: number) => (v >= 0.66 ? 'quite skeptical of ads' : v >= 0.4 ? 'a bit skeptical of ads' : 'fairly open to ads');
+
+/** Focus group: a moderator seats agents with a spread of decisions, each answers from their own persona and memory. */
 export async function focusGroup(st: RunState, opts: { size?: number; turns?: number; topic?: string }, onTurn?: (t: { speaker: string; text: string; agent_id?: string }) => void) {
   const size = Math.min(8, Math.max(3, opts.size ?? 6));
   const turns = Math.min(3, Math.max(1, opts.turns ?? 2));
   const seed = st.spec.seeds[0];
   const rng = new Rng(`${st.spec.crowd_seed ?? st.spec.run_id}:focus:${opts.topic ?? ''}`);
+  // each person's own decision on the post they saw, in one world they acted in (seeded pick)
+  const byAgent = new Map<string, { world: string; recs: ActionRecord[] }>();
   const worldsOf = new Map<string, Set<string>>();
-  for (const r of allRecords(st)) if (r.seed === seed && r.item_kind !== 'event') { if (!worldsOf.has(r.agent_id)) worldsOf.set(r.agent_id, new Set()); worldsOf.get(r.agent_id)!.add(r.world_id); }
-  const decided = new Map<string, string>();
-  for (const [id, ws] of [...worldsOf.entries()].sort(([a], [b]) => a.localeCompare(b))) decided.set(id, rng.pick([...ws].sort()));
-  const pool = rng.shuffle([...decided.keys()].sort().map((id) => st.personas.find((p) => p.id === id)!).filter(Boolean));
+  const recs = allRecords(st).filter((r) => r.seed === seed && r.item_kind !== 'event');
+  for (const r of recs) { if (!worldsOf.has(r.agent_id)) worldsOf.set(r.agent_id, new Set()); worldsOf.get(r.agent_id)!.add(r.world_id); }
+  for (const [id, ws] of [...worldsOf.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const world = rng.pick([...ws].sort());
+    byAgent.set(id, { world, recs: recs.filter((r) => r.agent_id === id && r.world_id === world).sort((a, b) => a.hour - b.hour) });
+  }
+  const engagedOf = (id: string) => byAgent.get(id)!.recs.some((r) => r.would_visit || ENGAGED.has(r.action));
+  const keyOf = (p: Persona) => [`w:${byAgent.get(p.id)!.world.split(':').pop()}`, `r:${p.role}`, `e:${engagedOf(p.id)}`, `c:${Boolean(p.customer)}`];
+  const pool = rng.shuffle([...byAgent.keys()].sort().map((id) => st.personas.find((p) => p.id === id)!).filter(Boolean));
+  // greedy coverage: each next seat adds the most not-yet-seen (world, role, engaged, customer) values; ties keep shuffle order
   const seats: Persona[] = [];
-  const seen = new Set<string>();
-  for (const p of pool) { const k = `${p.role}:${p.age_band}`; if (!seen.has(k)) { seats.push(p); seen.add(k); } if (seats.length >= size) break; }
-  for (const p of pool) { if (seats.length >= size) break; if (!seats.includes(p)) seats.push(p); }
+  const covered = new Set<string>();
+  while (seats.length < size && seats.length < pool.length) {
+    let best: Persona | null = null, bestScore = -1;
+    for (const p of pool) { if (seats.includes(p)) continue; const sc = keyOf(p).filter((k) => !covered.has(k)).length + (engagedOf(p.id) === (seats.filter((x) => engagedOf(x.id)).length < Math.ceil(size / 2)) ? 2 : 0); if (sc > bestScore) { best = p; bestScore = sc; } }
+    seats.push(best!); keyOf(best!).forEach((k) => covered.add(k));
+  }
   const [A, B] = st.spec.posts;
   const transcript: { speaker: string; text: string; agent_id?: string }[] = [];
   const say = (t: { speaker: string; text: string; agent_id?: string }) => { transcript.push(t); onTurn?.(t); };
   const topic = opts.topic || `Which of these two posts from ${st.spec.business} would actually get you in the door, and why?`;
   say({ speaker: 'Moderator', text: `Thanks for coming. Here are two posts. A: "${A.text}" B: "${B.text}". ${topic}` });
+  const label = (p: Persona) => `${p.id} (${p.age}, ${p.role})`;
+  const said = new Map<string, string[]>();
+  let question = topic;
   for (let t = 0; t < turns; t++) {
+    const round: { who: Persona; text: string }[] = [];
     for (const p of seats) {
-      const world = decided.get(p.id)!;
-      const mem = memoryFor(st, world, p.id).all().slice(-4).map((l) => l.text).join(' | ');
-      const r = await chat({
-        role: 'crowd',
-        system: `You are a simulated person in a small focus group. Who you are: ${personaBrief(p)}. Your memory of the week: ${mem || 'you never saw either post'}.
-You saw one version during the week (the one in your memory); the moderator is now showing you both. Speak in 1-2 short sentences in your own voice. React to what others said when it's relevant. Never invent visits or purchases.`,
-        user: `Transcript so far:\n${transcript.slice(-8).map((x) => `${x.speaker}: ${x.text}`).join('\n')}\n\nYour turn (${p.id}):`,
-        tag: `${st.spec.run_id}:focus`, maxTokens: 120, temperature: 0.8,
-      });
-      say({ speaker: `${p.id} (${p.age}, ${p.role})`, text: r.text.replace(/^["\s]+|["\s]+$/g, '').slice(0, 400), agent_id: p.id });
+      const { world, recs: mine } = byAgent.get(p.id)!;
+      const variant = world.split(':').pop()!;
+      const post = st.spec.posts.find((x) => x.variant === variant);
+      const own = mine.length
+        ? mine.map((r) => `- Hour ${r.hour}: you ${r.action === 'scroll_past' ? 'scrolled past it' : `chose to ${r.action}`}${r.would_visit ? ' and felt you might visit' : ''}. Your thought then: "${r.reason}"`).join('\n')
+        : '- you never saw either post';
+      const memLines = memoryFor(st, world, p.id).all().slice(-3).map((l) => `- ${l.text}`).join('\n');
+      const status = p.customer ? `You ARE already a customer (about ${p.customer.visits_per_month} visits a month).` : `You are NOT a customer of ${st.spec.business}; you have never been a regular there, so never say you are, or that it is your usual.`;
+      const system = `You are one participant in a small focus group about ${st.spec.business}. Stay in character and speak only for yourself.
+Who you are: age ${p.age}, ${p.education}, household income ${p.income_band}, ${priceWord(p.price_sensitivity)}, ${skepWord(p.skepticism)}. ${status} ${p.voice}
+During the week you saw version ${variant}: "${post?.text ?? ''}"
+What you did:\n${own}
+${memLines ? `Other things you remember:\n${memLines}\n` : ''}Rules: 1-2 short sentences, your own words. Stick to your own facts and what you did; never invent visits or purchases. Other people's answers are context only: say whether you agree or disagree and why, in a different wording. Do not reuse their phrases or open the way they did. If your own experience differs (for example you scrolled past, or the price did not move you), say so.`;
+      const prior = round.length || t > 0
+        ? `Others said so far:\n${[...transcript.filter((x) => x.agent_id && x.agent_id !== p.id).slice(-seats.length + 1)].map((x) => `- ${x.speaker.split(' ')[0]}: ${x.text.slice(0, 110)}`).join('\n')}\n\n` : '';
+      const mine2 = (said.get(p.id) ?? []).length ? `You already said: "${said.get(p.id)!.join(' / ')}". Add something new.\n\n` : '';
+      const ask = `${prior}${mine2}Moderator: ${question}\nYour answer (${p.id}), only the words you say:`;
+      const earlier = transcript.filter((x) => x.agent_id).map((x) => x.text);
+      const gen = async (extra: string) => (await chat({ role: 'interview', system: system + extra, user: ask, tag: `${st.spec.run_id}:focus`, maxTokens: 140, temperature: 0.8 })).text.replace(/^["\s]+|["\s]+$/g, '').slice(0, 400);
+      let text = await gen('');
+      const issue = focusIssue(text, earlier, Boolean(p.customer));
+      if (issue) {
+        const retry = await gen(`\nSTRONGER INSTRUCTION: your last draft was rejected (${issue}). Answer again in completely different words and structure from these earlier answers: ${earlier.slice(-4).map((e) => `"${e.slice(0, 80)}"`).join('; ')}.${p.customer ? '' : ' Do not call yourself a regular or say it is your usual.'}`);
+        if (retry) text = retry;
+      }
+      round.push({ who: p, text });
+      said.set(p.id, [...(said.get(p.id) ?? []), text]);
+      say({ speaker: label(p), text, agent_id: p.id });
     }
     if (t < turns - 1) {
       const m = await chat({ role: 'reason', system: 'You are a focus-group moderator. Ask one short follow-up question that probes the main disagreement. One sentence.', user: transcript.slice(-seats.length).map((x) => `${x.speaker}: ${x.text}`).join('\n'), tag: `${st.spec.run_id}:focus`, maxTokens: 80 });
-      say({ speaker: 'Moderator', text: m.text.trim() });
+      question = m.text.trim();
+      say({ speaker: 'Moderator', text: question });
     }
   }
   const wrap = await chat({ role: 'reason', system: 'Summarize this focus group in 2 sentences: where people agreed, where they split, and what would change minds. No new facts.', user: transcript.map((x) => `${x.speaker}: ${x.text}`).join('\n'), tag: `${st.spec.run_id}:focus`, maxTokens: 200 });
