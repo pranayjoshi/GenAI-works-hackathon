@@ -31,6 +31,18 @@ npm run backtest -- --slice scored --n 50
 ```
 
 <!-- DEMO_RUN -->
+**The demo run: South Congress Coffee, 600 people.** The run is saved in [runs/20261027-south-congress-coffe-e52a](runs/20261027-south-congress-coffe-e52a) and opens in the UI.
+
+- **The crowd.** 600 simulated Instagram users in ZIP 78704, drawn from ACS 2024 5-year Census rows and national Pew Instagram usage rates. The core group, aged 25 to 34, is deliberately oversampled to 50%. About a fifth carry habits from a synthetic customer list.
+- **The day.** One simulated day in 12 two-hour rounds, 07:00 to 07:00, run twice (2 seeds, same people). Each seed has twin worlds that start from a base log verified identical by hash. Only the post differs.
+- **The verdict: too close to call.** Intent to visit was 29.6% for A and 26.7% for B, a 2.9-point gap inside a ±5.5-point 95% interval. A was ahead in both seeds, but neither seed was significant on a paired test, and the two versions were tied until the competitor's post. We report no measurable difference between the two posts.
+- **The competitor's post.** "30% off all lattes" was injected at round 8 of 12 into both worlds. Before it, A and B were tied in both seeds: 35.3% vs 35.6%, and 37.2% vs 37.2%. After it, stated intent fell in all four worlds, including among people who had already decided. A finished ahead of B (31.8% vs 28.0% in seed 1, 27.4% vs 25.4% in seed 2). That gap is not statistically distinguishable, it was concentrated in people who first saw the post at or after the competitor's post, and an interrupted earlier attempt gave a different split. We have no run without the competitor event, so we describe when the gap opened, not what caused it.
+- **Loud is not lost.** Across the four worlds, 874 reactions were written but kept private. The simulated person drafted a reply, and their modelled propensity to speak decided not to post it; that propensity is a labelled prior, not a measurement. 439 of those were reactions to the café's post and 435 to the competitor's. Only 68 reactions to the café's post became public comments, plus 83 under the competitor news. No one shared either post in this run.
+- **The guard.** A rule-based fact-and-coherence guard screened every decision before it was logged. It fired on 731 of 4,146 (17.6%). Most often it forced a positive action paired with a negative feeling to scroll-past (245), cancelled a would-visit from someone who strongly disliked the post (204), and withheld reasons that claimed the person had seen the post before (123, plus 71 in comments) or invented a price (87, plus 22).
+- **Quality checks.** There were 4,146 simulated reactions across four worlds: 2,088 to the café post and 2,058 to the competitor's. 0.9% came from model output that needed a repair or a default. 97.8% of the non-empty private reasons are distinct strings, and 70% of reactions were scroll-past.
+- **Compute.** The whole run used Nemotron 3 Nano 4B locally through Ollama on an M1 Pro laptop: 602 crowd calls with 0.99M input tokens, or 640 calls and 1.12M input tokens including voices, report and review. The one segment-naming call was replayed from a response the same model recorded earlier. The run took 3.3 hours, and the video shows the saved run, not a live one.
+
+**Offline replay.** `npm run smoke` replays a recorded 40-person café run with no model provider and checks that it reproduces the same verdict. The 600-person run's per-call recordings were damaged by concurrent writers to the shared recordings file, so that run is kept as its saved action log rather than as a call-by-call replay.
 
 ## What happens in a run
 
@@ -122,9 +134,9 @@ Open http://localhost:8787 and press **Load example**.
 | `npm run run:ab -- --crowd 120 --rounds 12 --seeds 2` | A/B run from the command line |
 | `npm run backtest -- --slice scored --n 50` | Upworthy backtest |
 | `npm test` | Twin-world fairness, verdict rule, Meterless conformance |
-| `npm run smoke` | Offline end-to-end replay with no provider |
+| `npm run smoke` | Type-check, tests, then an offline replay of a recorded café run with no model provider |
 
-Local Nemotron 3 Nano 4B on an M1 Pro answers about one crowd batch every 15 to 20 seconds, so local runs use 60 to 300 people. With an NVIDIA API key or Nightshift the same code runs the planned 600-person crowd.
+Local Nemotron 3 Nano 4B on an M1 Pro answers about one crowd batch every 15 to 20 seconds. A 600-person, 12-round, 2-seed run takes about 3.3 hours locally. With an NVIDIA API key or Nightshift the same code runs in parallel against hosted Nemotron.
 
 ## Data and honesty
 
