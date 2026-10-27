@@ -92,11 +92,11 @@ const CLIPS = {
     await r.start(stage('verdict')); await settle(p);
     r.mark('start');
     await sleep(2500);
-    await r.moveTo(p.locator('text=Too close to call on intent').first(), { ms: 900 }).catch(() => {});
+    await r.moveTo(p.getByText(/leads on intent/).first(), { ms: 900 }).catch(() => {});
     await sleep(2000);
     await r.scroll(380, { ms: 1400 });
     await sleep(1000);
-    await r.moveTo(p.locator('text=interval includes zero').first(), { ms: 900 }).catch(() => {});
+    await r.moveTo(p.getByText(/likely to be the better/).last(), { ms: 900 }).catch(() => {});
     await sleep(4000);
     r.mark('end');
   },
@@ -167,9 +167,9 @@ const CLIPS = {
     await r.start(stage('decision')); await settle(p);
     r.mark('start');
     await sleep(2500);
-    await r.scrollToEl(p.getByText('People a real test needs').first(), { offset: 200, ms: 1400 }).catch(() => {});
+    await r.scrollToEl(p.getByText('What a live split test would have needed').first(), { offset: 200, ms: 1400 }).catch(() => {});
     await sleep(1500);
-    await r.moveTo(p.getByText('people needed').first(), { ms: 900 }).catch(() => {});
+    await r.moveTo(p.getByText('people a live test needs').first(), { ms: 900 }).catch(() => {});
     await sleep(1800);
     await r.moveTo(p.getByText('local Instagram users').first(), { ms: 900 }).catch(() => {});
     await sleep(1800);
@@ -208,7 +208,7 @@ const CLIPS = {
     await r.click(ad, { after: 2500 }).catch(() => {});
     await p.keyboard.press('Escape'); await sleep(900);
     r.mark('launch');
-    const act = p.getByText(/Set up a paused A vs C test/).first();
+    const act = p.getByText(/Launch Version A in Meta Ads/).first();
     await r.scrollToEl(act, { offset: 260, ms: 1400 }).catch(() => {});
     await sleep(2500);
     const box = p.locator('*', { has: act }).filter({ has: p.getByRole('button', { name: 'Approve' }) }).last();

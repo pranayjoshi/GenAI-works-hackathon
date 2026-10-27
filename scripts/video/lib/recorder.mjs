@@ -60,8 +60,8 @@ export async function startRecorder(name, { theme = 'dark', baseURL = 'http://lo
     async moveTo(target, { ms = 650, dx = 0, dy = 0 } = {}) {
       let to = target;
       if (typeof target?.boundingBox === 'function') {
-        await target.scrollIntoViewIfNeeded().catch(() => {});
-        const b = await target.boundingBox(); if (!b) throw new Error('no box for target');
+        await target.scrollIntoViewIfNeeded({ timeout: 4000 }).catch(() => {});
+        const b = await target.boundingBox({ timeout: 4000 }); if (!b) throw new Error('no box for target');
         to = { x: b.x + b.width / 2 + dx, y: b.y + b.height / 2 + dy };
       }
       const from = { ...pos }, steps = Math.max(8, Math.round(ms / 16));
