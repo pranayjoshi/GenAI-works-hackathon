@@ -26,7 +26,7 @@
   .cal i:nth-child(5)::after { animation-delay: 2.5s; } .cal i:nth-child(6)::after { animation-delay: 2.85s; } .cal i:nth-child(7)::after { animation-delay: 3.2s; }
   /* result */
   .bars { display: flex; flex-direction: column; gap: 18px; margin-top: auto; }
-  .bar { display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 14px; font-weight: 700; font-size: 24px; }
+  .bar { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 14px; font-weight: 700; font-size: 24px; }
   .bar i { height: 34px; border-radius: 9px; transform-origin: left; animation: grow 1.4s 2s var(--ease) both; }
   .bar.a i { background: var(--a); width: 74%; } .bar.b i { background: var(--b); width: 71%; }
   @keyframes grow { from { transform: scaleX(0); } }
@@ -42,12 +42,12 @@
 </style></head>
 <body><div class="grain"></div>
 <div class="panel">
-  <div class="card step"><div class="n">01 · PAY</div><h3>Buy the ads</h3><p>Real budget, split between A and B.</p><div class="coins"><span>$</span><span>$</span><span>$</span><span>$</span></div><div class="meter"><i></i></div></div>
-  <div class="card step"><div class="n">02 · WAIT</div><h3>Wait a week</h3><p>Hope enough people see both versions.</p><div class="cal"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-  <div class="card step"><div class="n">03 · HOPE</div><h3>Read the result</h3><p>If the two are too close, the money taught you nothing.</p><div class="bars"><div class="bar a"><span>A</span><i></i></div><div class="bar b"><span>B</span><i></i></div></div><div class="stamp">TOO CLOSE TO CALL</div></div>
+  <div class="card step"><div class="n">01 · POST</div><h3>Post it</h3><p>Once it is out, it is out. Every version costs a real impression.</p><div class="coins"><span>$</span><span>$</span><span>$</span><span>$</span></div><div class="meter"><i></i></div></div>
+  <div class="card step"><div class="n">02 · LISTEN</div><h3>Hear the loud few</h3><p>A handful of comments. Most people scroll past in silence.</p><div class="cal"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="card step"><div class="n">03 · GUESS</div><h3>Guess why</h3><p>The silent majority never tells you what put them off.</p><div class="bars"><div class="bar a"><span>said</span><i style="width:12%"></i></div><div class="bar b"><span>silent</span><i style="width:88%;background:#3a3f57"></i></div></div><div class="stamp">WHY?</div></div>
 </div>
 <div class="rings"><i></i><i></i><i></i></div>
-<div class="q display">What if she could<br><em>rehearse the test first?</em></div>
+<div class="q display">What if she could watch<br><em>the neighbourhood react first?</em></div>
 <script>
   const dur = Number(new URLSearchParams(location.search).get('dur') || 9);
   document.documentElement.style.setProperty('--qd', Math.max(3.8, dur - 3.3) + 's');

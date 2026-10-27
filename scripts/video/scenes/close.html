@@ -8,6 +8,7 @@
   .logo b { font-family: var(--display); font-size: 150px; font-weight: 750; letter-spacing: -0.04em; }
   .built { display: flex; flex-direction: column; gap: 16px; align-items: center; animation: up .9s .5s var(--ease) both; }
   .built .kicker { font-size: 22px; }
+  .tagline { font-size: 36px; color: var(--muted); margin: -8px 0 18px; letter-spacing: -0.01em; }
   .sp { display: flex; gap: 16px; }
   .sp .chip { font-size: 34px; padding: 14px 28px; font-weight: 600; }
   .sp .chip i { width: 12px; height: 12px; border-radius: 50%; }
@@ -24,12 +25,12 @@
 <div class="ring"><i></i><i></i><i></i></div>
 <div class="wrap">
   <div class="logo"><svg viewBox="0 0 32 32"><path d="M16 3.5a12.5 12.5 0 0 0 0 25" fill="none" stroke="#5b8cff" stroke-width="3" stroke-linecap="round"/><path d="M16 3.5a12.5 12.5 0 0 1 0 25" fill="none" stroke="#ff9a4d" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="8" fill="none" stroke="#4fe3c1" stroke-width="1.8" opacity=".75"/><path d="M16 9.8c-1.2 2.2-4 5.2-4 7.6a4 4 0 0 0 8 0c0-2.4-2.8-5.4-4-7.6z" fill="#8f7bff"/></svg><b>Ripple</b></div>
-  <div class="built"><div class="kicker">Built with</div>
+  <div class="built"><div class="tagline">Simulates how the public will react to what you post, and shows you why.</div><div class="kicker">Built with</div>
     <div class="sp"><span class="chip"><i style="background:#8f7bff"></i>Meterless Nightshift + H-MEM</span><span class="chip"><i style="background:#4fe3c1"></i>Zetaris</span><span class="chip"><i style="background:#76b900"></i>NVIDIA Nemotron</span></div></div>
   <div class="card limits"><div class="kicker">Limits</div>
     <span>Simulated people, not real customers. The customer list is synthetic.</span>
     <span>On 50 historical Upworthy tests, no method beat chance on the 4B model.</span>
-    <span>Ripple rehearses a test; it does not predict real behaviour.</span></div>
+    <span>Ripple simulates a reaction; it does not predict real behaviour.</span></div>
   <div class="repo">github.com/pranayjoshi/GenAI-works-hackathon</div>
 </div>
 <div class="credit" id="credit"></div>

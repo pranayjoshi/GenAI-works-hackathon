@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 export type Role = 'crowd' | 'reason' | 'review' | 'interview' | 'voice';
-export type ProviderName = 'nightshift' | 'nvidia' | 'ollama';
+export type ProviderName = 'nightshift' | 'ollama';
 
 const env = (k: string, d = '') => process.env[k] ?? d;
 const num = (k: string, d: number) => (process.env[k] ? Number(process.env[k]) : d);
@@ -15,8 +15,12 @@ function nightshiftToken(): string {
   const token = envAny(['NIGHTSHIFT_TOKEN', 'METERLESS_RUNTIME_TOKEN']);
   if (token) return token;
   const candidates = [
+    env('METERLESS_TOKEN_FILE'),
     env('NIGHTSHIFT_STATE_DIR') && path.join(env('NIGHTSHIFT_STATE_DIR'), 'proxy-token'),
-    path.join(os.homedir(), 'Library/Application Support/ai.meterless.runtime/proxy-token'),
+    path.join(os.homedir(), 'Library/Application Support/ai.meterless.runtime/proxy-token'), // macOS
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'ai.meterless.runtime', 'proxy-token'), // Windows
+    path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'ai.meterless.runtime', 'proxy-token'), // Linux
+    path.join(os.homedir(), '.config', 'ai.meterless.runtime', 'proxy-token'),
     path.join(os.homedir(), 'Library/Application Support/Nightshift/proxy-token'),
     path.join(os.homedir(), '.nightshift/proxy-token'),
   ].filter(Boolean) as string[];
@@ -26,12 +30,13 @@ function nightshiftToken(): string {
   return '';
 }
 
-/** Hosted Nemotron ids (NVIDIA catalog, confirmed 26 Oct 2026) and local Ollama Nemotron tags. */
+/** Hosted Nemotron ids as Nightshift serves them (its /v1/models list, 27 Oct 2026) and local Ollama Nemotron tags.
+ *  The NVIDIA key lives in Nightshift's Providers tab, never in this app. */
 const HOSTED: Record<Role, string> = {
   crowd: env('MODEL_CROWD', 'nvidia/nemotron-3.5-lightning-30b-a3b'),
   voice: env('MODEL_VOICE', 'nvidia/nemotron-3.5-lightning-30b-a3b'),
-  reason: env('MODEL_REASON', 'nvidia/nemotron-3.5-super-vl-120b-a12b'),
-  interview: env('MODEL_INTERVIEW', 'nvidia/nemotron-3.5-super-vl-120b-a12b'),
+  reason: env('MODEL_REASON', 'nvidia/nemotron-3-ultra-550b-a55b'),
+  interview: env('MODEL_INTERVIEW', 'nvidia/nemotron-3.5-lightning-30b-a3b'),
   review: env('MODEL_REVIEW', 'nvidia/nemotron-3-ultra-550b-a55b'),
 };
 const LOCAL: Record<Role, string> = {
@@ -54,20 +59,14 @@ export const config = {
   record: env('RECORD', 'true') !== 'false',
   replayCrowdMs: num('REPLAY_CROWD_MS', 450),
   crowdPrompt: env('CROWD_PROMPT', 'v1') as 'v1' | 'v2',   // pacing per crowd call in SAMPLE_MODE so replays look live
-  providers: (env('PROVIDERS', 'nightshift,nvidia,ollama').split(',').map((s) => s.trim()).filter(Boolean)) as ProviderName[],
+  // only Nightshift and local Ollama exist; a leftover 'nvidia' entry in an old .env is ignored
+  providers: env('PROVIDERS', 'nightshift,ollama').split(',').map((s) => s.trim()).filter((s): s is ProviderName => s === 'nightshift' || s === 'ollama'),
   nightshift: {
     baseUrl: envAny(['NIGHTSHIFT_BASE_URL', 'METERLESS_BASE_URL'], 'http://127.0.0.1:8088/v1'),
     token: nightshiftToken(),
     app: env('NIGHTSHIFT_APP', 'dryrun'),
     models: HOSTED,
     concurrency: num('NIGHTSHIFT_CONCURRENCY', 8),
-  },
-  nvidia: {
-    baseUrl: env('NVIDIA_BASE_URL', 'https://integrate.api.nvidia.com/v1'),
-    apiKey: env('NVIDIA_API_KEY'),
-    models: HOSTED,
-    concurrency: num('NVIDIA_CONCURRENCY', 6),
-    rpm: num('NVIDIA_RPM', 38),
   },
   ollama: {
     baseUrl: env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),

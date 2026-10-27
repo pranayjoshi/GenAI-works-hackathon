@@ -1,7 +1,17 @@
 import type { Persona } from '../schemas/persona.js';
 import type { ActionRecord } from '../schemas/action.js';
 
-export interface Post { variant: string; text: string; business: string; handle: string; image?: string }
+export type VersionKind = 'post' | 'image' | 'ad' | 'campaign';
+/** One delivered piece of a version: a post's caption, an ad's composed text, or one post of a campaign. image = VisionAgent description. */
+export interface PostItem { text: string; image?: string; image_id?: string }
+export interface Post {
+  variant: string; text: string; business: string; handle: string;
+  image?: string;             // VisionAgent description of the image (shown to the crowd as [image: ...])
+  image_id?: string;          // hash of the stored image (thumbnail, ad mockup)
+  kind?: VersionKind;         // default post
+  ad?: { headline: string; primary: string; cta: string };
+  items?: PostItem[];         // campaign: up to 3 posts delivered across the run
+}
 
 export interface InjectedEvent { id: string; round: number; text: string; target: 'all' | 'core' | 'spillover'; author: string }
 
@@ -10,6 +20,7 @@ export interface FeedItem {
   kind: 'ad' | 'share' | 'event';
   delivered_round: number;
   via: string | null;         // sharer id
+  idx?: number;               // campaign: which post of the version this item is (0-based)
   caption?: string;           // sharer's caption
   text?: string;              // event text
 }
@@ -64,3 +75,12 @@ export type SimEvent =
   | { type: 'error'; run_id: string; message: string }
   | { type: 'focus'; run_id: string; turn: { speaker: string; text: string; agent_id?: string } }
   | { type: 'done'; run_id: string };
+
+/** Platforms with Pew data (data/sources/pew_platform_use.csv). LinkedIn is not in the file, so it is not offered. */
+export const PLATFORMS = ['instagram', 'facebook', 'tiktok', 'youtube', 'x', 'reddit'] as const;
+export type Platform = (typeof PLATFORMS)[number];
+export const PLATFORM_NAME: Record<Platform, string> = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', reddit: 'Reddit' };
+export const platformName = (p?: string) => PLATFORM_NAME[(p ?? 'instagram') as Platform] ?? 'Instagram';
+
+/** The item a post delivers at index idx (0 for everything except campaigns). */
+export const itemOf = (post: Post, idx = 0): PostItem => post.items?.[idx] ?? { text: post.text, image: post.image, image_id: post.image_id };

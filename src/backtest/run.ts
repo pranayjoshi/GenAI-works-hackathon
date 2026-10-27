@@ -88,7 +88,7 @@ export async function runBacktest(o: BacktestOpts) {
     else for (const [k, v] of Object.entries(m)) served[k] = (served[k] ?? 0) + v;
   };
   const tests: TestResult[] = [];
-  const models: Record<string, string> = { crowd_hosted: config.nvidia.models.crowd, reason_hosted: config.nvidia.models.reason, crowd_local: config.ollama.models.crowd, reason_local: config.ollama.models.reason };
+  const models: Record<string, string> = { crowd_hosted: config.nightshift.models.crowd, reason_hosted: config.nightshift.models.reason, crowd_local: config.ollama.models.crowd, reason_local: config.ollama.models.reason };
   const save = (partial: boolean) => {
     const out = {
       partial, started: stamp, finished: partial ? null : new Date().toISOString(),

@@ -15,7 +15,8 @@ tables="pew.platform_use|data/sources/pew_platform_use.csv
 priors.behaviour|data/sources/priors_behaviour.csv
 biz.customers|data/sources/biz_customers_cafe.csv
 upworthy.tests|data/raw/upworthy-exploratory.csv
-census.acs|data/cache/census_all.csv"
+census.acs|data/cache/census_all.csv
+worldbank.country|data/cache/worldbank_all.csv"
 
 sql="$project/data/cache/zetaris-register.sql"
 json="$project/data/cache/zetaris-registered.json"

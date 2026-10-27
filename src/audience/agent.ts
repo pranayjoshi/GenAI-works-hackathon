@@ -1,13 +1,14 @@
 /** Audience agent (Super, thinking on): names the segments. It never emits a percentage (BUILD_PLAN §3.2). */
 import { chat } from '../llm.js';
 import { agentLog } from '../util/agentlog.js';
+import { platformName } from '../sim/types.js';
 import { SegmentProposal, AGE_BANDS } from '../schemas/persona.js';
 
-export interface AudienceInput { postA: string; postB: string; goal: string; place: string; business: string }
+export interface AudienceInput { postA: string; postB: string; goal: string; place: string; business: string; platform?: string }
 
 export async function proposeSegments(inp: AudienceInput, tag: string): Promise<{ proposal: SegmentProposal; served_by: string; fallback: boolean }> {
   const system = `You are the Audience agent in Dry Run, a tool that tests social posts on simulated crowds.
-Name who a local business's Instagram post is aimed at (the core segment) and who else will see it anyway (spillover).
+Name who a local business's ${platformName(inp.platform)} post is aimed at (the core segment) and who else will see it anyway (spillover).
 Rules:
 - Define the core segment only by age bands chosen from: ${AGE_BANDS.join(', ')}, plus behaviour or interests tied to the product.
 - Never use race, ethnicity, nationality, religion or gender to define a segment.
@@ -27,8 +28,8 @@ Version B: ${inp.postB}`;
   agentLog({ run_id: tag, agent_name: 'AudienceAgent', action: 'propose_segments', status: 'fallback', input_summary: `${inp.business}, ${inp.place}`, output_summary: 'model unavailable or invalid after one repair retry; default core 18-34' });
   return {
     proposal: {
-      core: { name: 'daily Instagram users 18-34 nearby', age_bands: ['18-24', '25-34'], why: 'Default core for a local consumer post; edit to match your target.' },
-      spillover: { name: 'other Instagram-using adults nearby', why: 'Paid local reach also lands outside the target.' },
+      core: { name: `daily ${platformName(inp.platform)} users 18-34 nearby`, age_bands: ['18-24', '25-34'], why: 'Default core for a local consumer post; edit to match your target.' },
+      spillover: { name: `other ${platformName(inp.platform)}-using adults nearby`, why: 'Paid local reach also lands outside the target.' },
       interests: [],
     },
     served_by: 'fallback',

@@ -98,7 +98,9 @@ export default {
     const replayBtn = h('button.btn.sm.pl-replay', { type: 'button', onclick: () => replayFlow() }, 'Replay flow');
     const head = h('div.pl-head',
       h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Build the audience → Simulate → Investigate → Explain → Recommend (gated). Sources at the top, the result at the bottom; each row reads left to right.'),
-        h('p.muted', 'An agent, not a pipeline: it uses tools (SQL on its own run log), it critiques and revises itself (code critic, model critic, honesty check), and it waits for the owner before anything spends money or publishes.')),
+        h('div.pl-traits', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' } },
+          ...[['Uses tools', 'SQL against its own run log'], ['Critiques itself', 'code critic, model critic, honesty check'], ['Asks permission', 'free, reversible steps run; spending or publishing waits for you']]
+            .map(([b, t]) => h('span.chip', { title: t }, h('b', b), ': ', t)))),
       h('div.pl-head-r', summary, replayBtn));
     const legend = h('div.pl-legend', h('span', h('i.lg.done'), 'done'), h('span', h('i.lg.now'), 'working now'), h('span', h('i.lg.future'), 'waiting'), h('span', h('i.lg.side'), 'Why (after the result)'), h('span.lg-pk', h('i.lg.pk'), 'one glowing packet = one model call'));
     stageBox.append(legend);
@@ -257,7 +259,7 @@ export default {
         if (cnt._v !== d) { cnt._v = d; countUp(cnt, d, (x) => fmtInt(Math.round(x)), 500); }
         const c = S.counters?.[`s${S.seed}:${variantOf(n.v)}`];
         nd.querySelector('.pl-round').textContent = c ? `round ${(c.round ?? 0) + 1}${S.spec ? ` of ${S.spec.rounds}` : ''}` : (S.spec ? `of ${fmtInt(target)} target` : '');
-        nd.querySelector('.pl-name').textContent = `Twin world ${variantOf(n.v)}`;
+        nd.querySelector('.pl-name').textContent = `Counterfactual world ${variantOf(n.v)}`;
         nd.style.setProperty('--rc', vcolor(vkey(variantOf(n.v))));
       } else if (n.id === 'guard') {
         const recs = Object.entries(S.rec || {}).filter(([w]) => w.startsWith(`s${S.seed}:`)).flatMap(([, r]) => r);

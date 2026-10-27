@@ -1,0 +1,265 @@
+iso3,indicator,label,value,year
+AUS,SP.POP.TOTL,"Population, total",27614411,2025
+AUS,SP.POP.TOTL.MA.ZS,"Population, male (% of total population)",49.6217935868456,2025
+AUS,SP.POP.TOTL.FE.ZS,"Population, female (% of total population)",50.3782064131544,2025
+AUS,SP.POP.0004.FE.5Y,"Population ages 00-04, female (% of female population)",5.54716541404481,2025
+AUS,SP.POP.0004.MA.5Y,"Population ages 00-04, male (% of male population)",5.9369575432431,2025
+AUS,SP.POP.0509.FE.5Y,"Population ages 05-09, female (% of female population)",5.62521366038585,2025
+AUS,SP.POP.0509.MA.5Y,"Population ages 05-09, male (% of male population)",6.03945664382181,2025
+AUS,SP.POP.1014.FE.5Y,"Population ages 10-14, female (% of female population)",5.8952145261577,2025
+AUS,SP.POP.1014.MA.5Y,"Population ages 10-14, male (% of male population)",6.32453331792304,2025
+AUS,SP.POP.1519.FE.5Y,"Population ages 15-19, female (% of female population)",5.93916173784436,2025
+AUS,SP.POP.1519.MA.5Y,"Population ages 15-19, male (% of male population)",6.37147020333328,2025
+AUS,SP.POP.2024.FE.5Y,"Population ages 20-24, female (% of female population)",5.82036739118365,2025
+AUS,SP.POP.2024.MA.5Y,"Population ages 20-24, male (% of male population)",6.22734987098053,2025
+AUS,SP.POP.2529.FE.5Y,"Population ages 25-29, female (% of female population)",6.47015988373858,2025
+AUS,SP.POP.2529.MA.5Y,"Population ages 25-29, male (% of male population)",6.91235570456486,2025
+AUS,SP.POP.3034.FE.5Y,"Population ages 30-34, female (% of female population)",7.16767469173022,2025
+AUS,SP.POP.3034.MA.5Y,"Population ages 30-34, male (% of male population)",7.31510518625128,2025
+AUS,SP.POP.3539.FE.5Y,"Population ages 35-39, female (% of female population)",7.28947513952522,2025
+AUS,SP.POP.3539.MA.5Y,"Population ages 35-39, male (% of male population)",7.26256874722147,2025
+AUS,SP.POP.4044.FE.5Y,"Population ages 40-44, female (% of female population)",6.9518425173893,2025
+AUS,SP.POP.4044.MA.5Y,"Population ages 40-44, male (% of male population)",6.96737626844925,2025
+AUS,SP.POP.4549.FE.5Y,"Population ages 45-49, female (% of female population)",6.14986109568302,2025
+AUS,SP.POP.4549.MA.5Y,"Population ages 45-49, male (% of male population)",6.09040921978644,2025
+AUS,SP.POP.5054.FE.5Y,"Population ages 50-54, female (% of female population)",6.29014704176284,2025
+AUS,SP.POP.5054.MA.5Y,"Population ages 50-54, male (% of male population)",6.21466028882864,2025
+AUS,SP.POP.5559.FE.5Y,"Population ages 55-59, female (% of female population)",5.88666719086398,2025
+AUS,SP.POP.5559.MA.5Y,"Population ages 55-59, male (% of male population)",5.75321448557827,2025
+AUS,SP.POP.6064.FE.5Y,"Population ages 60-64, female (% of female population)",5.8022204012273,2025
+AUS,SP.POP.6064.MA.5Y,"Population ages 60-64, male (% of male population)",5.57968062073686,2025
+AUS,SP.POP.6569.FE.5Y,"Population ages 65-69, female (% of female population)",5.34824025893532,2025
+AUS,SP.POP.6569.MA.5Y,"Population ages 65-69, male (% of male population)",5.00379697550141,2025
+AUS,SP.POP.7074.FE.5Y,"Population ages 70-74, female (% of female population)",4.64085351784294,2025
+AUS,SP.POP.7074.MA.5Y,"Population ages 70-74, male (% of male population)",4.3002554614232,2025
+AUS,SP.POP.7579.FE.5Y,"Population ages 75-79, female (% of female population)",3.92196853189784,2025
+AUS,SP.POP.7579.MA.5Y,"Population ages 75-79, male (% of male population)",3.61999748150831,2025
+AUS,SP.POP.80UP.FE.5Y,"Population ages 80 and above, female (% of female population)",5.25376699978707,2025
+AUS,SP.POP.80UP.MA.5Y,"Population ages 80 and above, male (% of male population)",4.08081198084826,2025
+AUS,SI.DST.FRST.20,Income share held by lowest 20%,7.2,2020
+AUS,SI.DST.02ND.20,Income share held by second 20%,12.4,2020
+AUS,SI.DST.03RD.20,Income share held by third 20%,16.5,2020
+AUS,SI.DST.04TH.20,Income share held by fourth 20%,22.6,2020
+AUS,SI.DST.05TH.20,Income share held by highest 20%,41.3,2020
+AUS,NY.GNP.PCAP.CD,"GNI per capita, Atlas method (current US$)",64120,2025
+AUS,IT.NET.USER.ZS,Individuals using the Internet (% of population),96.13140106,2024
+CAN,SP.POP.TOTL,"Population, total",41651653,2025
+CAN,SP.POP.TOTL.MA.ZS,"Population, male (% of total population)",49.6532834154756,2025
+CAN,SP.POP.TOTL.FE.ZS,"Population, female (% of total population)",50.3467165845244,2025
+CAN,SP.POP.0004.FE.5Y,"Population ages 00-04, female (% of female population)",4.5662025530272,2025
+CAN,SP.POP.0004.MA.5Y,"Population ages 00-04, male (% of male population)",4.86526321173026,2025
+CAN,SP.POP.0509.FE.5Y,"Population ages 05-09, female (% of female population)",4.85349390761905,2025
+CAN,SP.POP.0509.MA.5Y,"Population ages 05-09, male (% of male population)",5.16537259359337,2025
+CAN,SP.POP.1014.FE.5Y,"Population ages 10-14, female (% of female population)",5.1055024783458,2025
+CAN,SP.POP.1014.MA.5Y,"Population ages 10-14, male (% of male population)",5.41113610105643,2025
+CAN,SP.POP.1519.FE.5Y,"Population ages 15-19, female (% of female population)",5.36693068118468,2025
+CAN,SP.POP.1519.MA.5Y,"Population ages 15-19, male (% of male population)",5.61734476587571,2025
+CAN,SP.POP.2024.FE.5Y,"Population ages 20-24, female (% of female population)",5.91318024574944,2025
+CAN,SP.POP.2024.MA.5Y,"Population ages 20-24, male (% of male population)",6.19611979591388,2025
+CAN,SP.POP.2529.FE.5Y,"Population ages 25-29, female (% of female population)",6.66379078318945,2025
+CAN,SP.POP.2529.MA.5Y,"Population ages 25-29, male (% of male population)",7.26814085288241,2025
+CAN,SP.POP.3034.FE.5Y,"Population ages 30-34, female (% of female population)",6.93518805543129,2025
+CAN,SP.POP.3034.MA.5Y,"Population ages 30-34, male (% of male population)",7.43782866850776,2025
+CAN,SP.POP.3539.FE.5Y,"Population ages 35-39, female (% of female population)",6.90723852693882,2025
+CAN,SP.POP.3539.MA.5Y,"Population ages 35-39, male (% of male population)",7.18508371375153,2025
+CAN,SP.POP.4044.FE.5Y,"Population ages 40-44, female (% of female population)",6.76163764486923,2025
+CAN,SP.POP.4044.MA.5Y,"Population ages 40-44, male (% of male population)",6.87272543029317,2025
+CAN,SP.POP.4549.FE.5Y,"Population ages 45-49, female (% of female population)",6.32344903071961,2025
+CAN,SP.POP.4549.MA.5Y,"Population ages 45-49, male (% of male population)",6.28587731760147,2025
+CAN,SP.POP.5054.FE.5Y,"Population ages 50-54, female (% of female population)",6.05707836720602,2025
+CAN,SP.POP.5054.MA.5Y,"Population ages 50-54, male (% of male population)",6.01626847865756,2025
+CAN,SP.POP.5559.FE.5Y,"Population ages 55-59, female (% of female population)",6.15990976358728,2025
+CAN,SP.POP.5559.MA.5Y,"Population ages 55-59, male (% of male population)",6.12582098821307,2025
+CAN,SP.POP.6064.FE.5Y,"Population ages 60-64, female (% of female population)",6.76382301931879,2025
+CAN,SP.POP.6064.MA.5Y,"Population ages 60-64, male (% of male population)",6.67388216727312,2025
+CAN,SP.POP.6569.FE.5Y,"Population ages 65-69, female (% of female population)",6.28326833514932,2025
+CAN,SP.POP.6569.MA.5Y,"Population ages 65-69, male (% of male population)",6.03386011975215,2025
+CAN,SP.POP.7074.FE.5Y,"Population ages 70-74, female (% of female population)",5.3011021538808,2025
+CAN,SP.POP.7074.MA.5Y,"Population ages 70-74, male (% of male population)",4.90393972707259,2025
+CAN,SP.POP.7579.FE.5Y,"Population ages 75-79, female (% of female population)",4.24543017289331,2025
+CAN,SP.POP.7579.MA.5Y,"Population ages 75-79, male (% of male population)",3.76821233617722,2025
+CAN,SP.POP.80UP.FE.5Y,"Population ages 80 and above, female (% of female population)",5.79277428088992,2025
+CAN,SP.POP.80UP.MA.5Y,"Population ages 80 and above, male (% of male population)",4.17312373164832,2025
+CAN,SI.DST.FRST.20,Income share held by lowest 20%,7.7,2022
+CAN,SI.DST.02ND.20,Income share held by second 20%,13,2022
+CAN,SI.DST.03RD.20,Income share held by third 20%,17.2,2022
+CAN,SI.DST.04TH.20,Income share held by fourth 20%,22.6,2022
+CAN,SI.DST.05TH.20,Income share held by highest 20%,39.5,2022
+CAN,NY.GNP.PCAP.CD,"GNI per capita, Atlas method (current US$)",56420,2025
+CAN,IT.NET.USER.ZS,Individuals using the Internet (% of population),94.353302,2024
+DEU,SP.POP.TOTL,"Population, total",83491249,2025
+DEU,SP.POP.TOTL.MA.ZS,"Population, male (% of total population)",49.3817525512972,2025
+DEU,SP.POP.TOTL.FE.ZS,"Population, female (% of total population)",50.6182474487028,2025
+DEU,SP.POP.0004.FE.5Y,"Population ages 00-04, female (% of female population)",4.26049529565166,2025
+DEU,SP.POP.0004.MA.5Y,"Population ages 00-04, male (% of male population)",4.60750211015191,2025
+DEU,SP.POP.0509.FE.5Y,"Population ages 05-09, female (% of female population)",4.67069491132773,2025
+DEU,SP.POP.0509.MA.5Y,"Population ages 05-09, male (% of male population)",5.04058559730802,2025
+DEU,SP.POP.1014.FE.5Y,"Population ages 10-14, female (% of female population)",4.41936099890104,2025
+DEU,SP.POP.1014.MA.5Y,"Population ages 10-14, male (% of male population)",4.78656891424897,2025
+DEU,SP.POP.1519.FE.5Y,"Population ages 15-19, female (% of female population)",4.41539223478992,2025
+DEU,SP.POP.1519.MA.5Y,"Population ages 15-19, male (% of male population)",4.7928300923758,2025
+DEU,SP.POP.2024.FE.5Y,"Population ages 20-24, female (% of female population)",4.68306880819518,2025
+DEU,SP.POP.2024.MA.5Y,"Population ages 20-24, male (% of male population)",5.13034360211105,2025
+DEU,SP.POP.2529.FE.5Y,"Population ages 25-29, female (% of female population)",5.25230331067065,2025
+DEU,SP.POP.2529.MA.5Y,"Population ages 25-29, male (% of male population)",5.92182925732323,2025
+DEU,SP.POP.3034.FE.5Y,"Population ages 30-34, female (% of female population)",5.74491528826915,2025
+DEU,SP.POP.3034.MA.5Y,"Population ages 30-34, male (% of male population)",6.34549267613773,2025
+DEU,SP.POP.3539.FE.5Y,"Population ages 35-39, female (% of female population)",6.43819540460352,2025
+DEU,SP.POP.3539.MA.5Y,"Population ages 35-39, male (% of male population)",6.98627409814437,2025
+DEU,SP.POP.4044.FE.5Y,"Population ages 40-44, female (% of female population)",6.25294999129292,2025
+DEU,SP.POP.4044.MA.5Y,"Population ages 40-44, male (% of male population)",6.57859781909401,2025
+DEU,SP.POP.4549.FE.5Y,"Population ages 45-49, female (% of female population)",5.94646929087115,2025
+DEU,SP.POP.4549.MA.5Y,"Population ages 45-49, male (% of male population)",6.13442028060026,2025
+DEU,SP.POP.5054.FE.5Y,"Population ages 50-54, female (% of female population)",6.15883106761705,2025
+DEU,SP.POP.5054.MA.5Y,"Population ages 50-54, male (% of male population)",6.32062017914725,2025
+DEU,SP.POP.5559.FE.5Y,"Population ages 55-59, female (% of female population)",7.80074097225416,2025
+DEU,SP.POP.5559.MA.5Y,"Population ages 55-59, male (% of male population)",8.00972923734503,2025
+DEU,SP.POP.6064.FE.5Y,"Population ages 60-64, female (% of female population)",7.95642860951166,2025
+DEU,SP.POP.6064.MA.5Y,"Population ages 60-64, male (% of male population)",7.99647827698159,2025
+DEU,SP.POP.6569.FE.5Y,"Population ages 65-69, female (% of female population)",6.75151041551503,2025
+DEU,SP.POP.6569.MA.5Y,"Population ages 65-69, male (% of male population)",6.47640537225221,2025
+DEU,SP.POP.7074.FE.5Y,"Population ages 70-74, female (% of female population)",5.79589240668746,2025
+DEU,SP.POP.7074.MA.5Y,"Population ages 70-74, male (% of male population)",5.1302159458538,2025
+DEU,SP.POP.7579.FE.5Y,"Population ages 75-79, female (% of female population)",4.47623251919781,2025
+DEU,SP.POP.7579.MA.5Y,"Population ages 75-79, male (% of male population)",3.77321668393579,2025
+DEU,SP.POP.80UP.FE.5Y,"Population ages 80 and above, female (% of female population)",8.97651847464393,2025
+DEU,SP.POP.80UP.MA.5Y,"Population ages 80 and above, male (% of male population)",5.96888985698898,2025
+DEU,SI.DST.FRST.20,Income share held by lowest 20%,6.9,2022
+DEU,SI.DST.02ND.20,Income share held by second 20%,12.8,2022
+DEU,SI.DST.03RD.20,Income share held by third 20%,17,2022
+DEU,SI.DST.04TH.20,Income share held by fourth 20%,22.3,2022
+DEU,SI.DST.05TH.20,Income share held by highest 20%,40.9,2022
+DEU,NY.GNP.PCAP.CD,"GNI per capita, Atlas method (current US$)",60200,2025
+DEU,IT.NET.USER.ZS,Individuals using the Internet (% of population),93.49999579,2024
+GBR,SP.POP.TOTL,"Population, total",69487000,2025
+GBR,SP.POP.TOTL.MA.ZS,"Population, male (% of total population)",49.2542414572305,2025
+GBR,SP.POP.TOTL.FE.ZS,"Population, female (% of total population)",50.7457585427695,2025
+GBR,SP.POP.0004.FE.5Y,"Population ages 00-04, female (% of female population)",4.87481417174684,2025
+GBR,SP.POP.0004.MA.5Y,"Population ages 00-04, male (% of male population)",5.28906794209332,2025
+GBR,SP.POP.0509.FE.5Y,"Population ages 05-09, female (% of female population)",5.47650678541315,2025
+GBR,SP.POP.0509.MA.5Y,"Population ages 05-09, male (% of male population)",5.94415631663514,2025
+GBR,SP.POP.1014.FE.5Y,"Population ages 10-14, female (% of female population)",5.93722216251012,2025
+GBR,SP.POP.1014.MA.5Y,"Population ages 10-14, male (% of male population)",6.42825618521375,2025
+GBR,SP.POP.1519.FE.5Y,"Population ages 15-19, female (% of female population)",5.8268588906318,2025
+GBR,SP.POP.1519.MA.5Y,"Population ages 15-19, male (% of male population)",6.30433253881888,2025
+GBR,SP.POP.2024.FE.5Y,"Population ages 20-24, female (% of female population)",5.57893960961259,2025
+GBR,SP.POP.2024.MA.5Y,"Population ages 20-24, male (% of male population)",6.05175044467579,2025
+GBR,SP.POP.2529.FE.5Y,"Population ages 25-29, female (% of female population)",6.10429564357616,2025
+GBR,SP.POP.2529.MA.5Y,"Population ages 25-29, male (% of male population)",6.6539678438097,2025
+GBR,SP.POP.3034.FE.5Y,"Population ages 30-34, female (% of female population)",6.56086588135401,2025
+GBR,SP.POP.3034.MA.5Y,"Population ages 30-34, male (% of male population)",6.9823023809366,2025
+GBR,SP.POP.3539.FE.5Y,"Population ages 35-39, female (% of female population)",6.51565184632028,2025
+GBR,SP.POP.3539.MA.5Y,"Population ages 35-39, male (% of male population)",6.6372179731775,2025
+GBR,SP.POP.4044.FE.5Y,"Population ages 40-44, female (% of female population)",6.57320779992821,2025
+GBR,SP.POP.4044.MA.5Y,"Population ages 40-44, male (% of male population)",6.61737092360824,2025
+GBR,SP.POP.4549.FE.5Y,"Population ages 45-49, female (% of female population)",6.00640603940282,2025
+GBR,SP.POP.4549.MA.5Y,"Population ages 45-49, male (% of male population)",6.08792409348623,2025
+GBR,SP.POP.5054.FE.5Y,"Population ages 50-54, female (% of female population)",6.4203037253795,2025
+GBR,SP.POP.5054.MA.5Y,"Population ages 50-54, male (% of male population)",6.43067029169909,2025
+GBR,SP.POP.5559.FE.5Y,"Population ages 55-59, female (% of female population)",6.74420258845676,2025
+GBR,SP.POP.5559.MA.5Y,"Population ages 55-59, male (% of male population)",6.40138283055357,2025
+GBR,SP.POP.6064.FE.5Y,"Population ages 60-64, female (% of female population)",6.26195260343436,2025
+GBR,SP.POP.6064.MA.5Y,"Population ages 60-64, male (% of male population)",5.92786766586349,2025
+GBR,SP.POP.6569.FE.5Y,"Population ages 65-69, female (% of female population)",5.51906175465674,2025
+GBR,SP.POP.6569.MA.5Y,"Population ages 65-69, male (% of male population)",5.20426041045473,2025
+GBR,SP.POP.7074.FE.5Y,"Population ages 70-74, female (% of female population)",4.8584432797538,2025
+GBR,SP.POP.7074.MA.5Y,"Population ages 70-74, male (% of male population)",4.39902453750959,2025
+GBR,SP.POP.7579.FE.5Y,"Population ages 75-79, female (% of female population)",4.50635293600317,2025
+GBR,SP.POP.7579.MA.5Y,"Population ages 75-79, male (% of male population)",4.0933744278283,2025
+GBR,SP.POP.80UP.FE.5Y,"Population ages 80 and above, female (% of female population)",6.23491428181969,2025
+GBR,SP.POP.80UP.MA.5Y,"Population ages 80 and above, male (% of male population)",4.54707319363606,2025
+GBR,SI.DST.FRST.20,Income share held by lowest 20%,7.6,2021
+GBR,SI.DST.02ND.20,Income share held by second 20%,12.5,2021
+GBR,SI.DST.03RD.20,Income share held by third 20%,17,2021
+GBR,SI.DST.04TH.20,Income share held by fourth 20%,22.9,2021
+GBR,SI.DST.05TH.20,Income share held by highest 20%,40,2021
+GBR,NY.GNP.PCAP.CD,"GNI per capita, Atlas method (current US$)",54550,2025
+GBR,IT.NET.USER.ZS,Individuals using the Internet (% of population),95.4720993,2024
+IND,SP.POP.TOTL,"Population, total",1463865525,2025
+IND,SP.POP.TOTL.MA.ZS,"Population, male (% of total population)",51.5604361268089,2025
+IND,SP.POP.TOTL.FE.ZS,"Population, female (% of total population)",48.4395638731912,2025
+IND,SP.POP.0004.FE.5Y,"Population ages 00-04, female (% of female population)",7.69000947609511,2025
+IND,SP.POP.0004.MA.5Y,"Population ages 00-04, male (% of male population)",7.7601418511428,2025
+IND,SP.POP.0509.FE.5Y,"Population ages 05-09, female (% of female population)",7.9652779599508,2025
+IND,SP.POP.0509.MA.5Y,"Population ages 05-09, male (% of male population)",8.13068165920166,2025
+IND,SP.POP.1014.FE.5Y,"Population ages 10-14, female (% of female population)",8.29329778146077,2025
+IND,SP.POP.1014.MA.5Y,"Population ages 10-14, male (% of male population)",8.53619359047276,2025
+IND,SP.POP.1519.FE.5Y,"Population ages 15-19, female (% of female population)",8.50940262525223,2025
+IND,SP.POP.1519.MA.5Y,"Population ages 15-19, male (% of male population)",8.79332390685644,2025
+IND,SP.POP.2024.FE.5Y,"Population ages 20-24, female (% of female population)",8.71051078474726,2025
+IND,SP.POP.2024.MA.5Y,"Population ages 20-24, male (% of male population)",9.01419529346668,2025
+IND,SP.POP.2529.FE.5Y,"Population ages 25-29, female (% of female population)",8.41199454920308,2025
+IND,SP.POP.2529.MA.5Y,"Population ages 25-29, male (% of male population)",8.7170504270072,2025
+IND,SP.POP.3034.FE.5Y,"Population ages 30-34, female (% of female population)",8.08121992958284,2025
+IND,SP.POP.3034.MA.5Y,"Population ages 30-34, male (% of male population)",8.27730950745326,2025
+IND,SP.POP.3539.FE.5Y,"Population ages 35-39, female (% of female population)",7.67460149003312,2025
+IND,SP.POP.3539.MA.5Y,"Population ages 35-39, male (% of male population)",7.78396191580418,2025
+IND,SP.POP.4044.FE.5Y,"Population ages 40-44, female (% of female population)",6.93376789476727,2025
+IND,SP.POP.4044.MA.5Y,"Population ages 40-44, male (% of male population)",7.00516485665394,2025
+IND,SP.POP.4549.FE.5Y,"Population ages 45-49, female (% of female population)",6.05270035259434,2025
+IND,SP.POP.4549.MA.5Y,"Population ages 45-49, male (% of male population)",6.02569314625389,2025
+IND,SP.POP.5054.FE.5Y,"Population ages 50-54, female (% of female population)",5.32678185819567,2025
+IND,SP.POP.5054.MA.5Y,"Population ages 50-54, male (% of male population)",5.19200863673031,2025
+IND,SP.POP.5559.FE.5Y,"Population ages 55-59, female (% of female population)",4.55014420801889,2025
+IND,SP.POP.5559.MA.5Y,"Population ages 55-59, male (% of male population)",4.35442912770206,2025
+IND,SP.POP.6064.FE.5Y,"Population ages 60-64, female (% of female population)",3.82341580241169,2025
+IND,SP.POP.6064.MA.5Y,"Population ages 60-64, male (% of male population)",3.59724299935463,2025
+IND,SP.POP.6569.FE.5Y,"Population ages 65-69, female (% of female population)",3.07206894478669,2025
+IND,SP.POP.6569.MA.5Y,"Population ages 65-69, male (% of male population)",2.80857817090974,2025
+IND,SP.POP.7074.FE.5Y,"Population ages 70-74, female (% of female population)",2.25357201463187,2025
+IND,SP.POP.7074.MA.5Y,"Population ages 70-74, male (% of male population)",1.96942720112244,2025
+IND,SP.POP.7579.FE.5Y,"Population ages 75-79, female (% of female population)",1.35470130409405,2025
+IND,SP.POP.7579.MA.5Y,"Population ages 75-79, male (% of male population)",1.10916438936794,2025
+IND,SP.POP.80UP.FE.5Y,"Population ages 80 and above, female (% of female population)",1.2965330241743,2025
+IND,SP.POP.80UP.MA.5Y,"Population ages 80 and above, male (% of male population)",0.925433320500068,2025
+IND,SI.DST.FRST.20,Income share held by lowest 20%,11.1,2023
+IND,SI.DST.02ND.20,Income share held by second 20%,14.8,2023
+IND,SI.DST.03RD.20,Income share held by third 20%,17.9,2023
+IND,SI.DST.04TH.20,Income share held by fourth 20%,22,2023
+IND,SI.DST.05TH.20,Income share held by highest 20%,34.2,2023
+IND,NY.GNP.PCAP.CD,"GNI per capita, Atlas method (current US$)",2760,2025
+IND,IT.NET.USER.ZS,Individuals using the Internet (% of population),70,2025
+MEX,SP.POP.TOTL,"Population, total",131946900,2025
+MEX,SP.POP.TOTL.MA.ZS,"Population, male (% of total population)",48.4913378033133,2025
+MEX,SP.POP.TOTL.FE.ZS,"Population, female (% of total population)",51.5086621966867,2025
+MEX,SP.POP.0004.FE.5Y,"Population ages 00-04, female (% of female population)",7.314470791874,2025
+MEX,SP.POP.0004.MA.5Y,"Population ages 00-04, male (% of male population)",8.05090763665501,2025
+MEX,SP.POP.0509.FE.5Y,"Population ages 05-09, female (% of female population)",7.56788331860521,2025
+MEX,SP.POP.0509.MA.5Y,"Population ages 05-09, male (% of male population)",8.32725605063622,2025
+MEX,SP.POP.1014.FE.5Y,"Population ages 10-14, female (% of female population)",8.09191010492998,2025
+MEX,SP.POP.1014.MA.5Y,"Population ages 10-14, male (% of male population)",8.89918538597636,2025
+MEX,SP.POP.1519.FE.5Y,"Population ages 15-19, female (% of female population)",8.07475619144306,2025
+MEX,SP.POP.1519.MA.5Y,"Population ages 15-19, male (% of male population)",8.84387834940122,2025
+MEX,SP.POP.2024.FE.5Y,"Population ages 20-24, female (% of female population)",8.09592913951329,2025
+MEX,SP.POP.2024.MA.5Y,"Population ages 20-24, male (% of male population)",8.7497921512271,2025
+MEX,SP.POP.2529.FE.5Y,"Population ages 25-29, female (% of female population)",7.84668866936673,2025
+MEX,SP.POP.2529.MA.5Y,"Population ages 25-29, male (% of male population)",8.26833319952137,2025
+MEX,SP.POP.3034.FE.5Y,"Population ages 30-34, female (% of female population)",7.82223089804655,2025
+MEX,SP.POP.3034.MA.5Y,"Population ages 30-34, male (% of male population)",7.94063896874062,2025
+MEX,SP.POP.3539.FE.5Y,"Population ages 35-39, female (% of female population)",7.3750858964727,2025
+MEX,SP.POP.3539.MA.5Y,"Population ages 35-39, male (% of male population)",7.25026455149669,2025
+MEX,SP.POP.4044.FE.5Y,"Population ages 40-44, female (% of female population)",6.90768313610587,2025
+MEX,SP.POP.4044.MA.5Y,"Population ages 40-44, male (% of male population)",6.37544061243818,2025
+MEX,SP.POP.4549.FE.5Y,"Population ages 45-49, female (% of female population)",6.4221384403877,2025
+MEX,SP.POP.4549.MA.5Y,"Population ages 45-49, male (% of male population)",5.72776672211853,2025
+MEX,SP.POP.5054.FE.5Y,"Population ages 50-54, female (% of female population)",5.92149606432562,2025
+MEX,SP.POP.5054.MA.5Y,"Population ages 50-54, male (% of male population)",5.31503325338114,2025
+MEX,SP.POP.5559.FE.5Y,"Population ages 55-59, female (% of female population)",5.1277429874247,2025
+MEX,SP.POP.5559.MA.5Y,"Population ages 55-59, male (% of male population)",4.62258874910119,2025
+MEX,SP.POP.6064.FE.5Y,"Population ages 60-64, female (% of female population)",4.26307304109437,2025
+MEX,SP.POP.6064.MA.5Y,"Population ages 60-64, male (% of male population)",3.79524552662319,2025
+MEX,SP.POP.6569.FE.5Y,"Population ages 65-69, female (% of female population)",3.31589480873302,2025
+MEX,SP.POP.6569.MA.5Y,"Population ages 65-69, male (% of male population)",2.91132305099977,2025
+MEX,SP.POP.7074.FE.5Y,"Population ages 70-74, female (% of female population)",2.41788813659121,2025
+MEX,SP.POP.7074.MA.5Y,"Population ages 70-74, male (% of male population)",2.07862370298576,2025
+MEX,SP.POP.7579.FE.5Y,"Population ages 75-79, female (% of female population)",1.66853939602187,2025
+MEX,SP.POP.7579.MA.5Y,"Population ages 75-79, male (% of male population)",1.38291191524124,2025
+MEX,SP.POP.80UP.FE.5Y,"Population ages 80 and above, female (% of female population)",1.76658897906413,2025
+MEX,SP.POP.80UP.MA.5Y,"Population ages 80 and above, male (% of male population)",1.46081017345641,2025
+MEX,SI.DST.FRST.20,Income share held by lowest 20%,5.6,2024
+MEX,SI.DST.02ND.20,Income share held by second 20%,10,2024
+MEX,SI.DST.03RD.20,Income share held by third 20%,14.3,2024
+MEX,SI.DST.04TH.20,Income share held by fourth 20%,21.1,2024
+MEX,SI.DST.05TH.20,Income share held by highest 20%,48.9,2024
+MEX,NY.GNP.PCAP.CD,"GNI per capita, Atlas method (current US$)",13730,2025
+MEX,IT.NET.USER.ZS,Individuals using the Internet (% of population),83.12233799,2024

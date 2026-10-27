@@ -15,7 +15,7 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
 3. **Upload the video** (YouTube unlisted or Drive "anyone with link"). Test the link in a private browser window.
 4. **Slides:** turn `docs/pitch/DECK.md` (12 slides) into a deck. Use screenshots from `docs/images/` and `media/frames/`; the frames are in the release zip.
 5. **Submission form:**
-   - Track 2 (The Agent That Can Explain Why). The project was repositioned from Track 3 on branch `rebrand/explain-why`.
+   - Track 2 (The Agent That Can Explain Why). Repositioned from Track 3 on branch `rebrand/explain-why`.
    - Repo URL, video link, deck.
    - Sponsor explanation: paste from `docs/SPONSOR_TECH.md`.
    - **Declare pre-existing components:** the vendored Meterless engines in `engines/` (upstream commit 1742dec, 19 Oct; see `engines/VENDORED_FROM.txt`).
@@ -23,14 +23,18 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
 
 ## 2. State of the project (all committed and pushed)
 
+- **The video is out of date.** Release `demo-video` was rendered BEFORE the product changes (commits 7f926cb, 034a216, 9b32d90) and still shows "too close to call" and "don't pay" wording in the Verdict and Decide scenes. Options: (a) submit it as is, or (b) re-record the Verdict + Decide scenes (dark theme, run 1458) and re-render with `bash scripts/video/make.sh` (about 30-40 minutes). `docs/pitch/VOICEOVER.md` still carries the old wording too.
+- **New since the video:** Ripple is the A/B test (leader/winner verdict with CI and P(better); one paused launch); platforms (instagram, facebook, tiktok, youtube, x, reddit); version types post/image/ad/campaign (VisionAgent); places outside the US (World Bank, 6th federated source). Details in README and `docs/SPONSOR_TECH.md`.
+- **Zetaris:** tables must be re-registered on a new machine with `scripts/zetaris-register.sh` (`ZETARIS_DB=dryrun2` or a new name). World Bank tables are `dryrun2.*`.
+
 - **Product:** Ripple (formerly Dry Run): simulates how the public will react to what you post, and shows you why. The UI is at `npm start` → http://localhost:8787. The judge API is `POST /run` (Docker on port 8000; see README).
-- **Headline demo run:** `runs/20261027-south-congress-coffe-1458`. A copy-only pair of drafts (same latte, same $6.50, only the wording differs).
+- **Headline demo run:** `runs/20261027-south-congress-coffe-1458`. A copy-only A/B (same latte, same $6.50, only the wording differs).
   - 600 simulated people, 2 seeds, 12 rounds, with a competitor post at round 8.
   - Crowd on Nemotron 3.5 Lightning via Meterless Nightshift; reasoning on Nemotron Super via direct NVIDIA (Nightshift excludes Super VL); review on Ultra via Nightshift.
   - All 7 audience queries ran on Zetaris.
-  - Result: no measurable difference, A 24.8% vs B 23.4% (±5.1).
-  - Decision: a real test needs 29,274 people, 108% of the ZIP's 27,006 Instagram users, so don't pay.
-- **Suggested-rewrite (C) check:** `runs/20261027-south-congress-coffe-13b7`. C 30.1% vs A 29.0%, +1.0 pt, below the bar, so keep A. The honesty check passed (Ultra via Nightshift).
+  - Verdict: "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version."
+  - Decision: "Launch A: it leads by 1.4 points and is 70% likely to be the better version. A sharper Version C could widen the gap." A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend.
+- **Version C check:** `runs/20261027-south-congress-coffe-13b7`. C 30.1% vs A 29.0%, +1.0 pt, below the bar, so keep A. The honesty check passed (Ultra via Nightshift).
 - **Claim-checked numbers** for the voiceover, deck and Q&A: `docs/pitch/DEMO_PLAN.md` (numbers sheet), `docs/pitch/JUDGE_QA.md`, `docs/pitch/DECK.md`, `docs/SPONSOR_TECH.md`, `samples/README-runs.md`.
 - **Voiceover text:** `docs/pitch/VOICEOVER.md`. The video pipeline is in `scripts/video/`.
 - **Checks:**
@@ -72,8 +76,8 @@ for v in $(grep -o '^META_[A-Z_]*' .env); do export $v=; done; RUNS_DIR=$PWD/med
 - **Zetaris speed:** under Rosetta, a new ZIP's first Zetaris query can take about a minute. Stick to ZIP 78704 for live demos.
 - **Wording:** say "simulated people", never "predicts customers". The competitor post's effect is timing only, not causal. The Meta launch is "two paused ad sets with identical targeting", not Meta's split-test object.
 
-## 5. Rebrand TODO (Track 2)
+## 5. Track 2 rebrand notes (branch `rebrand/explain-why`)
 
-- **Regenerate `docs/images/hero.jpg`.** The image still carries the old tagline ("rehearse your A/B test before you pay for it"). Regenerate it with the new line: "Ripple simulates how the public will react to what you post, and shows you why." The README alt text is already updated.
-- **Video and voiceover.** The rendered video and `docs/pitch/VOICEOVER.md` / `VIDEO_SCRIPT.md` use the old A/B-test framing and were left as they are, because they must match the rendered cut. Re-record or add a Track 2 intro card if there is time.
-- **Saved demo decisions vs README.** Commit `7f926cb` rebuilt the stored decisions as "Launch A: it leads by ..." (leader/winner). The README's demo-run note and "At a glance" still quote the earlier "don't pay" spend-gate decision. Reconcile one with the other before submitting.
+- **README illustrations are new:** `docs/images/hero.jpg` (new tagline), `loop.jpg` (the agent loop) and `evidence.jpg` (one reason traced to its quote, action, query and data). They are rendered from `docs/images/src/*.html` with `bash scripts/render-images.sh` (headless Chrome + ffmpeg). Every number and id in them comes from run 1458's `summary.json` and `actions.sqlite`; change the HTML and re-render if the headline run changes.
+- **UI screenshots are older:** `docs/images/{sources,crowd,worlds,signals,report,ask}.jpg` still show the old stage names (Crowd, Twin worlds, Verdict, Ask why). Re-capture them from run 1458 if there is time; the README captions already use the new names.
+- **LinkedIn:** the tagline names "LinkedIn comments" as an example of content, but LinkedIn is not a platform option (no Pew data). The README says so under "Where this goes".

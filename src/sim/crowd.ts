@@ -8,7 +8,7 @@ import { config } from '../config.js';
 import { decideOffline, noteOffline, offlineAllowed, OFFLINE_SERVED_BY } from './offline.js';
 import type { Persona } from '../schemas/persona.js';
 import type { MemoryLine } from '../memory/hmem.js';
-import type { FeedItem, Post } from './types.js';
+import { itemOf, platformName, type FeedItem, type Platform, type Post } from './types.js';
 
 export interface AgentTurn {
   persona: Persona;
@@ -25,11 +25,12 @@ export interface RenderCtx {
   topComments: (forAgent: string) => string[];
   eventText: (itemId: string) => string;
   mode: 'ab' | 'backtest';
+  platform?: string;                       // Pew platform of the test (default instagram)
 }
 
-function personaLine(p: Persona) {
+function personaLine(p: Persona, plat = 'Instagram') {
   const cust = p.customer ? ` Already a customer: ${p.customer.visits_per_month} visits/month.` : '';
-  return `${p.id} | age ${p.age} | income ${p.income_band} | ${p.education} | price sensitivity ${p.price_sensitivity} | ad skepticism ${p.skepticism} | ${p.daily_minutes} min/day on Instagram |${cust} "${p.voice}"`;
+  return `${p.id} | age ${p.age} | income ${p.income_band} | ${p.education} | price sensitivity ${p.price_sensitivity} | ad skepticism ${p.skepticism} | ${p.daily_minutes} min/day on ${plat} |${cust} "${p.voice}"`;
 }
 
 function renderItem(it: FeedItem, ctx: RenderCtx, agentId: string): string {
@@ -41,11 +42,24 @@ function renderItem(it: FeedItem, ctx: RenderCtx, agentId: string): string {
     if (it.kind === 'share') return `  ${k} -> @${it.via} shared an article: "${ctx.post.text}" — their caption: "${it.caption ?? ''}"`;
     return `  ${k} -> Suggested article from ${ctx.post.handle}: "${ctx.post.text}"`;
   }
-  if (it.kind === 'share') return `  ${k} -> @${it.via} shared ${ctx.post.handle}'s post: "${ctx.post.text}" — their caption: "${it.caption ?? ''}"${c}`;
-  return `  ${k} -> Sponsored · ${ctx.post.handle} (${ctx.post.business}): "${ctx.post.text}"${ctx.post.image ? ` [image: ${ctx.post.image}]` : ''}${c}`;
+  const item = itemOf(ctx.post, it.idx ?? 0);
+  const img = item.image ? ` [image: ${item.image}]` : '';
+  const camp = ctx.post.items && ctx.post.items.length > 1 ? ` (post ${(it.idx ?? 0) + 1} of ${ctx.post.items.length} in a campaign)` : '';
+  if (it.kind === 'share') return `  ${k} -> @${it.via} shared ${ctx.post.handle}'s post: "${item.text}"${img} — their caption: "${it.caption ?? ''}"${c}`;
+  return `  ${k} -> ${FRAME[(ctx.platform ?? 'instagram') as Platform]?.(ctx.post.kind === 'ad') ?? FRAME.instagram(false)} · ${ctx.post.handle} (${ctx.post.business})${camp}: "${item.text}"${img}${c}`;
 }
 
-const SYSTEM_AB = (place: string, business: string) => `You simulate real Instagram users in ${place} scrolling their feeds. For every person and every feed item listed under them, decide what that person does, in character.
+/** How a sponsored item shows up in each platform's feed (instagram keeps the original wording). */
+const FRAME: Record<Platform, (ad: boolean) => string> = {
+  instagram: () => 'Sponsored',
+  tiktok: () => 'Sponsored TikTok video',
+  youtube: () => 'YouTube ad',
+  x: () => 'Promoted post on X',
+  facebook: () => 'Sponsored Facebook post',
+  reddit: () => 'Promoted post on Reddit',
+};
+
+const SYSTEM_AB = (place: string, business: string, plat = 'Instagram') => `You simulate real ${plat} users in ${place} scrolling their feeds. For every person and every feed item listed under them, decide what that person does, in character.
 How to decide:
 - Ground every decision in the person's numbers and voice. High price sensitivity reacts to price; high ad skepticism distrusts hype, urgency and discounts; few minutes per day means little attention.
 - Most people scroll past sponsored posts: in a typical crowd about 8 or 9 in 10 do. Engage only when the post genuinely fits the person.
@@ -73,7 +87,7 @@ export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: strin
   const blocks = turns.map((t) => {
     const seen = t.seenBefore === 0 ? 'first time seeing this post' : `has seen this post ${t.seenBefore} time${t.seenBefore > 1 ? 's' : ''} before`;
     const mem = t.memories.length ? `\n  memories: ${t.memories.map((m) => m.text).join(' | ')}` : '';
-    return `${personaLine(t.persona)}\n  (${seen})${mem}\n  feed:\n${t.items.map((it) => renderItem(it, ctx, t.persona.id)).join('\n')}`;
+    return `${personaLine(t.persona, ctx.mode === 'backtest' ? 'Instagram' : platformName(ctx.platform))}\n  (${seen})${mem}\n  feed:\n${t.items.map((it) => renderItem(it, ctx, t.persona.id)).join('\n')}`;
   });
   const expected = turns.flatMap((t) => t.items.map((it) => `${t.persona.id}/${it.item_id}`));
   const user = `${ctx.hourLabel}. ${ctx.worldNote}\n\n${blocks.join('\n\n')}\n\nReturn exactly ${expected.length} decisions, one per KEY, using these keys: ${expected.join(', ')}.`;
@@ -82,7 +96,7 @@ export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: strin
   try {
     const r = await chat({
       role: 'crowd',
-      system: (ctx.mode === 'backtest' ? SYSTEM_BT : SYSTEM_AB(ctx.place, ctx.post.business)) + (variant === 'v2' ? V2_RULE : ''),
+      system: (ctx.mode === 'backtest' ? SYSTEM_BT : SYSTEM_AB(ctx.place, ctx.post.business, platformName(ctx.platform))) + (variant === 'v2' ? V2_RULE : ''),
       user, schema: (variant === 'v2' ? CrowdBatchV2 : CrowdBatch) as typeof CrowdBatch, schemaName: variant === 'v2' ? 'CrowdBatchV2' : 'CrowdBatch', tag,
       maxTokens: (variant === 'v2' ? 110 : 90) * expected.length + 60,
     });

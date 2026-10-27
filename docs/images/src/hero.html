@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ripple hero</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .left { position: absolute; left: 80px; top: 178px; width: 760px; display: flex; flex-direction: column; gap: 30px; }
+  h1 { font-size: 68px; }
+  .sub { font-size: 23px; line-height: 1.45; color: var(--muted); max-width: 700px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .right { position: absolute; left: 880px; top: 136px; width: 640px; display: flex; flex-direction: column; gap: 16px; }
+  .draft { padding: 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .draft.a { border-top: 3px solid var(--a); transform: rotate(-1.2deg); }
+  .draft.b { border-top: 3px solid var(--b); transform: rotate(.8deg); margin-left: -20px; }
+  .draft p { font-size: 19px; line-height: 1.42; }
+  .draft .row { display: flex; justify-content: space-between; align-items: center; }
+  .rate { font-family: var(--display); font-weight: 650; font-size: 30px; letter-spacing: -0.02em; }
+  .rate small { font-family: var(--sans); font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+  .why { padding: 20px 24px; display: flex; flex-direction: column; gap: 10px; border-color: rgba(79,227,193,.35); margin-left: 40px; }
+  .why .k { font-family: var(--mono); font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--teal); }
+  .why q { font-size: 21px; line-height: 1.35; font-style: italic; }
+  .why .refs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .result { font-size: 16px; color: var(--muted); line-height: 1.45; margin-left: 40px; }
+  .result b { color: var(--text); font-weight: 600; }
+</style></head>
+<body><div class="grain"></div>
+<div class="rings"><i style="width:760px;height:760px"></i><i style="width:1120px;height:1120px"></i><i style="width:1480px;height:1480px"></i></div>
+
+<div class="left">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="62" height="62" fill="none" stroke-linecap="round"><path d="M16 3.5a12.5 12.5 0 0 0 0 25" stroke="#5b8cff" stroke-width="3"/><path d="M16 3.5a12.5 12.5 0 0 1 0 25" stroke="#ff9a4d" stroke-width="3"/><circle cx="16" cy="16" r="8" stroke="#4fe3c1" stroke-width="1.8" opacity=".75"/><path d="M16 9.8c-1.2 2.2-4 5.2-4 7.6a4 4 0 0 0 8 0c0-2.4-2.8-5.4-4-7.6z" fill="#8f7bff"/></svg>
+    <b>Ripple</b>
+  </div>
+  <h1 class="display">Simulates how the public will react to what you post, <span class="grad">and shows you why.</span></h1>
+  <p class="sub">An audience sampled from real Census and Pew data lives through a day with your drafts. You see who reacts, who stays silent, how each group feels, and the evidence behind every reason.</p>
+  <div class="chips"><span class="chip">audience from Census × Pew</span><span class="chip">counterfactual worlds</span><span class="chip">every reason cited</span><span class="chip">spend gated on you</span></div>
+</div>
+
+<div class="right">
+  <div class="card draft a">
+    <div class="row"><span class="chip a">Draft A · product-first</span><span class="rate">24.8%<small>intent to visit</small></span></div>
+    <p>New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now at South Congress Coffee.</p>
+  </div>
+  <div class="card draft b">
+    <div class="row"><span class="chip b">Draft B · story-first</span><span class="rate">23.4%<small>intent to visit</small></span></div>
+    <p>Slow mornings, done right. Our new Oat Milk Honey Latte is sweetened with wildflower honey from a farm 20 miles away…</p>
+  </div>
+  <div class="card why">
+    <div class="k">Why · put off by price · 8 of 14 sampled</div>
+    <q>Six fifty is steep for my budget.</q>
+    <div class="refs"><span class="muted" style="font-size:15px">person p0146, 25–34, scrolled past</span><span class="chip qid">action s1:A:204</span><span class="chip qid">query q_24d5335a_9</span></div>
+  </div>
+  <p class="result"><b>Simulated result:</b> A leads by 1.4 pts (95% CI −3.7 to +6.5), 70% likely to be the better draft. A simulation of 600 people, not a forecast.</p>
+</div>
+
+<div class="foot"><span>run 20261027-south-congress-coffe-1458 · 600 simulated Instagram users · ZIP 78704 · 2 seeds × 12 rounds</span><span>Open Agent Hackathon 2026 · Track 2</span></div>
+</body></html>

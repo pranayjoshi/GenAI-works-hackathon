@@ -261,3 +261,41 @@
   .su-ind, .su-prog-bar i, .su-donut .dn, .su-stack i, .su-bar i, .su-mini, .su-track i { transition: none; }
   .su-seam-line::after, .su-seam-node svg, .su-scan.live .su-scan-grid i, .su-fold.folding .su-mini { animation: none; }
 }
+
+/* platform picker */
+.su-platform { grid-column: 1 / -1; }
+.su-plats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+.su-plat { --pc: var(--accent); display: grid; grid-template-columns: 22px 1fr; column-gap: 8px; align-items: center; text-align: left; padding: 9px 11px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--glass); color: var(--muted); cursor: pointer; font: inherit; transition: border-color .15s, background .15s, color .15s, transform .15s; }
+.su-plat svg { grid-row: 1 / 3; color: var(--pc); }
+.su-plat b { font-size: 13px; color: var(--text); line-height: 1.15; }
+.su-plat small { font-size: 11px; color: var(--faint); line-height: 1.2; }
+.su-plat:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--pc) 55%, var(--line-2)); }
+.su-plat.on { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 13%, var(--glass)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pc) 18%, transparent); }
+.su-plat:focus-visible { outline: 2px solid var(--pc); outline-offset: 2px; }
+.su-plat-note { display: block; margin-top: 6px; color: var(--faint); font-size: 12px; }
+
+/* version type selector, image drop, ad fields, campaign rows */
+.su-kinds { display: flex; gap: 4px; margin: 0 10px 8px; padding: 3px; border-radius: 10px; background: var(--glass); border: 1px solid var(--line-2); }
+.su-kinds button { flex: 1; padding: 6px 4px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: 600 12px var(--sans, inherit); cursor: pointer; }
+.su-kinds button.on { background: var(--panel-solid); color: var(--text); box-shadow: 0 1px 6px rgba(0, 0, 0, .25); }
+.su-post.a .su-kinds button.on { color: var(--a); }
+.su-post.b .su-kinds button.on { color: var(--b); }
+.su-post-body { display: flex; flex-direction: column; gap: 8px; }
+.su-drop { position: relative; display: flex; align-items: center; justify-content: center; min-height: 92px; border: 1.5px dashed var(--line-2); border-radius: 12px; background: var(--glass); color: var(--muted); cursor: pointer; text-align: center; transition: border-color .15s, background .15s; }
+.su-drop:hover, .su-drop.over, .su-drop:focus-visible { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--glass)); outline: none; }
+.su-drop.has { border-style: solid; min-height: 0; padding: 6px; }
+.su-drop-in { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px; font-size: 12.5px; }
+.su-drop.has .su-drop-in { padding: 0; }
+.su-drop small { font-size: 11px; color: var(--faint); }
+.su-thumb { display: block; max-width: 100%; max-height: 190px; border-radius: 8px; object-fit: contain; }
+.su-thumb-x { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, .65); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+.su-ad-row { display: grid; grid-template-columns: 1fr 150px; gap: 8px; }
+.su-camp { display: flex; flex-direction: column; gap: 8px; }
+.su-camp-row { position: relative; display: grid; grid-template-columns: 22px 1fr; gap: 8px; }
+.su-camp-n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11px var(--mono); background: var(--glass); color: var(--muted); margin-top: 6px; }
+.su-camp-f { display: flex; flex-direction: column; gap: 6px; }
+.su-camp-f .su-drop { min-height: 48px; }
+.su-camp-x { position: absolute; top: 2px; right: 2px; border: 0; background: transparent; color: var(--faint); font-size: 18px; cursor: pointer; }
+.su-camp-add { align-self: flex-start; }
+.su-camp-note { margin: 0; font-size: 11.5px; color: var(--faint); line-height: 1.4; }
+.su-cta { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--glass); border: 1px solid var(--line-2); font-size: 11px; }

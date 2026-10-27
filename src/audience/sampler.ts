@@ -6,12 +6,13 @@
  */
 import { agentLog } from '../util/agentlog.js';
 import { query, type Row } from '../data/federation.js';
+import { wbJoinSql } from '../data/worldbank.js';
 import { AGE_BANDS, EDUCATION, INCOME_BANDS, type Persona, type Receipt } from '../schemas/persona.js';
 import { Rng, clamp, round } from '../util/core.js';
 import { GaussianCopula } from './copula.js';
 
 export interface SampleSpec {
-  geoId: string;          // "86000US78704" or "01000US"
+  geoId: string;          // "86000US78704", "01000US", or "WB:GBR" (a country: World Bank data, see geo.ts)
   zip: string;            // label for the persona record
   n: number;
   seed: string;
@@ -36,6 +37,13 @@ export interface SampleReport {
 
 interface AgeCell { sex: 'man' | 'woman'; lo: number; hi: number; est: number; label: string }
 interface IncomeCell { group: string; lo: number; band: (typeof INCOME_BANDS)[number]; est: number; label: string }
+
+/** Standard normal CDF (Abramowitz-Stegun 7.1.26), for the lognormal income split below. */
+function phi(x: number) {
+  const t = 1 / (1 + 0.3275911 * Math.abs(x) / Math.SQRT2), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x / 2);
+  return 0.5 * (1 + (x < 0 ? -y : y));
+}
+const WB_EDU_PRIOR: [(typeof EDUCATION)[number], number][] = [['No HS diploma', 0.2], ['High school', 0.3], ['Some college', 0.2], ["Bachelor's", 0.2], ['Graduate', 0.1]];
 
 function parseAgeRange(name: string): [number, number] | null {
   if (/^Under/i.test(name)) return [0, 4];
@@ -71,14 +79,16 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
   agentLog({ run_id: spec.run_id, agent_name: 'AudienceAgent', action: 'request_data', target_agent: 'DataAgent', status: 'started', input_summary: `Census ACS + Pew + priors for ${spec.geoId}, ${spec.n} people, core ${spec.coreAgeBands.join('/')}` });
   const q = async (label: string, sql: string) => { const r = await query(sql, label, spec.run_id); queries.push({ label, query_id: r.query_id, engine: r.engine }); return r; };
 
-  const qAge = await q('ACS B01001 sex by age', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' ORDER BY column_id`);
-  const qInc = await q('ACS B19037 householder age x income', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B19037' ORDER BY column_id`);
-  const qEdu = await q('ACS B15003 education 25+', `SELECT column_id, column_name, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B15003' ORDER BY column_id`);
+  const wb = spec.geoId.startsWith('WB:'); // country: World Bank rows instead of ACS (US ZIP path below is unchanged)
+  const iso3 = geo.slice(3);
+  const qAge = wb ? await q('World Bank population by age and sex', `SELECT indicator, label, value, year FROM worldbank.country WHERE iso3 = '${iso3}' AND indicator LIKE 'SP.POP.%' ORDER BY indicator`) : await q('ACS B01001 sex by age', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' ORDER BY column_id`);
+  const qInc = wb ? await q('World Bank income quintiles, GNI per capita, internet use', `SELECT indicator, label, value, year FROM worldbank.country WHERE iso3 = '${iso3}' AND (indicator LIKE 'SI.DST.%' OR indicator IN ('NY.GNP.PCAP.CD', 'IT.NET.USER.ZS')) ORDER BY indicator`) : await q('ACS B19037 householder age x income', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B19037' ORDER BY column_id`);
+  const qEdu = wb ? null : await q('ACS B15003 education 25+', `SELECT column_id, column_name, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B15003' ORDER BY column_id`);
   const platform = (spec.platform ?? 'instagram').replace(/[^a-z]/g, '');
   const qPew = await q(`Pew ${platform} use`, `SELECT dimension, band, pct_us_adults_ever_use AS pct FROM pew.platform_use WHERE platform = '${platform}'`);
   const qPri = await q('Behaviour priors', `SELECT param, dimension, band, dist, a, b, label FROM priors.behaviour`);
   // Cross-source join: Census population by Pew age band x Pew Instagram rate = Instagram users in this geography.
-  const qJoin = await q('Audience size: Census x Pew join', `
+  const qJoin = wb ? await q('Audience size: World Bank x internet use x Pew join', wbJoinSql(iso3, platform)) : await q('Audience size: Census x Pew join', `
     WITH ages AS (
       SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INTEGER) END AS age_lo, estimate
       FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' AND indent = 2
@@ -93,7 +103,21 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
   // ---- parse ACS
   const ageCells: AgeCell[] = [];
   let sex: 'man' | 'woman' | null = null;
-  for (const r of qAge.rows as Row[]) {
+  const wbv = (rows: Row[]) => new Map((rows).map((r) => [String(r.indicator), r]));
+  if (wb) {
+    // age x sex: indicator = % of that sex's population in a 5-year band; count = population x sex share x band share
+    const m = wbv(qAge.rows as Row[]);
+    const pop = Number(m.get('SP.POP.TOTL')?.value ?? 0);
+    const share = { man: Number(m.get('SP.POP.TOTL.MA.ZS')?.value ?? 50) / 100, woman: Number(m.get('SP.POP.TOTL.FE.ZS')?.value ?? 50) / 100 };
+    for (const [ind, r] of m) {
+      const k = ind.match(/^SP\.POP\.(\d{4}|80UP)\.(FE|MA)\.5Y$/);
+      if (!k) continue;
+      const lo = parseInt(k[1].slice(0, 2)), hi = k[1] === '80UP' ? 84 : parseInt(k[1].slice(2));
+      if (hi < 18) continue;
+      const s = k[2] === 'MA' ? 'man' : 'woman';
+      ageCells.push({ sex: s, lo: Math.max(18, lo), hi, est: pop * share[s] * Number(r.value) / 100 * (lo < 18 ? (hi - 17) / (hi - lo + 1) : 1), label: `${ind} ${r.label} (${r.year}) x SP.POP.TOTL` });
+    }
+  } else for (const r of qAge.rows as Row[]) {
     const name = String(r.column_name);
     if (/^Male/i.test(name)) { sex = 'man'; continue; }
     if (/^Female/i.test(name)) { sex = 'woman'; continue; }
@@ -104,7 +128,22 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
   }
   const incCells: IncomeCell[] = [];
   let group = '';
-  for (const r of qInc.rows as Row[]) {
+  if (wb) {
+    // Income, MODELED from World Bank quintiles: quintile i holds share s_i of national income, so its mean income per person is
+    // 5 * s_i * GNI per capita (Atlas USD). Within a quintile, income is lognormal (sigma 0.6, mean preserved) and is cut at the
+    // persona income bands (USD). Each of the 5 quintiles has weight 0.2. Per-person, not per-household, and country-wide: it
+    // shows how poor or rich the country is, not the city. Missing quintile data: equal shares (flat), labelled as such.
+    const m = wbv(qInc.rows as Row[]);
+    const gni = Number(m.get('NY.GNP.PCAP.CD')?.value ?? 0) || 10000;
+    const qs = ['SI.DST.FRST.20', 'SI.DST.02ND.20', 'SI.DST.03RD.20', 'SI.DST.04TH.20', 'SI.DST.05TH.20'];
+    const sigma = 0.6, cuts = [25000, 50000, 75000, 100000, 150000];
+    qs.forEach((ind, i) => {
+      const sh = m.get(ind)?.value;
+      const mean = 5 * (sh !== undefined ? Number(sh) / 100 : 0.2) * gni, mu = Math.log(mean) - sigma * sigma / 2;
+      const cdf = [0, ...cuts.map((c) => phi((Math.log(c) - mu) / sigma)), 1];
+      INCOME_BANDS.forEach((band, b) => incCells.push({ group: '', lo: b, band, est: 0.2 * (cdf[b + 1] - cdf[b]), label: `${ind} ${sh !== undefined ? `share ${sh}%` : 'missing, flat 20%'} x NY.GNP.PCAP.CD $${Math.round(gni)} -> quintile mean $${Math.round(mean)}; modeled from World Bank quintiles` }));
+    });
+  } else for (const r of qInc.rows as Row[]) {
     const name = String(r.column_name);
     if (/^Householder/i.test(name)) { group = name.replace(/^Householder\s*/i, '').replace(/:$/, '').replace(/\s*years?:?$/, ''); continue; }
     if (!group || /Total/i.test(name)) continue;
@@ -112,7 +151,8 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
     const lo = /Less than/i.test(name) ? 0 : nums[0] ?? 0;
     incCells.push({ group, lo, band: incomeBand(lo), est: Number(r.estimate), label: `${r.column_id} householder ${group} / ${name}` });
   }
-  const eduCells = (qEdu.rows as Row[]).map((r) => ({ cat: eduCategory(String(r.column_name)), est: Number(r.estimate), label: `${r.column_id} ${r.column_name}` })).filter((c) => c.cat);
+  // education: World Bank has no matching indicator in this table, so a labelled prior stands in for countries
+  const eduCells = wb ? WB_EDU_PRIOR.map(([cat, est]) => ({ cat, est, label: `prior ${cat} ${est} (MODELED PRIOR, no World Bank education indicator)` })) : (qEdu!.rows as Row[]).map((r) => ({ cat: eduCategory(String(r.column_name)), est: Number(r.estimate), label: `${r.column_id} ${r.column_name}` })).filter((c) => c.cat);
 
   const pew: Record<string, number> = {};
   for (const r of qPew.rows as Row[]) pew[`${r.dimension}:${r.band}`] = Number(r.pct) / 100;
@@ -180,11 +220,11 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
     const role = isCore ? 'core' : 'spillover';
     const id = `${spec.idPrefix ?? 'p'}${String(personas.length + 1).padStart(4, '0')}`;
     const receipts: Receipt[] = [
-      { field: 'age, gender', source: 'census.acs B01001 (ACS 5-year, live REST)', query_id: qAge.query_id, ref: cell.label },
-      { field: 'income_band', source: 'census.acs B19037 (householder age x income)', query_id: qInc.query_id, ref: inc.label },
-      { field: 'education', source: 'census.acs B15003', query_id: qEdu.query_id, ref: edu.label },
-      { field: 'channel', source: `pew.platform_use (${platform}, by age and gender)`, query_id: qPew.query_id, ref: `${platform} age ${pewAgeBand(age)} x gender ${cell.sex}` },
-      { field: 'segment share', source: 'Census x Pew join', query_id: qJoin.query_id, ref: `core share ${round(target, 2)} (natural ${round(natural, 2)})` },
+      { field: 'age, gender', source: wb ? 'worldbank.country SP.POP age x sex (country-level)' : 'census.acs B01001 (ACS 5-year, live REST)', query_id: qAge.query_id, ref: cell.label },
+      { field: 'income_band', source: wb ? 'worldbank.country SI.DST quintiles x NY.GNP.PCAP.CD (MODELED)' : 'census.acs B19037 (householder age x income)', query_id: qInc.query_id, ref: inc.label },
+      { field: 'education', source: wb ? 'priors (MODELED PRIOR; no World Bank indicator)' : 'census.acs B15003', query_id: wb ? qPri.query_id : qEdu!.query_id, ref: edu.label },
+      { field: 'channel', source: wb ? `pew.platform_use (${platform}; US Pew rates applied outside the US, a proxy)` : `pew.platform_use (${platform}, by age and gender)`, query_id: qPew.query_id, ref: `${platform} age ${pewAgeBand(age)} x gender ${cell.sex}` },
+      { field: 'segment share', source: wb ? 'World Bank x internet use x Pew join' : 'Census x Pew join', query_id: qJoin.query_id, ref: `core share ${round(target, 2)} (natural ${round(natural, 2)})` },
       { field: 'behaviour', source: 'priors.behaviour (MODELED PRIOR)', query_id: qPri.query_id, ref: `price:${inc.band} skepticism:${band} speak:${band}` },
     ];
 

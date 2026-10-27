@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { config, THINKING, type ProviderName, type Role } from './config.js';
 import { agentLog } from './util/agentlog.js';
-import { Bus, RpmLimiter, Semaphore, sha, sleep } from './util/core.js';
+import { Bus, Semaphore, sha, sleep } from './util/core.js';
 
 export interface TraceEntry {
   ts: string;
@@ -41,6 +41,12 @@ export interface ChatOpts<T> {
   tag?: string;
   /** override thinking for this call */
   thinking?: boolean;
+  /** image data URLs sent with the user turn (OpenAI-style image_url parts); hosted providers only */
+  images?: string[];
+  /** model id override (vision calls); hosted providers only */
+  model?: string;
+  /** restrict the provider chain for this call (vision: the NVIDIA route) */
+  providers?: ProviderName[];
 }
 
 export interface ChatResult<T> {
@@ -107,7 +113,8 @@ function rec() {
 const occurrences = new Map<string, number>();
 /** Identical prompts within one run are numbered #1, #2...; the counter is per run so a second replay starts at #1. */
 function recordKey(o: ChatOpts<unknown>) {
-  const base = sha(JSON.stringify([o.role, o.system, o.user, o.schemaName ?? '', o.temperature ?? null]), 24);
+  const extra = o.images?.length || o.model ? [o.model ?? null, (o.images ?? []).map((i) => sha(i, 12))] : [];
+  const base = sha(JSON.stringify([o.role, o.system, o.user, o.schemaName ?? '', o.temperature ?? null, ...extra]), 24);
   const scope = `${(o.tag ?? 'misc').split(':')[0]}|${base}`;
   const n = (occurrences.get(scope) ?? 0) + 1;
   occurrences.set(scope, n);
@@ -119,38 +126,32 @@ interface RawResult { text: string; tokens_in: number; tokens_out: number; serve
 
 const sems: Record<ProviderName, Semaphore> = {
   nightshift: new Semaphore(config.nightshift.concurrency),
-  nvidia: new Semaphore(config.nvidia.concurrency),
   ollama: new Semaphore(config.ollama.concurrency),
 };
-const nvidiaRpm = new RpmLimiter(config.nvidia.rpm);
 const downUntil: Partial<Record<ProviderName, number>> = {};
 const lastError: Partial<Record<ProviderName, string>> = {};
 
 function providerConfigured(p: ProviderName): boolean {
   if (p === 'nightshift') return Boolean(config.nightshift.token);
-  if (p === 'nvidia') return Boolean(config.nvidia.apiKey);
   return true;
 }
 
-async function openAiCompat(p: 'nightshift' | 'nvidia', o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
-  const c = p === 'nightshift' ? config.nightshift : config.nvidia;
-  const model = c.models[o.role];
+async function openAiCompat(p: 'nightshift', o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
+  const c = config.nightshift;
+  const model = o.model ?? c.models[o.role];
   const thinking = o.thinking ?? THINKING[o.role];
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
-  if (p === 'nightshift') {
-    headers.authorization = `Bearer ${config.nightshift.token}`;
-    headers['meterless-app'] = config.nightshift.app;
-    headers['meterless-scope'] = 'user';
-  } else {
-    headers.authorization = `Bearer ${config.nvidia.apiKey}`;
-    await nvidiaRpm.take();
-  }
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    authorization: `Bearer ${config.nightshift.token}`,
+    'meterless-app': config.nightshift.app,
+    'meterless-scope': 'user',
+  };
   const system = jsonSchema
     ? `${o.system}\n\nReply with a single JSON object that matches this JSON Schema. No prose, no code fences.\n${JSON.stringify(jsonSchema)}`
     : o.system;
   const body: Record<string, unknown> = {
     model,
-    messages: [{ role: 'system', content: system }, { role: 'user', content: o.user }],
+    messages: [{ role: 'system', content: system }, { role: 'user', content: o.images?.length ? [{ type: 'text', text: o.user }, ...o.images.map((url) => ({ type: 'image_url', image_url: { url } }))] : o.user }],
     temperature: o.temperature ?? (o.role === 'crowd' || o.role === 'voice' ? 0.9 : 0.4),
     top_p: 0.95,
     max_tokens: (o.maxTokens ?? 1200) + (thinking ? 2000 : 0),
@@ -219,6 +220,7 @@ function isTransient(msg: string) {
 async function rawChat(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult & { provider: ProviderName }> {
   const errors: string[] = [];
   for (const p of config.providers) {
+    if (o.providers && !o.providers.includes(p)) continue;
     if (!providerConfigured(p)) continue;
     if ((downUntil[p] ?? 0) > Date.now()) continue;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -229,7 +231,7 @@ async function rawChat(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawRe
         const msg = (e as Error).message;
         lastError[p] = msg;
         if (/ECONNREFUSED|HTTP 401|HTTP 403|HTTP 404/.test(msg) || (e as any)?.cause?.code === 'ECONNREFUSED') {
-          downUntil[p] = Date.now() + 60_000; // provider unavailable; fall through to the next one
+          if (!o.model) downUntil[p] = Date.now() + 60_000; // provider unavailable; fall through to the next one (a model override failing says nothing about the provider)
           errors.push(`${p}: ${msg}`);
           break;
         }
@@ -325,7 +327,7 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
 /** Provider status for the UI and the probe script. */
 export async function providerStatus() {
   const out: { provider: ProviderName; configured: boolean; online: boolean; detail: string; models: Record<string, string> }[] = [];
-  for (const p of ['nightshift', 'nvidia', 'ollama'] as ProviderName[]) {
+  for (const p of ['nightshift', 'ollama'] as ProviderName[]) {
     const configured = providerConfigured(p);
     let online = false, detail = configured ? '' : 'not configured';
     if (configured) {
@@ -337,16 +339,14 @@ export async function providerStatus() {
           online = names.some((n) => n.startsWith('nemotron'));
           detail = online ? `local models: ${names.filter((n) => n.includes('nemotron')).join(', ')}` : 'no nemotron model pulled';
         } else {
-          const c = p === 'nightshift' ? config.nightshift : config.nvidia;
-          const headers: Record<string, string> = { authorization: `Bearer ${p === 'nightshift' ? config.nightshift.token : config.nvidia.apiKey}` };
-          if (p === 'nightshift') { headers['meterless-app'] = config.nightshift.app; headers['meterless-scope'] = 'user'; }
-          const r = await fetch(`${c.baseUrl}/models`, { headers, signal: AbortSignal.timeout(5000) });
+          const headers: Record<string, string> = { authorization: `Bearer ${config.nightshift.token}`, 'meterless-app': config.nightshift.app, 'meterless-scope': 'user' };
+          const r = await fetch(`${config.nightshift.baseUrl}/models`, { headers, signal: AbortSignal.timeout(5000) });
           online = r.ok;
           detail = `GET /models -> ${r.status}`;
         }
       } catch (e) { detail = (e as Error).message; }
     }
-    const models = p === 'ollama' ? config.ollama.models : p === 'nvidia' ? config.nvidia.models : config.nightshift.models;
+    const models = p === 'ollama' ? config.ollama.models : config.nightshift.models;
     out.push({ provider: p, configured, online, detail: lastError[p] && !online ? `${detail}; last error: ${lastError[p]}` : detail, models });
   }
   return { sampleMode: config.sampleMode, order: config.providers, providers: out };

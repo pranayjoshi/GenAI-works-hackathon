@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ripple evidence trail</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .head { position: absolute; left: 80px; top: 64px; display: flex; flex-direction: column; gap: 12px; }
+  .head h2 { font-size: 54px; }
+  .head p { font-size: 20px; color: var(--muted); max-width: 1100px; line-height: 1.45; }
+  .chain { position: absolute; left: 80px; right: 80px; top: 252px; display: grid; grid-template-columns: 1fr 1.05fr 1fr 1.15fr; gap: 34px; }
+  .step { position: relative; padding: 20px 20px; display: flex; flex-direction: column; gap: 11px; min-height: 420px; }
+  .step:not(:last-child)::after { content: "→"; position: absolute; right: -29px; top: 50%; transform: translateY(-50%); font-size: 24px; color: var(--accent-text); }
+  .step .k { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-text); }
+  .step h3 { font-family: var(--display); font-weight: 650; font-size: 25px; letter-spacing: -0.02em; line-height: 1.12; }
+  .step p { font-size: 16px; line-height: 1.45; color: var(--muted); }
+  .step q { font-size: 19px; line-height: 1.38; font-style: italic; color: var(--text); }
+  .step .refs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 15px; }
+  .kv dt { color: var(--faint); font-family: var(--mono); font-size: 13px; padding-top: 2px; }
+  .kv dd { color: var(--text); }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.55; color: #cfd3e6; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; }
+  .mem { font-family: var(--mono); font-size: 13.5px; line-height: 1.5; color: #cfd3e6; background: rgba(79,227,193,.06); border: 1px solid rgba(79,227,193,.25); border-radius: 10px; padding: 10px 12px; }
+  .step.reason { border-color: rgba(79,227,193,.4); } .step.reason .k { color: var(--teal); }
+  .critic { position: absolute; left: 80px; right: 80px; top: 728px; padding: 18px 24px; display: flex; align-items: center; gap: 20px; border-color: rgba(255,200,77,.42); }
+  .critic .k { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--warn); white-space: nowrap; }
+  .critic span { font-size: 18px; line-height: 1.45; }
+</style></head>
+<body><div class="grain"></div>
+<div class="head">
+  <div class="kicker">How Ripple explains why</div>
+  <h2 class="display">Every reason has a receipt</h2>
+  <p>One reason from the café run, followed back to its evidence: the quote, the simulated action, the SQL query that sampled it, and the data the person was sampled from.</p>
+</div>
+<div class="chain">
+  <div class="card step reason">
+    <div class="k">The reason · report</div>
+    <h3>Put off by price</h3>
+    <p>Draft A's objection theme: 8 of the 14 negative reactions the agent sampled for Draft A.</p>
+    <q>Six fifty is steep for my budget.</q>
+    <div class="refs"><span class="chip a">Draft A</span></div>
+  </div>
+  <div class="card step">
+    <div class="k">The action · event log</div>
+    <h3>Person p0146 scrolled past</h3>
+    <dl class="kv"><dt>world</dt><dd>s1:A, Day 1 17:00</dd><dt>action</dt><dd>scroll past</dd><dt>feeling</dt><dd>negative (−1)</dd><dt>would visit</dt><dd>no</dd></dl>
+    <div class="mem">p0146.mem-1: saw South Congress Coffee's sponsored post "New: Oat Milk Honey Latte, $6.50…". I scroll past. Felt negative: Six fifty is steep for my budget.</div>
+    <div class="refs"><span class="chip qid">action s1:A:204</span><span class="chip qid">memory p0146.mem-1</span></div>
+  </div>
+  <div class="card step">
+    <div class="k">The query · SQL tool</div>
+    <h3>The query behind it</h3>
+    <pre>query_actions(
+  variant = 'A',
+  sentiment = 'negative')
+-- run action log ⨝ personas</pre>
+    <p>One of 11 tool calls the report agent made over its own run log.</p>
+    <div class="refs"><span class="chip qid">query q_24d5335a_9</span><span class="chip">run log</span></div>
+  </div>
+  <div class="card step">
+    <div class="k">The person · real data</div>
+    <h3>Sampled, not invented</h3>
+    <dl class="kv"><dt>age</dt><dd>33 (25–34), ACS B01001</dd><dt>income</dt><dd>&lt;$25k, ACS B19037</dd><dt>education</dt><dd>graduate, ACS B15003</dd><dt>platform</dt><dd>Instagram use, Pew</dd><dt>price sens.</dt><dd>0.66, labelled prior</dd></dl>
+    <div class="refs"><span class="chip qid">q_f1f21cfe_1</span><span class="chip qid">q_cc93f114_2</span><span class="chip qid">q_9f0a5681_4</span><span class="chip good">answered by Zetaris</span></div>
+  </div>
+</div>
+<div class="card critic">
+  <div class="k">The critics</div>
+  <span>Before the report shipped, the code critic flagged 4 counts that did not match their cited query, and those claims are not in the final report. Interviews may cite only the person's own memory lines.</span>
+</div>
+<div class="foot"><span>run 20261027-south-congress-coffe-1458 · actions.sqlite (meta.report, meta.decision, actions, memories, personas)</span><span>a simulation, not a forecast</span></div>
+</body></html>

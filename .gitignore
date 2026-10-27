@@ -36,3 +36,7 @@ logs/*
 media/
 !runs/20261027-south-congress-coffe-1458/
 !runs/20261027-south-congress-coffe-13b7/
+
+# uploaded images and their VisionAgent descriptions
+data/cache/images/
+data/cache/vision/

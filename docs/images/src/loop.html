@@ -1,0 +1,40 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Ripple agent loop</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .head { position: absolute; left: 80px; top: 70px; display: flex; flex-direction: column; gap: 12px; }
+  .head h2 { font-size: 58px; }
+  .loop { position: absolute; left: 80px; right: 80px; top: 222px; display: grid; grid-template-columns: repeat(5, 1fr); }
+  .st { position: relative; margin-right: 30px; padding: 22px 20px; min-height: 230px; display: flex; flex-direction: column; gap: 10px; }
+  .st:last-child { margin-right: 0; }
+  .st .n { font-family: var(--mono); font-size: 15px; color: var(--accent-text); letter-spacing: .12em; }
+  .st b { font-family: var(--display); font-size: 29px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.05; }
+  .st span { color: var(--muted); font-size: 17px; line-height: 1.4; }
+  .st em { margin-top: auto; font-style: normal; font-family: var(--mono); font-size: 13px; color: var(--faint); line-height: 1.4; }
+  .st:not(:last-child)::after { content: "→"; position: absolute; right: -26px; top: 50%; transform: translateY(-50%); font-size: 24px; color: var(--accent-text); }
+  .st.gate { border-color: rgba(255,200,77,.5); }
+  .st.gate .n { color: var(--warn); }
+  .why { position: absolute; left: 80px; right: 80px; top: 600px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  .w { padding: 24px 26px; display: flex; flex-direction: column; gap: 10px; }
+  .w .k { font-family: var(--mono); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; }
+  .w b { font-size: 26px; font-weight: 650; letter-spacing: -0.01em; }
+  .w span { color: var(--muted); font-size: 18px; line-height: 1.45; }
+  .w:nth-child(1) .k { color: var(--teal); } .w:nth-child(2) .k { color: #c4b5ff; } .w:nth-child(3) .k { color: var(--warn); }
+  .lbl { position: absolute; left: 80px; top: 560px; font-family: var(--mono); font-size: 15px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+</style></head>
+<body><div class="grain"></div>
+<div class="head"><div class="kicker">How Ripple works</div><h2 class="display">An agent, working in a loop</h2></div>
+<div class="loop">
+  <div class="card st"><div class="n">01</div><b>Build the audience</b><span>People sampled from Census (or World Bank) and Pew rows, queried on Zetaris</span><em>a receipt for every trait</em></div>
+  <div class="card st"><div class="n">02</div><b>Simulate</b><span>A day of that audience seeing each draft: memory, competing posts, sharing</span><em>counterfactual worlds, identical except for the content</em></div>
+  <div class="card st"><div class="n">03</div><b>Investigate</b><span>SQL over its own event log: segments, timeline, reaction samples</span><em>every number has a query id</em></div>
+  <div class="card st"><div class="n">04</div><b>Explain</b><span>Who reacted, who stayed silent, how they felt, and why, in their words</span><em>every quote is an action id</em></div>
+  <div class="card st gate"><div class="n">05 · GATED</div><b>Recommend</b><span>Which draft leads, a suggested rewrite, an action plan</span><em>spending or publishing waits for the owner</em></div>
+</div>
+<div class="lbl">Why it is an agent, not a pipeline</div>
+<div class="why">
+  <div class="card w"><div class="k">Uses tools</div><b>Queries its own run</b><span>SQL against the event log it just wrote, plus Census and Pew through Zetaris.</span></div>
+  <div class="card w"><div class="k">Critiques itself</div><b>Checks, then revises</b><span>A code critic checks every number against its query, a model critic reviews the report, an honesty check guards every rewrite.</span></div>
+  <div class="card w"><div class="k">Asks permission</div><b>Owner approves spend</b><span>Free, reversible steps proceed. Anything that spends money or publishes waits for a yes, and is created paused.</span></div>
+</div>
+</body></html>

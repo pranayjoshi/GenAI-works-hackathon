@@ -18,7 +18,7 @@ export const OFFLINE_SERVED_BY = 'offline-model';
 const hashU = (...parts: (string | number)[]) => parseInt(sha(parts.join('|'), 8), 16) / 0x100000000;
 
 /** Offline fallback applies in sample mode, or when no hosted provider is set (a local Ollama that answers still wins first). */
-export const offlineAllowed = () => !config.sampleStrict && (config.sampleMode || (!config.nightshift.token && !config.nvidia.apiKey));
+export const offlineAllowed = () => !config.sampleStrict && (config.sampleMode || !config.nightshift.token);
 
 /** calls answered offline, per run tag (for the /run trace summary) */
 export const offlineCalls = new Map<string, number>();
@@ -45,6 +45,8 @@ export function parseFeatures(text: string): Features {
   };
 }
 
+/** Relative willingness to engage with a sponsored item (assumption for the offline fallback; instagram = 1 keeps the original rates). */
+const PLATFORM_ENGAGE: Record<string, number> = { instagram: 1, tiktok: 1.25, facebook: 0.9, youtube: 0.7, x: 0.8, reddit: 0.6 };
 const u = (tag: string, ...k: (string | number)[]) => hashU(tag, ...k);
 const pick = <T>(arr: T[], x: number) => arr[Math.min(arr.length - 1, Math.floor(x * arr.length))];
 
@@ -109,13 +111,14 @@ export function decideOffline(turns: AgentTurn[], ctx: RenderCtx, runTag: string
   // stable across reruns (the run id carries a random suffix) and identical in both twin worlds
   const tag = sha(`${ctx.post.business}|${ctx.place}`, 8);
   const out = new Map<string, CrowdDecision>();
-  const postF = parseFeatures(ctx.post.text);
+  const postFs = (ctx.post.items?.length ? ctx.post.items : [{ text: ctx.post.text, image: ctx.post.image }]).map((x) => parseFeatures(`${x.text} ${x.image ?? ''}`));
+  const plat = ctx.mode === 'backtest' ? 1 : PLATFORM_ENGAGE[ctx.platform ?? 'instagram'] ?? 1;
   for (const t of turns) {
     const p = t.persona;
     for (const it of t.items) {
       const key = `${p.id}/${it.item_id}`;
       const visitDraw = hashU(tag, p.id, 'visit');
-      const base = scorePost(p, postF, t.seenBefore, (hashU(tag, p.id, 'mood') - 0.5) * 0.8);
+      const base = scorePost(p, postFs[Math.min(it.idx ?? 0, postFs.length - 1)], t.seenBefore, (hashU(tag, p.id, 'mood') - 0.5) * 0.8);
       if (it.kind === 'event') {
         // competitor / news item: shifts feeling and intent relative to what the persona thought of the post
         const ef = parseFeatures(ctx.eventText(it.item_id));
@@ -134,7 +137,7 @@ export function decideOffline(turns: AgentTurn[], ctx: RenderCtx, runTag: string
       const f = feelingOf(s);
       const x = u(tag, p.id, it.item_id, ctx.hourLabel, 'act');
       const y = u(tag, p.id, it.item_id, ctx.hourLabel, 'kind');
-      const pEng = s > 0 ? clamp(0.02 + 0.08 * s, 0, 0.4) : 0.01;
+      const pEng = (s > 0 ? clamp(0.02 + 0.08 * s, 0, 0.4) : 0.01) * plat;
       let action: CrowdDecision['action'] = 'scroll_past';
       let text = '';
       if (f <= -2 && x < 0.07) action = 'hide';
