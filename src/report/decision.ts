@@ -55,7 +55,7 @@ export interface Decision {
   };
   variant: { text: string; rationale: string; targets: string[]; honesty: { ok: boolean; issues: string[] } } | null;
   plan: {
-    variants: { label: string; text: string }[];
+    variants: { label: string; text: string; image_url?: string }[];
     targeting: { platform: string; place: string; zip: string; age_bands: string[]; note: string };
     per_version: number;
     total: number;

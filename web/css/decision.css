@@ -87,3 +87,49 @@
   .dc-act-btns .btn { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .dc-bar-fill { transition: none; } }
+
+/* ---- ad preview: Instagram-style mocks of the generated creatives ---- */
+.dc-c { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: start; }
+.dc-thumb { width: 150px; aspect-ratio: 1; border-radius: 12px; object-fit: cover; box-shadow: var(--shadow); }
+.ad-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 18px; }
+.ad-toggle { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line-2); }
+.ad-toggle button { border: 0; background: transparent; color: var(--muted); font: 650 14px var(--sans); padding: 7px 20px; border-radius: 999px; cursor: pointer; transition: background .2s, color .2s; }
+.ad-toggle button.on { background: var(--accent); color: #fff; }
+.ad-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; justify-items: center; padding: 26px 16px 20px; border-radius: 20px; border: 1px solid var(--line-2); background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%), var(--panel); }
+.ad-card { margin: 0; width: 100%; max-width: 380px; display: grid; gap: 12px; justify-items: center; cursor: zoom-in; outline: none; transition: transform .25s cubic-bezier(.2,.8,.3,1), filter .25s; }
+.ad-card:hover, .ad-card:focus-visible { transform: translateY(-8px) scale(1.015); }
+.ad-label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.ad-phone { position: relative; width: 100%; padding: 12px 10px 10px; border-radius: 40px; background: #0a0b10; border: 2px solid #2a2e3d; box-shadow: 0 24px 60px rgba(0,0,0,.45), 0 0 0 1px var(--vc) inset, 0 0 40px color-mix(in srgb, var(--vc) 30%, transparent); transition: box-shadow .25s; }
+.ad-card:hover .ad-phone { box-shadow: 0 34px 70px rgba(0,0,0,.5), 0 0 0 1px var(--vc) inset, 0 0 60px color-mix(in srgb, var(--vc) 50%, transparent); }
+.ad-notch { width: 34%; height: 18px; margin: 0 auto 8px; border-radius: 12px; background: #1b1e2a; }
+.ad-post { position: relative; overflow: hidden; border-radius: 26px; background: #fff; color: #111; font-family: -apple-system, "Helvetica Neue", Arial, sans-serif; }
+.ad-top { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.ad-av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 16px; color: #fff; background: linear-gradient(135deg, #feda75, #d62976 55%, #4f5bd5); }
+.ad-who { display: grid; line-height: 1.15; flex: 1; min-width: 0; } .ad-who b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ad-who span { font-size: 12px; color: #6b7280; }
+.ad-dots { letter-spacing: 2px; color: #444; }
+.ad-img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #e5e7eb; }
+.ad-cta { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; background: #0095f6; color: #fff; font-weight: 650; font-size: 14.5px; }
+.ad-cta i { font-style: normal; font-size: 22px; line-height: 1; }
+.ad-acts { display: flex; align-items: center; gap: 14px; padding: 10px 12px 4px; } .ad-acts .sp { flex: 1; }
+.ad-ic { width: 24px; height: 24px; fill: none; stroke: #111; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.ad-cap { padding: 2px 14px 14px; font-size: 13.5px; line-height: 1.4; color: #222; }
+.ad-post.story { background: #000; aspect-ratio: 9 / 16; }
+.ad-post.story .ad-img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; }
+.ad-post.story .ad-bar { position: absolute; z-index: 2; left: 12px; right: 12px; top: 8px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.45); }
+.ad-post.story .ad-bar::after { content: ""; display: block; width: 40%; height: 100%; border-radius: 2px; background: #fff; }
+.ad-top.on { position: absolute; z-index: 2; top: 14px; left: 0; right: 0; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); } .ad-top.on .ad-who span { color: #eee; }
+.ad-swipe { position: absolute; z-index: 2; left: 0; right: 0; bottom: 14px; display: grid; justify-items: center; color: #fff; font-weight: 650; font-size: 14px; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.ad-intent { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--text); font-size: 13.5px; font-weight: 600; text-decoration: none; transition: border-color .2s, background .2s; }
+.ad-intent i { width: 9px; height: 9px; border-radius: 50%; } .ad-intent:hover { border-color: var(--vc); background: var(--panel-3); }
+.ad-state { display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; background: var(--good-soft); color: var(--good); border: 1px solid var(--good); animation: ad-pop .6s cubic-bezier(.2,1.4,.4,1) both; }
+.ad-state.warn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.ad-tick { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--good); color: #fff; font-size: 12px; } .ad-state.warn .ad-tick { background: var(--warn); }
+.ad-ids { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; font-size: 12px; }
+.ad-card.launched .ad-phone { animation: ad-settle .7s cubic-bezier(.2,.9,.3,1) both; filter: saturate(.9); }
+.ad-zoom { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; align-content: center; gap: 14px; background: rgba(5,6,10,.82); backdrop-filter: blur(8px); cursor: zoom-out; animation: ad-fade .2s both; }
+.ad-zoom img { max-height: 84vh; max-width: 92vw; border-radius: 16px; box-shadow: 0 30px 90px rgba(0,0,0,.6); }
+@keyframes ad-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ad-settle { 0% { transform: scale(1); } 40% { transform: scale(1.04) rotate(-.6deg); } 100% { transform: scale(1); } }
+@keyframes ad-fade { from { opacity: 0; } }
+@media (max-width: 560px) { .dc-c { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .ad-card, .ad-state, .ad-card.launched .ad-phone, .ad-zoom { animation: none; transition: none; } }

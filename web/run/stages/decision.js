@@ -26,6 +26,7 @@ export default {
     const root = h('div.dc'); el.append(root);
     const cleanups = [];
     let D = null, loading = false, loadErr = null, shown = false;
+    let placement = 'feed', zoom = null;   // ad preview: feed|story toggle, enlarged ad
     const notes = {};   // action id -> { note, launch_plan } returned by the POST route
 
     async function load() {
@@ -88,12 +89,65 @@ export default {
       if (!v) return sec('Version C', 'No draft yet', null, h('p.muted', 'No Version C was drafted for this decision. The Ask why stage can draft one.'));
       const ok = v.honesty?.ok;
       return sec('Version C', 'A bolder version, drafted from the objections', 'a draft, never posted on its own',
-        h('div.dc-post', { style: { '--vc': 'var(--c)' } }, h('span.dc-post-tag', 'Version C draft'), h('p', v.text)),
+        h('div.dc-post.dc-c', { style: { '--vc': 'var(--c)' } }, h('img.dc-thumb', { src: `/api/runs/${encodeURIComponent(id)}/creative/c.svg`, alt: 'Version C ad creative', loading: 'lazy' }), h('div', h('span.dc-post-tag', 'Version C draft'), h('p', v.text))),
         v.rationale ? h('p.dc-why', h('b', 'Why: '), v.rationale) : null,
         v.targets?.length ? h('div.chips', { style: { marginBottom: '12px' } }, v.targets.map((t) => h('span.chip', t))) : null,
         h('div.dc-honesty.' + (ok ? 'ok' : 'warn'),
           s('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, s('path', { d: 'M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z' }), s('path', { d: ok ? 'M8 12.5l3 3 5-6' : 'M12 8v5M12 16v.5' })),
           h('div', h('b', 'Honesty check: '), ok ? 'passed. Price and offer are kept, no invented claims.' : 'issues found.', !ok && v.honesty?.issues?.length ? h('ul', v.honesty.issues.map((i) => h('li', i))) : null)));
+    }
+
+
+    /* ---------------------------------------------------------- ad preview (creatives from GET /api/runs/:id/creative/:variant.svg) */
+    const letterOf = (label) => (String(label).match(/\b([ABC])\b/) || [])[1] || 'A';
+    const launchAct = (d) => d.actions.find((a) => a.kind === 'launch_test' || a.kind === 'publish');
+    const imgUrl = (v, pl) => `${v.image_url || `/api/runs/${encodeURIComponent(id)}/creative/${letterOf(v.label).toLowerCase()}.svg`}${pl === 'story' ? '?placement=story' : ''}`;
+    const icon = (d) => s('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true', class: 'ad-ic' }, s('path', { d }));
+    const IC = { like: 'M12 21s-7.5-4.6-9.5-9.2C1.2 8.600 3 5.500 6.200 5.500c1.900 0 3.300 1 3.800 2.200.5-1.200 1.900-2.200 3.800-2.200 3.200 0 5 3.100 3.700 6.300C19.500 16.400 12 21 12 21z', cmt: 'M21 12a8 8 0 0 1-11.800 7L3 20.500l1.500-5.200A8 8 0 1 1 21 12z', share: 'M22 3L9.500 10.500 3 8.500 22 3zM22 3l-5.500 17-5-8.500', save: 'M6 3h12v18l-6-4.500L6 21z' };
+    function intentChip(d, v) {
+      const k = letterOf(v.label), r = d.verdict;
+      const val = k === 'A' ? r.a : k === 'B' ? r.b : null;
+      const text = val != null ? `${k} ${(val * 100).toFixed(1)}% simulated intent` : `${k}: drafted, not simulated yet`;
+      return h('a.ad-intent', { href: `#/run/${encodeURIComponent(id)}/verdict`, title: 'Open the Verdict stage', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), text, h('span', ' →'));
+    }
+    function adCard(d, v, launched) {
+      const k = letterOf(v.label), st = launched, pl = placement;
+      const a = launchAct(d), res = a?.result;
+      const adSet = (res?.ad_sets || []).find((x) => x.label === v.label) || (res?.ad_sets || [])[d.plan.variants.indexOf(v)];
+      const handle = S.spec?.handle || '@yourbusiness', biz = S.spec?.business || d.audience?.place || 'Your business';
+      const img = h('img.ad-img', { src: imgUrl(v, pl), alt: `Ad creative for ${v.label}`, loading: 'lazy' });
+      const post = h('div.ad-post' + (pl === 'story' ? '.story' : ''),
+        pl === 'story' ? null : h('div.ad-top', h('span.ad-av', (biz.trim()[0] || 'R').toUpperCase()), h('div.ad-who', h('b', handle.replace(/^@/, '')), h('span', 'Sponsored')), h('span.ad-dots', '•••')),
+        pl === 'story' ? h('div.ad-bar') : null,
+        pl === 'story' ? h('div.ad-top.on', h('span.ad-av', (biz.trim()[0] || 'R').toUpperCase()), h('div.ad-who', h('b', handle.replace(/^@/, '')), h('span', 'Sponsored'))) : null,
+        img,
+        pl === 'story' ? h('div.ad-swipe', h('span', '⌃'), 'Learn more') : [
+          h('div.ad-cta', h('span', 'Learn more'), h('i', '›')),
+          h('div.ad-acts', icon(IC.like), icon(IC.cmt), icon(IC.share), h('span.sp'), icon(IC.save)),
+          h('div.ad-cap', h('b', handle.replace(/^@/, '')), ' ', v.text.length > 120 ? `${v.text.slice(0, 118)}...` : v.text)]);
+      const state = st === 'live' ? ['good', 'Campaign created — paused'] : st === 'preview' ? ['warn', 'Preview — nothing sent'] : null;
+      return h('figure.ad-card' + (st ? '.launched' : ''), { style: { '--vc': k === 'C' ? '#8b5cf6' : variantVar(k) }, tabindex: '0', role: 'button', 'aria-label': `Enlarge ${v.label}`, onclick: () => { zoom = v; draw(); }, onkeydown: (e) => { if (e.key === 'Enter') { zoom = v; draw(); } } },
+        h('figcaption.ad-label', h('b', v.label)),
+        h('div.ad-phone', h('div.ad-notch'), post),
+        state ? h('div.ad-state.' + state[0], h('span.ad-tick', '✓'), state[1]) : null,
+        st === 'live' && adSet ? h('div.ad-ids', h('code', `ad set ${adSet.ad_set_id || '-'}`), h('code', `ad ${adSet.ad_id || '-'}`)) : null,
+        intentChip(d, v));
+    }
+    function adPreview(d) {
+      const vs = d.plan.variants.filter((v) => v.text && !v.text.startsWith('('));
+      if (!vs.length) return null;
+      const a = launchAct(d), res = a?.result;
+      const launched = a && a.status === 'approved' ? (res?.mode === 'live' && res.ok ? 'live' : 'preview') : null;
+      const tog = h('div.ad-toggle', { role: 'tablist' }, ['feed', 'story'].map((p) => h('button' + (placement === p ? '.on' : ''), { role: 'tab', 'aria-selected': String(placement === p), onclick: () => { placement = p; draw(); } }, p === 'feed' ? 'Feed' : 'Story')));
+      const tag = vs.length > 1 ? `${letterOf(vs[0].label)} vs ${letterOf(vs[1].label)}` : letterOf(vs[0].label);
+      return sec('Ad preview', `How ${tag} would look in people's feeds`, launched === 'live' ? 'created in your ad account, paused' : 'generated from the post text; nothing is live',
+        h('div.ad-tools', tog, h('span.expl', 'Click an ad to enlarge it.')),
+        h('div.ad-row', vs.map((v) => adCard(d, v, launched))));
+    }
+    function adZoom() {
+      if (!zoom) return null;
+      const close = () => { zoom = null; draw(); };
+      return h('div.ad-zoom', { onclick: close }, h('img', { src: imgUrl(zoom, placement), alt: zoom.label }), h('button.btn.sm', { onclick: close }, 'Close (Esc)'));
     }
 
     function launchPlan(d) {
@@ -203,12 +257,14 @@ export default {
         sec('Why', 'Reasons', null, h('ul.dc-reasons', d.reasons.map((r) => h('li', r)))),
         sec('In their words', 'Why people hesitated, and what drew them', 'each quote links to the action it came from',
           h('div.dc-cols', themeCol('Why people hesitated', 'objections', d.brief?.objections || []), themeCol('What drew them', 'likes', d.brief?.likes || []))),
-        versionC(d), launchPlan(d),
-        sec('Next steps', 'Actions', 'what runs on its own, and what waits for you', h('ul.dc-acts', d.actions.map((a) => actionCard(d, a)))));
+        versionC(d), adPreview(d), launchPlan(d),
+        sec('Next steps', 'Actions', 'what runs on its own, and what waits for you', h('ul.dc-acts', d.actions.map((a) => actionCard(d, a)))), adZoom());
       if (!reduced() && !shown) { shown = true; stagger(root, { y: 14, gap: 50, ms: 520 }); }
     }
 
     // the decision can arrive after the report; pick it up on done/snapshot only if we have none yet
+    const onKey = (e) => { if (e.key === 'Escape' && zoom) { zoom = null; draw(); } };
+    document.addEventListener('keydown', onKey); cleanups.push(() => document.removeEventListener('keydown', onKey));
     cleanups.push(bus.on('done', () => { if (!D && shown) load(); }));
     draw();
     return {

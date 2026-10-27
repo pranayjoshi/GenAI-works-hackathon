@@ -8,9 +8,10 @@
  */
 import { config } from '../config.js';
 import { agentLog } from '../util/agentlog.js';
+import { creativeUrl } from './creative.js';
 import type { Decision } from '../report/decision.js';
 
-export interface MetaVariant { label: string; text: string }
+export interface MetaVariant { label: string; text: string; image_url?: string }
 export interface MetaLaunchInput {
   run_id: string;
   business: string;
@@ -52,6 +53,8 @@ function assertPaused(body: Record<string, unknown>) {
   if ('status' in body && body.status !== PAUSED) throw new Error('Dry Run only creates paused Meta objects');
 }
 
+/** Preview only: `picture` is the generated creative's URL. A live launch must upload a PNG to /adimages and use its image_hash,
+ * which needs an SVG-to-PNG converter (not a dependency yet), so live creatives stay text-only and never send `picture`. */
 /** The Graph API requests, in order. `$campaign`, `$adset:i`, `$creative:i` are filled with ids as they are created. */
 export function metaPayloads(inp: MetaLaunchInput): { path: string; body: Record<string, unknown> }[] {
   const m = config.meta;
@@ -87,7 +90,7 @@ export function metaPayloads(inp: MetaLaunchInput): { path: string; body: Record
         object_story_spec: {
           page_id: m.pageId || '<page id>',
           ...(m.instagramUserId ? { instagram_user_id: m.instagramUserId } : {}),
-          link_data: { message: v.text, link: m.linkUrl, name: inp.business, call_to_action: { type: 'LEARN_MORE', value: { link: m.linkUrl } } },
+          link_data: { message: v.text, ...(v.image_url && !metaConfigured() ? { picture: v.image_url } : {}), link: m.linkUrl, name: inp.business, call_to_action: { type: 'LEARN_MORE', value: { link: m.linkUrl } } },
         },
       },
     });
@@ -123,7 +126,7 @@ async function launchOnMetaInner(inp: MetaLaunchInput): Promise<MetaLaunchResult
   const payloads = metaPayloads(inp);
   const ad_sets: MetaLaunchResult['ad_sets'] = inp.variants.map((v) => ({ label: v.label }));
   if (!metaConfigured()) {
-    return { mode: 'preview', ok: true, ad_sets, payloads, note: 'Meta is not configured (docs/META_SETUP.md), so nothing was sent. These are the exact requests Dry Run would make, all paused.' };
+    return { mode: 'preview', ok: true, ad_sets, payloads, note: 'Meta is not configured (docs/META_SETUP.md), so nothing was sent. These are the exact requests Dry Run would make, all paused. Each creative carries picture = the generated ad image; a live launch would first upload a PNG of it to /adimages.' };
   }
   const ids: Record<string, string> = {};
   const fill = (x: unknown): unknown => (typeof x === 'string' && ids[x] ? ids[x] : Array.isArray(x) ? x.map(fill) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, fill(v)])) : x);
@@ -156,5 +159,6 @@ export function launchInputFromDecision(d: Decision, business: string): MetaLaun
   const variants = d.plan.variants.filter((v) => v.text && !v.text.startsWith('('));
   if (!variants.length) throw Object.assign(new Error('The launch plan has no finished variant text yet'), { statusCode: 400 });
   if (d.actions.some((x) => x.kind === 'launch_test') && new Set(variants.map((v) => v.text)).size < 2) throw Object.assign(new Error('A split test needs two different finished variants; Version C has not been drafted (or the Rewriter returned nothing). Draft Version C first.'), { statusCode: 400 });
+  for (const v of variants) { const m = v.label.match(/\b([ABC])\b/); if (m) v.image_url = creativeUrl(d.run_id, m[1], 'feed', `http://localhost:${config.port}`); }
   return { run_id: d.run_id, business, zip: d.plan.targeting.zip, age_bands: d.plan.targeting.age_bands, variants, days: 7 };
 }

@@ -12,6 +12,7 @@ import { CAFE_DEMO } from './demo.js';
 import { runs, startRun, loadRun, listRunsOnDisk, injectEvent, allRecords, specFromInput, persist, runDir, type RunState, type RunInput } from './sim/run.js';
 import { buildDecision, decideAction, writeLaunchPlan, recordVerification } from './report/decision.js';
 import { metaConfigured } from './actions/meta.js';
+import { renderCreative, creativeUrl } from './actions/creative.js';
 import { interview, askSegment, focusGroup } from './report/interview.js';
 import { draftVersionC } from './report/rewriter.js';
 import { queryActions } from './report/tools.js';
@@ -27,13 +28,27 @@ async function getRun(id: string): Promise<RunState> {
   return st;
 }
 
+/** Text of one variant: A/B from the run's posts, C from the decision's Version C draft. */
+function variantText(st: RunState, v: string): string | null {
+  if (v === 'c') return st.decision?.variant?.text ?? null;
+  return st.spec.posts.find((p) => p.variant.toLowerCase() === v)?.text ?? null;
+}
+/** Add the creative URL to each launch-plan variant (label looks like "Version A (current leader)"). */
+function withImages<T extends { run_id: string; plan?: { variants: { label: string; image_url?: string }[] } }>(d: T): T {
+  for (const v of d.plan?.variants ?? []) {
+    const m = v.label.match(/\b([ABC])\b/);
+    if (m) v.image_url = creativeUrl(d.run_id, m[1]);
+  }
+  return d;
+}
+
 function snapshot(st: RunState) {
   return {
     spec: st.spec, status: st.status, phase: st.phase, error: st.error, created: st.created,
     proposal: st.proposal, sampleReport: st.sampleReport,
     personas: st.personas.map(({ receipts, ...p }) => p),
     summaries: st.summaries, verdict: st.verdict, tipping: st.tipping, validity: st.validity, fairness: st.fairness,
-    report: st.report, decision: st.decision, usage: st.usage ?? traceStats(st.spec.run_id), timing: st.timing,
+    report: st.report, decision: st.decision ? withImages(st.decision) : st.decision, usage: st.usage ?? traceStats(st.spec.run_id), timing: st.timing,
     worlds: st.worlds.map(({ records, ...w }) => ({ ...w, decisions: records.length })),
   };
 }
@@ -143,17 +158,27 @@ app.post('/api/runs/:id/focus', async (req) => {
 });
 app.post('/api/runs/:id/version-c', async (req) => draftVersionC(await getRun((req.params as any).id)));
 // spend decision and launch plan (src/report/decision.ts)
+app.get('/api/runs/:id/creative/:file', async (req, reply) => {
+  const st = await getRun((req.params as any).id);
+  const m = String((req.params as any).file).match(/^([abc])\.svg$/i);
+  const v = m?.[1].toLowerCase() as 'a' | 'b' | 'c' | undefined;
+  const text = v ? variantText(st, v) : null;
+  if (!v || !text) return reply.code(404).send({ error: v === 'c' ? 'No Version C draft for this run yet' : 'Unknown variant (use a.svg, b.svg or c.svg)' });
+  const placement = (req.query as any)?.placement === 'story' ? 'story' : 'feed';
+  reply.header('content-type', 'image/svg+xml; charset=utf-8').header('cache-control', 'public, max-age=300');
+  return renderCreative({ business: st.spec.business, place: st.spec.place, handle: st.spec.handle, variant: v, text, placement });
+});
 app.get('/api/runs/:id/decision', async (req) => {
   const st = await getRun((req.params as any).id);
   if (!st.decision) { st.decision = await buildDecision(st, { draft: false }); persist(st); writeLaunchPlan(runDir(st.spec.run_id), st.decision); }
-  return st.decision;
+  return withImages(st.decision);
 });
 app.post('/api/runs/:id/decision', async (req) => {
   const st = await getRun((req.params as any).id);
   st.decision = await buildDecision(st, { draft: Boolean((req.body as any)?.draft ?? true) });
   persist(st);
   writeLaunchPlan(runDir(st.spec.run_id), st.decision);
-  return st.decision;
+  return withImages(st.decision);
 });
 app.post('/api/runs/:id/decision/actions/:action', async (req) => {
   const st = await getRun((req.params as any).id);
