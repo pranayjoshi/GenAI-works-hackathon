@@ -4,7 +4,8 @@
 # recorded fails, and checks the verdict matches the recorded run.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export SAMPLE_MODE=true SAMPLE_STRICT=true REPLAY_CROWD_MS=0 PROVIDERS=none RECORD=false
+export DOTENV_CONFIG_PATH=/nonexistent  # ignore the local .env: a configured Zetaris changes the data path
+export SAMPLE_MODE=true SAMPLE_STRICT=true REPLAY_CROWD_MS=0 PROVIDERS=none RECORD=false QUIET_AGENT_LOG=true QUIET_AGENT_LOG=true
 export RECORDINGS_DB=${RECORDINGS_DB:-samples/smoke-recordings.sqlite}
 npx tsc --noEmit
 npx vitest run
