@@ -1227,7 +1227,8 @@
       "The simulated gap is 2.9 points (A 29.6% vs B 26.7%), inside a ±5.5-point interval: no winner.",
       "A real test needs about 3,828 people per version to detect a gap that small (5% two-sided, 80% power): 7,656 in all.",
       "There are about 27,006 Instagram users in Austin, TX 78704 (Census x Pew join), so that test would have to reach 28.3% of them.",
-      "A test using at most 20.0% of the local audience (2,700 per version) can only detect a gap of about 3.5 points, so the next version must move intent by at least that much to be worth testing."
+      "A test using at most 20.0% of the local audience (2,700 per version) can only detect a gap of about 3.5 points, so the next version must move intent by at least that much to be worth testing.",
+      "Version C moved intent by +1.1 points on the same crowd (14.6% vs 13.5%), short of the 3.5-point bar. Keep A and don't pay for a real test of C."
     ],
     "actions": [
       {
@@ -1246,7 +1247,7 @@
         "id": "simulate_c",
         "title": "Simulate version C against A on the same crowd",
         "policy": "auto",
-        "status": "proposed"
+        "status": "done"
       },
       {
         "id": "launch_test",

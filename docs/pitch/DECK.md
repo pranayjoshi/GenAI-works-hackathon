@@ -70,7 +70,7 @@ Each layer of the architecture maps to one word of that sentence. Results come f
 - Capped at 20% of the audience (2,700 per version), a test detects only about 3.5 points
 - Version C, drafted from the quoted objections, passed the Honesty check
 
-**Speaker notes:** This is the centrepiece. The decision does not need the crowd to predict a winner. It needs the measured gap and the real audience size. The objection "Put off by price" appeared on both versions. A drew people on taste and ingredients, B on the discount. The agent drafted C: "Your new morning ritual: Oat Milk Honey Latte, $6.50. 20% off this week. Local wildflower honey. South Congress Coffee." Then it simulated C on the same crowd, hosted Nemotron 3.5 Lightning via Nightshift. <<C_RESULT: Version C moved intent by X points on the same crowd ... >> Then it re-decided against the 3.5-point bar.
+**Speaker notes:** This is the centrepiece. The decision does not need the crowd to predict a winner. It needs the measured gap and the real audience size. The objection "Put off by price" appeared on both versions. A drew people on taste and ingredients, B on the discount. The agent drafted C: "Your new morning ritual: Oat Milk Honey Latte, $6.50. 20% off this week. Local wildflower honey. South Congress Coffee." Then it simulated C on the same crowd, hosted Nemotron 3.5 Lightning via Nightshift. On its own, the agent then simulated Version C against A on the same 600 people, this time on hosted Nemotron 3.5 Lightning through Nightshift (11.7 minutes). C moved intent by +1.1 points (14.6% vs 13.5%), short of the 3.5-point bar, so the agent's decision was: keep A and don't pay for a real test of C. Then it re-decided against the 3.5-point bar.
 
 ## Slide 9. Actions and policy
 **On slide:**

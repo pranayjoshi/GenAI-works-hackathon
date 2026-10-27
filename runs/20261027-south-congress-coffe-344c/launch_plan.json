@@ -1,0 +1,45 @@
+{
+  "run_id": "20261027-south-congress-coffe-344c",
+  "call": "cancel_ab",
+  "headline": "Don't pay to A/B test these two posts: they are too close to tell apart with the people South Congress Coffee can reach. Test a bolder version instead.",
+  "approved_actions": [],
+  "plan": {
+    "variants": [
+      {
+        "label": "Version C (current leader)",
+        "text": "Your new morning ritual: Oat Milk Honey Latte, $6.50. 20% off this week. Local wildflower honey. South Congress Coffee."
+      },
+      {
+        "label": "Version C (rewrite)",
+        "text": "Oat Milk Honey Latte: $6.50, 20% off this week. Local wildflower honey. South Congress Coffee."
+      }
+    ],
+    "targeting": {
+      "platform": "Instagram",
+      "place": "Austin, TX 78704",
+      "zip": "78704",
+      "age_bands": [
+        "25-34"
+      ],
+      "note": "Core segment 25-34 first; the crowd sampled 50.0% core."
+    },
+    "per_version": 2700,
+    "total": 5400,
+    "success_metric": "Taps through to the post and store visits attributed to the post (the real-world counterpart of the simulated intent to visit).",
+    "decision_rule": "Pick the version whose tap rate is higher by at least 2.8 points with a 95% interval that excludes zero; otherwise keep C and stop testing.",
+    "stop_rule": "Stop when each version has reached 2,700 people, or after 7 days.",
+    "assumptions": [
+      "The real gap is no larger than the simulated one (simulated people, local Nemotron 3 Nano 4B; the backtest shows the crowd does not predict real winners).",
+      "A test is worth paying for only if it needs at most 20.0% of local Instagram users.",
+      "Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age."
+    ]
+  },
+  "reasons": [
+    "The simulated gap is 1.1 points (C 14.6% vs A 13.5%), inside a ±4.2-point interval: no winner.",
+    "A real test needs about 16,851 people per version to detect a gap that small (5% two-sided, 80% power): 33,702 in all.",
+    "There are about 27,006 Instagram users in Austin, TX 78704 (Census x Pew join), so that test would have to reach 124.8% of them.",
+    "A test using at most 20.0% of the local audience (2,700 per version) can only detect a gap of about 2.8 points, so the next version must move intent by at least that much to be worth testing."
+  ],
+  "exported": "2026-10-27T18:09:34.115Z",
+  "note": "Exported by Dry Run. Nothing was posted or spent."
+}

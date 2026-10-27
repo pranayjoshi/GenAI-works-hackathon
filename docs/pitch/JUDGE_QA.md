@@ -22,7 +22,7 @@ We don't know. A and B were tied before it in both seeds (35.3 vs 35.6, 37.2 vs 
 A power calculation on the simulated gap: 3,828 people per version, 7,656 in total, at 5% two-sided and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. Capped at 20% (2,700 per version), a test detects about 3.5 points.
 
 ## 8. Why would the agent's Version C be any better?
-We don't claim it is. It was drafted from the quoted price objections and passed the honesty check. <<C_RESULT: Version C moved intent by X points on the same crowd ... >> The agent then re-decides against the 3.5-point bar.
+We don't claim it is. It was drafted from the quoted price objections and passed the honesty check. On its own, the agent then simulated Version C against A on the same 600 people, this time on hosted Nemotron 3.5 Lightning through Nightshift (11.7 minutes). C moved intent by +1.1 points (14.6% vs 13.5%), short of the 3.5-point bar, so the agent's decision was: keep A and don't pay for a real test of C. The agent then re-decides against the 3.5-point bar.
 
 ## 9. What stops the agent spending money?
 Free, reversible steps run on their own. Anything that spends or publishes waits for the owner. Approval creates the campaign and ad sets paused, and the code refuses anything else. We recommend a sandbox ad account. Without credentials it shows the requests and sends nothing. Code: `src/actions/meta.ts`.
