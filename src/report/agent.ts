@@ -195,13 +195,10 @@ ${toolText}`;
   for (const c of report.claims) c.text = noAlias(c.text);
   // no winner: the summary must say so up front, and the recommendation must be a next test, not a pick
   if (!v.winner) {
-    if (!/too close|not a clear|within the (margin|interval)|no clear/i.test(report.summary)) {
-      const rest = report.summary.split(/(?<=[.!?])\s+(?=[A-Z])/).filter((x) => !/\b(leads?|wins?|winner|ahead|beats?|better)\b/i.test(x)).join(' ');
-      report.summary = `${v.headline} ${rest}`.trim();
-      issues.push('Summary implied a winner although the verdict is too close to call; the verdict now leads it.');
-    }
+    // with no winner the summary is the computed verdict; model sentences there tend to pick a side
+    if (report.summary.trim() !== v.headline) { report.summary = v.headline; issues.push('Summary set to the computed verdict (no winner).'); }
     const before = report.claims.length;
-    report.claims = report.claims.filter((c) => !/\b(leads?|wins?|winner|beats?|outperforms?)\b/i.test(c.text));
+    report.claims = report.claims.filter((c) => !/\b(leads?|wins?|winner|beats?|outperforms?|higher|better|stronger)\b/i.test(c.text));
     if (report.claims.length < before) issues.push('Dropped claims that named a winner although the verdict is too close to call.');
     if (!/version c|test|re-?run|bigger|larger/i.test(report.recommendation)) {
       report.recommendation = 'Too close to call: test a sharper version C on the same crowd before spending.';
@@ -219,13 +216,17 @@ ${toolText}`;
       }
       for (const [seg, m] of bySeg) {
         const a = m[va], b = m[vb];
-        if (!a || !b || a.n < 40 || b.n < 40) continue; // small segments swing on a handful of people
-        gaps.push({ qid: t.query_id, gap: Math.abs(a.rate - b.rate), text: `${t.args.by === 'customer' ? seg : `${t.args.by} ${seg}`}: intent ${(a.rate * 100).toFixed(1)}% on ${va} vs ${(b.rate * 100).toFixed(1)}% on ${vb} (${a.n} and ${b.n} people deciding).` });
+        if (!a || !b || a.n / st.spec.seeds.length < 40 || b.n / st.spec.seeds.length < 40) continue; // small segments swing on a handful of people
+        gaps.push({ qid: t.query_id, gap: Math.abs(a.rate - b.rate), text: `${t.args.by === 'customer' ? seg : `${t.args.by} ${seg}`}: intent ${(a.rate * 100).toFixed(1)}% on ${va} vs ${(b.rate * 100).toFixed(1)}% on ${vb} (${Math.round(a.n / st.spec.seeds.length)} people deciding${st.spec.seeds.length > 1 ? `, pooled over ${st.spec.seeds.length} seeds` : ""}).` });
       }
     }
     gaps.sort((x, y) => y.gap - x.gap);
+    const seenNums = new Set(report.claims.map((c) => (c.text.match(/\d+(\.\d+)?%/g) ?? []).join('|')));
     for (const g of gaps) {
       if (report.claims.length >= 3) break;
+      const nums = (g.text.match(/\d+(\.\d+)?%/g) ?? []).join('|');
+      if (seenNums.has(nums)) continue; // same people under another label (e.g. core = 25-34)
+      seenNums.add(nums);
       report.claims.push({ text: g.text, query_ids: [g.qid] });
     }
   }
@@ -266,7 +267,7 @@ function fallbackReport(st: RunState, tools: ToolResult[], samples: ToolResult[]
   const [va, vb] = v.variants;
   return {
     summary: v.headline,
-    claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% (${r.deciders} simulated people deciding, summed over ${st.spec.seeds.length} seed${st.spec.seeds.length > 1 ? "s" : ""}).`, query_ids: [seg.query_id] })).slice(0, 4),
+    claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% (${Math.round(Number(r.deciders) / st.spec.seeds.length)} people deciding${st.spec.seeds.length > 1 ? `, pooled over ${st.spec.seeds.length} seeds` : ""}).`, query_ids: [seg.query_id] })).slice(0, 4),
     objections: [va, vb].map((variant, i) => themeFrom(samples[i * 2], variant, 'negative') ?? { theme: `Negative reactions to ${variant}`, variant, action_ids: pick(samples[i * 2]) }),
     likes: [va, vb].map((variant, i) => themeFrom(samples[i * 2 + 1], variant, 'positive') ?? { theme: `Positive reactions to ${variant}`, variant, action_ids: pick(samples[i * 2 + 1]) }),
     tipping_note: tippingNote(st),

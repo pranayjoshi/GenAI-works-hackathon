@@ -1269,30 +1269,24 @@
   },
   "report": {
     "summary": "Too close to call on intent to visit: A 29.6% vs B 26.7% (±5.5 pts), A ahead in 2 of 2 seeds.",
-    "recommendation": "The versions are too close to call; test a sharper version C.",
+    "recommendation": "Too close to call: test a sharper version C on the same crowd before spending.",
     "claims": [
       {
-        "text": "core on A: intent 36.5% (556 simulated people deciding, summed over 2 seeds).",
+        "text": "income $100-150k: intent 43.0% on A vs 33.5% on B (90 people deciding, pooled over 2 seeds).",
+        "query_ids": [
+          "q_bf03e777_3"
+        ]
+      },
+      {
+        "text": "role core: intent 36.5% on A vs 32.0% on B (278 people deciding, pooled over 2 seeds).",
         "query_ids": [
           "q_6168d03c_1"
         ]
       },
       {
-        "text": "core on B: intent 32.0% (556 simulated people deciding, summed over 2 seeds).",
+        "text": "not a customer: intent 23.2% on A vs 19.0% on B (418 people deciding, pooled over 2 seeds).",
         "query_ids": [
-          "q_6168d03c_1"
-        ]
-      },
-      {
-        "text": "spillover on A: intent 21.7% (488 simulated people deciding, summed over 2 seeds).",
-        "query_ids": [
-          "q_6168d03c_1"
-        ]
-      },
-      {
-        "text": "spillover on B: intent 20.7% (488 simulated people deciding, summed over 2 seeds).",
-        "query_ids": [
-          "q_6168d03c_1"
+          "q_373d805e_4"
         ]
       }
     ]
