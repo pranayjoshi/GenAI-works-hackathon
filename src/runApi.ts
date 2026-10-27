@@ -7,6 +7,8 @@ import { traceStats } from './llm.js';
 import { startRun, persist, runDir, type RunInput, type RunState } from './sim/run.js';
 import { buildDecision, writeLaunchPlan } from './report/decision.js';
 import { offlineCalls } from './sim/offline.js';
+/** Largest crowd /run accepts (keeps a judge's call to minutes); raise with RUN_MAX_CROWD for long runs. */
+const MAX_CROWD = Number(process.env.RUN_MAX_CROWD ?? 300);
 
 const Version = z.object({
   text: z.string().min(3).optional(),
@@ -28,7 +30,7 @@ export const RunBody = z.object({
   }),
   version_a: Version,
   version_b: Version,
-  crowd: z.number().int().min(20, 'crowd must be 20 to 300').max(300, 'crowd must be 20 to 300').default(60),
+  crowd: z.number().int().min(20, `crowd must be 20 to ${MAX_CROWD}`).max(MAX_CROWD, `crowd must be 20 to ${MAX_CROWD}`).default(60),
   rounds: z.number().int().min(6, 'rounds must be 6 to 32').max(32, 'rounds must be 6 to 32').default(8),
   seeds: z.number().int().min(1).max(3).default(1),
   events: z.array(z.object({ round: z.number().int().min(0), text: z.string().min(3), target: z.enum(['all', 'core', 'spillover']).optional() })).default([]),
