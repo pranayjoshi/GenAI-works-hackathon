@@ -1,0 +1,37 @@
+{
+  "run_id": "20261027-south-congress-coffe-13b7",
+  "crowd_seed": "9510af3861e4",
+  "business": "South Congress Coffee",
+  "handle": "@southcongresscoffee",
+  "place": "Austin, TX 78704",
+  "zip": "78704",
+  "geoId": "86000US78704",
+  "goal": "Get people within 3 miles to come in this week",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now at South Congress Coffee.",
+      "business": "South Congress Coffee",
+      "handle": "@southcongresscoffee"
+    },
+    {
+      "variant": "C",
+      "text": "Oat Milk Honey Latte, $6.50. Local wildflower honey. Slow mornings, done right. New on the menu at South Congress Coffee.",
+      "business": "South Congress Coffee",
+      "handle": "@southcongresscoffee"
+    }
+  ],
+  "crowdSize": 600,
+  "rounds": 12,
+  "startHour": 7,
+  "hourStep": 2,
+  "seeds": [
+    1,
+    2
+  ],
+  "batchSize": 8,
+  "useCustomers": true,
+  "events": [],
+  "mode": "ab",
+  "parent_run": "20261027-south-congress-coffe-1458"
+}

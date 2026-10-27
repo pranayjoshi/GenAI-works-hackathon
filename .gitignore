@@ -34,3 +34,5 @@ logs/*
 
 # demo video build outputs (scripts/video/ builds them)
 media/
+!runs/20261027-south-congress-coffe-1458/
+!runs/20261027-south-congress-coffe-13b7/
