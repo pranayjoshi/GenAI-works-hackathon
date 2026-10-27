@@ -1,5 +1,5 @@
 {
-    "run_id": "20261027-wicker-park-bakehous-9f0f",
+    "run_id": "20261027-wicker-park-bakehous-d7d0",
     "input_echo": {
         "business": {
             "name": "Wicker Park Bakehouse",
@@ -8,6 +8,7 @@
             "zip": "60622",
             "goal": "Fill the morning counter on weekdays"
         },
+        "platform": "instagram",
         "version_a": {
             "text": "Fresh out of the oven: our slow-fermented sourdough, hand-shaped every morning from local grain. Wicker Park Bakehouse, open at 7."
         },
@@ -24,6 +25,25 @@
             }
         ]
     },
+    "platform": "instagram",
+    "versions": [
+        {
+            "variant": "A",
+            "type": "post",
+            "text": "Fresh out of the oven: our slow-fermented sourdough, hand-shaped every morning from local grain. Wicker Park Bakehouse, open at 7.",
+            "image_id": null,
+            "image_description": null,
+            "campaign_posts": null
+        },
+        {
+            "variant": "B",
+            "type": "post",
+            "text": "Free coffee with any pastry before 9am, all week. Wicker Park Bakehouse, your neighbourhood stop.",
+            "image_id": null,
+            "image_description": null,
+            "campaign_posts": null
+        }
+    ],
     "audience": {
         "size": 60,
         "place": "Wicker Park, Chicago, IL 60622",
@@ -42,15 +62,16 @@
         "interests": [],
         "segments": {
             "role": {
-                "core": 36,
-                "spillover": 24
+                "spillover": 24,
+                "core": 36
             },
             "age_band": {
+                "45-54": 9,
                 "25-34": 30,
-                "45-54": 3,
+                "55-64": 1,
                 "18-24": 6,
-                "35-44": 18,
-                "55-64": 3
+                "35-44": 12,
+                "65+": 2
             },
             "customers": 0
         },
@@ -58,20 +79,20 @@
         "instagram_users_est": 29459
     },
     "verdict": {
-        "headline": "Too close to call on intent to visit: A 30.4% vs B 16.1% (\u00b115.4 pts), A ahead in 1 of 1 seed.",
+        "headline": "A leads on intent to visit: 24.0% vs 14.0% (+10.0 pts, 95% CI \u22125.3 to +25.3); A ahead in 1 of 1 seed; 90% likely to be the better version.",
         "winner": null,
-        "call": "too close to call",
+        "call": "leader",
         "metric": "intent_rate",
-        "gap_pts": 14.3,
-        "ci_half_pts": 15.4,
+        "gap_pts": 10,
+        "ci_half_pts": 15.3,
         "seeds_agree": 1,
         "per_seed": [
             {
                 "seed": 1,
-                "a": 0.3036,
-                "b": 0.1607,
-                "na": 56,
-                "nb": 56,
+                "a": 0.24,
+                "b": 0.14,
+                "na": 50,
+                "nb": 50,
                 "leader": "A"
             }
         ],
@@ -80,56 +101,56 @@
     "metrics": {
         "A": {
             "variant": "A",
-            "intent_rate": 0.304,
-            "rate_pct": 30.4,
-            "n_deciders": 56,
-            "margin_of_error_pts": 12,
-            "engagement_rate": 0.0357,
-            "mean_stance": 0.128,
+            "intent_rate": 0.24,
+            "rate_pct": 24,
+            "n_deciders": 50,
+            "margin_of_error_pts": 11.8,
+            "engagement_rate": 0.12,
+            "mean_stance": 0.099,
             "vocal_share": 0,
-            "silent_negative_share": 0,
+            "silent_negative_share": 0.02,
             "hide_rate": 0,
-            "tap_rate": 0.0179
+            "tap_rate": 0.1
         },
         "B": {
             "variant": "B",
-            "intent_rate": 0.161,
-            "rate_pct": 16.1,
-            "n_deciders": 56,
+            "intent_rate": 0.14,
+            "rate_pct": 14,
+            "n_deciders": 50,
             "margin_of_error_pts": 9.6,
-            "engagement_rate": 0.0357,
-            "mean_stance": 0.067,
+            "engagement_rate": 0.04,
+            "mean_stance": 0.06,
             "vocal_share": 0,
             "silent_negative_share": 0,
             "hide_rate": 0,
-            "tap_rate": 0.0179
+            "tap_rate": 0.04
         }
     },
     "report": {
-        "summary": "Too close to call on intent to visit: A 30.4% vs B 16.1% (\u00b115.4 pts), A ahead in 1 of 1 seed.",
+        "summary": "A leads on intent to visit: 24.0% vs 14.0% (+10.0 pts, 95% CI \u22125.3 to +25.3); A ahead in 1 of 1 seed; 90% likely to be the better version.",
         "claims": [
             {
-                "text": "core on A: intent 35.3% (34 people deciding).",
+                "text": "core on A: intent 26.7% (30 people deciding).",
                 "query_ids": [
-                    "q_cd0d460e_16"
+                    "q_2bd63a85_1c"
                 ]
             },
             {
-                "text": "core on B: intent 17.6% (34 people deciding).",
+                "text": "core on B: intent 20.0% (30 people deciding).",
                 "query_ids": [
-                    "q_cd0d460e_16"
+                    "q_2bd63a85_1c"
                 ]
             },
             {
-                "text": "spillover on A: intent 22.7% (22 people deciding).",
+                "text": "spillover on A: intent 20.0% (20 people deciding).",
                 "query_ids": [
-                    "q_cd0d460e_16"
+                    "q_2bd63a85_1c"
                 ]
             },
             {
-                "text": "spillover on B: intent 13.6% (22 people deciding).",
+                "text": "spillover on B: intent 5.0% (20 people deciding).",
                 "query_ids": [
-                    "q_cd0d460e_16"
+                    "q_2bd63a85_1c"
                 ]
             }
         ],
@@ -140,27 +161,38 @@
                     "theme": "Drawn by the discount (5 of 14 sampled reasons)",
                     "variant": "A",
                     "action_ids": [
-                        "s1:A:94",
-                        "s1:A:14"
+                        "s1:A:99",
+                        "s1:A:71"
                     ]
                 },
                 {
                     "theme": "Positive reactions (14 of 14 sampled reasons)",
                     "variant": "B",
                     "action_ids": [
-                        "s1:B:3",
-                        "s1:B:9"
+                        "s1:B:23",
+                        "s1:B:102"
                     ]
                 }
             ]
         },
         "tipping_note": "No one shared either version, so neither spread beyond the people it was served to.",
-        "recommendation": "The versions are too close to call; test a sharper version C.",
+        "recommendation": "Launch version A, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.",
         "quotes": {
-            "s1:A:94": {
-                "agent_id": "p0032",
+            "s1:A:99": {
+                "agent_id": "p0054",
                 "world_id": "s1:A",
                 "hour": 5,
+                "action": "scroll_past",
+                "reason": "Good ingredients matter more to me than a discount, and i like trying what is new on the menu.",
+                "text": "",
+                "unsaid": "",
+                "variant": "A",
+                "checks": []
+            },
+            "s1:A:71": {
+                "agent_id": "p0039",
+                "world_id": "s1:A",
+                "hour": 4,
                 "action": "scroll_past",
                 "reason": "Good ingredients matter more to me than a discount.",
                 "text": "",
@@ -168,32 +200,21 @@
                 "variant": "A",
                 "checks": []
             },
-            "s1:A:14": {
-                "agent_id": "p0054",
-                "world_id": "s1:A",
-                "hour": 2,
-                "action": "scroll_past",
-                "reason": "I like trying what is new on the menu, and good ingredients matter more to me than a discount.",
-                "text": "",
-                "unsaid": "",
-                "variant": "A",
-                "checks": []
-            },
-            "s1:B:3": {
-                "agent_id": "p0023",
+            "s1:B:23": {
+                "agent_id": "p0004",
                 "world_id": "s1:B",
-                "hour": 1,
+                "hour": 3,
                 "action": "scroll_past",
-                "reason": "A freebie is a low risk reason to try the place.",
+                "reason": "Anything free gets my attention right away.",
                 "text": "",
                 "unsaid": "",
                 "variant": "B",
                 "checks": []
             },
-            "s1:B:9": {
-                "agent_id": "p0022",
+            "s1:B:102": {
+                "agent_id": "p0034",
                 "world_id": "s1:B",
-                "hour": 2,
+                "hour": 7,
                 "action": "scroll_past",
                 "reason": "A freebie is a low risk reason to try the place.",
                 "text": "",
@@ -206,45 +227,45 @@
         "error": null
     },
     "decision": {
-        "run_id": "20261027-wicker-park-bakehous-9f0f",
-        "created": "2026-10-27T19:01:25.016Z",
-        "call": "run_ab",
-        "headline": "A real A/B test of these two posts is affordable: 136 people per version.",
+        "run_id": "20261027-wicker-park-bakehous-d7d0",
+        "created": "2026-10-27T21:56:28.275Z",
+        "call": "leader",
+        "headline": "Launch A: it leads by 10.0 points and is 90% likely to be the better version.",
         "reasons": [
-            "The simulated gap is 14.3 points (A 30.4% vs B 16.1%), inside a \u00b115.4-point interval: no winner.",
-            "A real test needs about 136 people per version to detect a gap that small (5% two-sided, 80% power): 272 in all.",
-            "There are about 29,459 Instagram users in Wicker Park, Chicago, IL 60622 (Census x Pew join), so that test would have to reach 0.9% of them.",
-            "A test using at most 20.0% of the local audience (2,945 per version) can only detect a gap of about 3.4 points, so the next version must move intent by at least that much to be worth testing."
+            "A leads on intent to visit: 24.0% vs 14.0%, a 10.0-point gap with a 95% interval of \u00b115.3 points, and A is ahead in 1 of 1 seeds. A is 90% likely to be the better version.",
+            "A live split test would need about 241 people per version (1.6% of the local Instagram users) and paid impressions to detect this gap. Ripple ran it on the simulated crowd for $0 of ad spend.",
+            "There are about 29,459 Instagram users in Wicker Park, Chicago, IL 60622 (Census x Pew join)."
         ],
         "verdict": {
-            "headline": "Too close to call on intent to visit: A 30.4% vs B 16.1% (\u00b115.4 pts), A ahead in 1 of 1 seed.",
-            "a": 0.3036,
-            "b": 0.1607,
-            "gap_pts": 14.289999999999997,
-            "ci_half_pts": 15.409999999999998,
+            "headline": "A leads on intent to visit: 24.0% vs 14.0% (+10.0 pts, 95% CI \u22125.3 to +25.3); A ahead in 1 of 1 seed; 90% likely to be the better version.",
+            "a": 0.24,
+            "b": 0.14,
+            "gap_pts": 9.999999999999998,
+            "ci_half_pts": 15.25,
             "winner": null,
-            "leader": "A"
+            "leader": "A",
+            "p_better": 0.9006
         },
         "audience": {
             "local_instagram_users": 29459,
             "place": "Wicker Park, Chicago, IL 60622",
-            "query_id": "q_93a0cb53_15",
+            "query_id": "q_51fb1c52_1b",
             "source": "ACS adults by age in the ZIP x Pew Instagram use by age"
         },
         "sample_size": {
             "metric": "intent to visit (simulated)",
-            "p_a": 0.3036,
-            "p_b": 0.1607,
-            "per_version": 136,
-            "total": 272,
-            "share_of_audience": 0.009233171526528396,
+            "p_a": 0.24,
+            "p_b": 0.14,
+            "per_version": 241,
+            "total": 482,
+            "share_of_audience": 0.016361723072745173,
             "alpha": 0.05,
             "power": 0.8
         },
         "affordable": {
             "max_share": 0.2,
             "per_version": 2945,
-            "detectable_gap_pts": 3.406794215382606
+            "detectable_gap_pts": 3.1853331448200275
         },
         "brief": {
             "objections": [],
@@ -254,12 +275,12 @@
                     "theme": "Drawn by the discount (5 of 14 sampled reasons)",
                     "quotes": [
                         {
-                            "action_id": "s1:A:94",
-                            "reason": "Good ingredients matter more to me than a discount."
+                            "action_id": "s1:A:99",
+                            "reason": "Good ingredients matter more to me than a discount, and i like trying what is new on the menu."
                         },
                         {
-                            "action_id": "s1:A:14",
-                            "reason": "I like trying what is new on the menu, and good ingredients matter more to me than a discount."
+                            "action_id": "s1:A:71",
+                            "reason": "Good ingredients matter more to me than a discount."
                         }
                     ]
                 },
@@ -268,21 +289,21 @@
                     "theme": "Positive reactions (14 of 14 sampled reasons)",
                     "quotes": [
                         {
-                            "action_id": "s1:B:3",
-                            "reason": "A freebie is a low risk reason to try the place."
+                            "action_id": "s1:B:23",
+                            "reason": "Anything free gets my attention right away."
                         },
                         {
-                            "action_id": "s1:B:9",
+                            "action_id": "s1:B:102",
                             "reason": "A freebie is a low risk reason to try the place."
                         }
                     ]
                 }
             ],
             "segments": [
-                "core on A: intent 35.3% (34 people deciding).",
-                "core on B: intent 17.6% (34 people deciding).",
-                "spillover on A: intent 22.7% (22 people deciding).",
-                "spillover on B: intent 13.6% (22 people deciding)."
+                "core on A: intent 26.7% (30 people deciding).",
+                "core on B: intent 20.0% (30 people deciding).",
+                "spillover on A: intent 20.0% (20 people deciding).",
+                "spillover on B: intent 5.0% (20 people deciding)."
             ]
         },
         "variant": null,
@@ -291,10 +312,6 @@
                 {
                     "label": "Version A",
                     "text": "Fresh out of the oven: our slow-fermented sourdough, hand-shaped every morning from local grain. Wicker Park Bakehouse, open at 7."
-                },
-                {
-                    "label": "Version B",
-                    "text": "Free coffee with any pastry before 9am, all week. Wicker Park Bakehouse, your neighbourhood stop."
                 }
             ],
             "targeting": {
@@ -307,65 +324,64 @@
                 ],
                 "note": "Core segment daily Instagram users 18-34 nearby first; the crowd sampled 50.0% core."
             },
-            "per_version": 136,
-            "total": 272,
+            "per_version": 2945,
+            "total": 2945,
             "success_metric": "Taps through to the post and store visits attributed to the post (the real-world counterpart of the simulated intent to visit).",
-            "decision_rule": "Pick the version whose tap rate is higher by at least 3.4 points with a 95% interval that excludes zero; otherwise keep A and stop testing.",
-            "stop_rule": "Stop when each version has reached 136 people, or after 7 days.",
+            "decision_rule": "Keep version A running if its tap rate is not below the simulated range; otherwise pause it.",
+            "stop_rule": "Stop after 2,945 people have seen it, or after 7 days.",
             "assumptions": [
-                "The real gap is no larger than the simulated one (simulated people, local Nemotron 3 Nano 4B; the backtest shows the crowd does not predict real winners).",
-                "A test is worth paying for only if it needs at most 20.0% of local Instagram users.",
+                "These are simulated people, not real customers; the backtest shows the crowd does not reliably predict real winners.",
                 "Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age."
             ]
         },
         "actions": [
             {
-                "id": "launch_test",
-                "kind": "launch_test",
-                "title": "Create the real split test in Meta Ads: A vs B",
-                "detail": "One paused campaign, one ad set per version: 136 people per version (0.9% of local Instagram users).",
+                "id": "launch",
+                "kind": "publish",
+                "title": "Launch Version A in Meta Ads (paused)",
+                "detail": "Ripple puts A ahead by 10.0 points (90% likely to be better); launch it, or launch the version you prefer. One paused campaign, one ad set, one ad: Instagram, ZIP 60622. \"Fresh out of the oven: our slow-fermented sourdough, hand-shaped every morning from local grain. Wicker Park Bakehouse, open at 7.\"",
                 "policy": "needs_approval",
-                "why_policy": "It sets up ad spend and public posts in your ad account: you decide. Everything is created paused.",
+                "why_policy": "It sets up ad spend and a public post in your ad account: you decide. Everything is created paused.",
                 "status": "proposed",
                 "evidence": [
-                    "q_93a0cb53_15"
+                    "q_51fb1c52_1b"
                 ]
             }
         ],
         "budget_input": null
     },
     "validity": {
-        "decisions": 228,
+        "decisions": 204,
         "repaired_share": 0,
-        "distinct_reason_ratio": 0.213,
+        "distinct_reason_ratio": 0.215,
         "top_reason_opener": {
             "text": "tempting but my",
-            "share": 0.112
+            "share": 0.134
         },
-        "scroll_past_share": 0.982,
+        "scroll_past_share": 0.961,
         "stance_sd_by_world": [
             {
                 "world": "s1:A",
-                "sd": 0.142
+                "sd": 0.092
             },
             {
                 "world": "s1:B",
-                "sd": 0.101
+                "sd": 0.071
             }
         ],
         "silenced": 0,
         "guard": {
-            "decisions_with_a_check": 50,
+            "decisions_with_a_check": 55,
             "by_check": {
-                "reason:duplicate_in_batch": 50
+                "reason:duplicate_in_batch": 55
             }
         }
     },
     "trace": {
-        "log_file": "logs/20261027-wicker-park-bakehous-9f0f.jsonl",
+        "log_file": "logs/20261027-wicker-park-bakehous-d7d0.jsonl",
         "models_used": {
-            "none": 45,
-            "offline-model": 40
+            "none": 39,
+            "offline-model": 34
         },
         "queries": {
             "count": 17,
@@ -374,12 +390,12 @@
             }
         },
         "timing_ms": {
-            "total": 721,
-            "crowd_ms": 48,
-            "sim_ms": 230,
-            "report_ms": 309,
-            "decision_ms": 20
+            "total": 568,
+            "crowd_ms": 72,
+            "sim_ms": 226,
+            "report_ms": 211,
+            "decision_ms": 13
         }
     },
-    "ui_url": "http://localhost:8000/#/run/20261027-wicker-park-bakehous-9f0f"
+    "ui_url": "http://localhost:8000/#/run/20261027-wicker-park-bakehous-d7d0"
 }
