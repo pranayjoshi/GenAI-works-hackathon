@@ -37,7 +37,7 @@ curl -s -X POST http://localhost:8000/run -H "Content-Type: application/json" -d
 tail -n 12 logs/<run_id>.jsonl
 ```
 
-Show named agents (Orchestrator, DataAgent, CrowdAgent, ModelRouter) and a ModelRouter line with `served_by: nightshift:...`. Use a hosted run so the lines are real. A sample-mode run shows `offline-model` and `none`, and must be called that. Do not edit the output. If `/run` takes longer than the beat, cut to a finished run's log and say it was run beforehand. TODO(number: how long `/run` with example_2 takes hosted; not measured).
+Show named agents (Orchestrator, DataAgent, CrowdAgent, ModelRouter) and a ModelRouter line with `served_by: nightshift:...`. Use a hosted run so the lines are real. A sample-mode run shows `offline-model` and `none`, and must be called that. Do not edit the output. If `/run` takes longer than the beat, cut to a finished run's log and say it was run beforehand. A live 20-person café `/run` took 6 min 53 s on 27 Oct, so in the video show the finished trace `output_examples/hosted/example_1_live.trace.jsonl` (or the Docker sample-mode curl, which returns in about a second and must be called sample mode).
 
 ## Pre-recording checklist
 

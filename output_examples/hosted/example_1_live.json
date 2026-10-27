@@ -1,0 +1,472 @@
+{
+    "run_id": "20261027-south-congress-coffe-6264",
+    "input_echo": {
+        "business": {
+            "name": "South Congress Coffee",
+            "type": "cafe",
+            "address": "Austin, TX 78704",
+            "zip": "78704",
+            "handle": "@southcongresscoffee",
+            "goal": "Get people within 3 miles to come in this week"
+        },
+        "version_a": {
+            "text": "New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now at South Congress Coffee."
+        },
+        "version_b": {
+            "text": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress."
+        },
+        "crowd": 20,
+        "rounds": 6,
+        "seeds": 1,
+        "events": [],
+        "decision": {
+            "budget": 500
+        }
+    },
+    "audience": {
+        "size": 20,
+        "place": "Austin, TX 78704",
+        "core": {
+            "name": "local specialty coffee drinkers 25-44",
+            "age_bands": [
+                "25-34",
+                "35-44"
+            ],
+            "why": "They live within 3 miles, buy premium coffee, and are likely to try a new oat milk latte during a limited-time promotion."
+        },
+        "spillover": {
+            "name": "nearby residents and visitors",
+            "why": "Anyone outside the core age bands who lives near South Congress, follows the shop, or sees the location tag may encounter the post."
+        },
+        "interests": [
+            "specialty coffee",
+            "oat milk",
+            "local honey",
+            "morning routines",
+            "limited-time offers"
+        ],
+        "segments": {
+            "role": {
+                "core": 13,
+                "spillover": 7
+            },
+            "age_band": {
+                "35-44": 5,
+                "55-64": 2,
+                "25-34": 8,
+                "18-24": 5
+            },
+            "customers": 7
+        },
+        "census_geo": "86000US78704",
+        "instagram_users_est": 10206
+    },
+    "verdict": {
+        "headline": "B wins on intent to visit, 68.4% vs 31.6% (\u00b129.6 pts), 1 of 1 seed.",
+        "winner": "B",
+        "call": "winner",
+        "metric": "intent_rate",
+        "gap_pts": -36.8,
+        "ci_half_pts": 29.6,
+        "seeds_agree": 1,
+        "per_seed": [
+            {
+                "seed": 1,
+                "a": 0.3158,
+                "b": 0.6842,
+                "na": 19,
+                "nb": 19,
+                "leader": "B"
+            }
+        ],
+        "segments": []
+    },
+    "metrics": {
+        "A": {
+            "variant": "A",
+            "intent_rate": 0.316,
+            "rate_pct": 31.6,
+            "n_deciders": 19,
+            "margin_of_error_pts": 20.9,
+            "engagement_rate": 0,
+            "mean_stance": 0.016,
+            "vocal_share": 0,
+            "silent_negative_share": 0,
+            "hide_rate": 0,
+            "tap_rate": 0
+        },
+        "B": {
+            "variant": "B",
+            "intent_rate": 0.684,
+            "rate_pct": 68.4,
+            "n_deciders": 19,
+            "margin_of_error_pts": 20.9,
+            "engagement_rate": 0.1579,
+            "mean_stance": 0.011,
+            "vocal_share": 0,
+            "silent_negative_share": 0.0526,
+            "hide_rate": 0,
+            "tap_rate": 0
+        }
+    },
+    "report": {
+        "summary": "Version B wins on intent to visit, 68.4% vs 31.6% for Version A, a 36.8 percentage point gap across the single seed. The 20% off this week only offer and morning ritual framing drove higher intent, especially among non-customers and younger adults.",
+        "claims": [
+            {
+                "text": "Core segment intent was 76.9% for B vs 38.5% for A.",
+                "query_ids": [
+                    "q_3f8782c9_8"
+                ]
+            },
+            {
+                "text": "Spillover segment intent was 50.0% for B vs 16.7% for A.",
+                "query_ids": [
+                    "q_3f8782c9_8"
+                ]
+            },
+            {
+                "text": "Not a customer intent was 58.3% for B vs 16.7% for A.",
+                "query_ids": [
+                    "q_67231f84_b"
+                ]
+            }
+        ],
+        "themes": {
+            "objections": [
+                {
+                    "theme": "Price still a barrier even with 20% off",
+                    "variant": "B",
+                    "action_ids": [
+                        "s1:B:11",
+                        "s1:B:5"
+                    ]
+                },
+                {
+                    "theme": "Negative reactions (2 of 2 sampled reasons)",
+                    "variant": "A",
+                    "action_ids": [
+                        "s1:A:2",
+                        "s1:A:5"
+                    ]
+                }
+            ],
+            "likes": [
+                {
+                    "theme": "Local honey feels like a treat or smart indulgence",
+                    "variant": "A",
+                    "action_ids": [
+                        "s1:A:10",
+                        "s1:A:8"
+                    ]
+                },
+                {
+                    "theme": "Drawn by taste and ingredients (2 of 3 sampled reasons)",
+                    "variant": "B",
+                    "action_ids": [
+                        "s1:B:15",
+                        "s1:B:12"
+                    ]
+                }
+            ]
+        },
+        "tipping_note": "No one shared either version, so neither spread beyond the people it was served to.",
+        "recommendation": "Run Version B with the 20% off this week only offer to drive in-store visits this week.",
+        "quotes": {
+            "s1:B:11": {
+                "agent_id": "p0003",
+                "world_id": "s1:B",
+                "hour": 3,
+                "action": "scroll_past",
+                "reason": "Price tag feels high without strong brand trust despite local honey appeal.",
+                "text": "",
+                "unsaid": "",
+                "variant": "B",
+                "checks": []
+            },
+            "s1:B:5": {
+                "agent_id": "p0016",
+                "world_id": "s1:B",
+                "hour": 1,
+                "action": "scroll_past",
+                "reason": "budget consciousness makes 20% off matter.",
+                "text": "",
+                "unsaid": "",
+                "variant": "B",
+                "checks": []
+            },
+            "s1:A:2": {
+                "agent_id": "p0001",
+                "world_id": "s1:A",
+                "hour": 1,
+                "action": "scroll_past",
+                "reason": "Six fifty for a honey latte adds up fast.",
+                "text": "",
+                "unsaid": "",
+                "variant": "A",
+                "checks": []
+            },
+            "s1:A:5": {
+                "agent_id": "p0016",
+                "world_id": "s1:A",
+                "hour": 1,
+                "action": "scroll_past",
+                "reason": "Another six fifty latte ad, really?",
+                "text": "",
+                "unsaid": "",
+                "variant": "A",
+                "checks": []
+            },
+            "s1:A:10": {
+                "agent_id": "p0020",
+                "world_id": "s1:A",
+                "hour": 2,
+                "action": "scroll_past",
+                "reason": "Graduate student life, local honey feels like smart indulgence",
+                "text": "",
+                "unsaid": "",
+                "variant": "A",
+                "checks": []
+            },
+            "s1:A:8": {
+                "agent_id": "p0011",
+                "world_id": "s1:A",
+                "hour": 2,
+                "action": "scroll_past",
+                "reason": "Frequent visitor, honey-oat combo feels like a treat",
+                "text": "",
+                "unsaid": "",
+                "variant": "A",
+                "checks": []
+            },
+            "s1:B:15": {
+                "agent_id": "p0010",
+                "world_id": "s1:B",
+                "hour": 3,
+                "action": "save",
+                "reason": "Late-night study sessions crave warm oat milk; local sourcing feels meaningful.",
+                "text": "",
+                "unsaid": "",
+                "variant": "B",
+                "checks": []
+            },
+            "s1:B:12": {
+                "agent_id": "p0005",
+                "world_id": "s1:B",
+                "hour": 3,
+                "action": "like",
+                "reason": "Honey-sweetened oat latte sounds worth the hype for my curiosity.",
+                "text": "",
+                "unsaid": "",
+                "variant": "B",
+                "checks": []
+            }
+        },
+        "fallback": false,
+        "error": null
+    },
+    "decision": {
+        "run_id": "20261027-south-congress-coffe-6264",
+        "created": "2026-10-27T19:08:45.490Z",
+        "call": "launch_winner",
+        "headline": "Launch version B: it won every seed by more than the interval.",
+        "reasons": [
+            "The simulated gap is 36.8 points (B 68.4% vs A 31.6%), inside a \u00b129.6-point interval: version B wins every seed and clears the interval.",
+            "A real test needs about 28 people per version to detect a gap that small (5% two-sided, 80% power): 56 in all.",
+            "There are about 10,206 Instagram users in Austin, TX 78704 (Census x Pew join), so that test would have to reach 0.5% of them.",
+            "A test using at most 20.0% of the local audience (1,020 per version) can only detect a gap of about 5.6 points, so the next version must move intent by at least that much to be worth testing."
+        ],
+        "verdict": {
+            "headline": "B wins on intent to visit, 68.4% vs 31.6% (\u00b129.6 pts), 1 of 1 seed.",
+            "a": 0.3158,
+            "b": 0.6842,
+            "gap_pts": 36.84,
+            "ci_half_pts": 29.56,
+            "winner": "B",
+            "leader": "B"
+        },
+        "audience": {
+            "local_instagram_users": 10206,
+            "place": "Austin, TX 78704",
+            "query_id": "q_ab2b844c_6",
+            "source": "ACS adults by age in the ZIP x Pew Instagram use by age"
+        },
+        "sample_size": {
+            "metric": "intent to visit (simulated)",
+            "p_a": 0.3158,
+            "p_b": 0.6842,
+            "per_version": 28,
+            "total": 56,
+            "share_of_audience": 0.0054869684499314125,
+            "alpha": 0.05,
+            "power": 0.8
+        },
+        "affordable": {
+            "max_share": 0.2,
+            "per_version": 1020,
+            "detectable_gap_pts": 5.612872078425562
+        },
+        "brief": {
+            "objections": [
+                {
+                    "variant": "B",
+                    "theme": "Price still a barrier even with 20% off",
+                    "quotes": [
+                        {
+                            "action_id": "s1:B:11",
+                            "reason": "Price tag feels high without strong brand trust despite local honey appeal."
+                        },
+                        {
+                            "action_id": "s1:B:5",
+                            "reason": "budget consciousness makes 20% off matter."
+                        }
+                    ]
+                },
+                {
+                    "variant": "A",
+                    "theme": "Negative reactions (2 of 2 sampled reasons)",
+                    "quotes": [
+                        {
+                            "action_id": "s1:A:2",
+                            "reason": "Six fifty for a honey latte adds up fast."
+                        },
+                        {
+                            "action_id": "s1:A:5",
+                            "reason": "Another six fifty latte ad, really?"
+                        }
+                    ]
+                }
+            ],
+            "likes": [
+                {
+                    "variant": "A",
+                    "theme": "Local honey feels like a treat or smart indulgence",
+                    "quotes": [
+                        {
+                            "action_id": "s1:A:10",
+                            "reason": "Graduate student life, local honey feels like smart indulgence"
+                        },
+                        {
+                            "action_id": "s1:A:8",
+                            "reason": "Frequent visitor, honey-oat combo feels like a treat"
+                        }
+                    ]
+                },
+                {
+                    "variant": "B",
+                    "theme": "Drawn by taste and ingredients (2 of 3 sampled reasons)",
+                    "quotes": [
+                        {
+                            "action_id": "s1:B:15",
+                            "reason": "Late-night study sessions crave warm oat milk; local sourcing feels meaningful."
+                        },
+                        {
+                            "action_id": "s1:B:12",
+                            "reason": "Honey-sweetened oat latte sounds worth the hype for my curiosity."
+                        }
+                    ]
+                }
+            ],
+            "segments": [
+                "Core segment intent was 76.9% for B vs 38.5% for A.",
+                "Spillover segment intent was 50.0% for B vs 16.7% for A.",
+                "Not a customer intent was 58.3% for B vs 16.7% for A."
+            ]
+        },
+        "variant": null,
+        "plan": {
+            "variants": [
+                {
+                    "label": "Version B",
+                    "text": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress."
+                }
+            ],
+            "targeting": {
+                "platform": "Instagram",
+                "place": "Austin, TX 78704",
+                "zip": "78704",
+                "age_bands": [
+                    "25-34",
+                    "35-44"
+                ],
+                "note": "Core segment local specialty coffee drinkers 25-44 first; the crowd sampled 50.0% core."
+            },
+            "per_version": 1020,
+            "total": 1020,
+            "success_metric": "Taps through to the post and store visits attributed to the post (the real-world counterpart of the simulated intent to visit).",
+            "decision_rule": "Keep version B running if its tap rate is not below the simulated range; otherwise pause and re-test.",
+            "stop_rule": "Stop when each version has reached 1,020 people, or after 7 days.",
+            "assumptions": [
+                "The real gap is no larger than the simulated one (simulated people, local Nemotron 3 Nano 4B; the backtest shows the crowd does not predict real winners).",
+                "A test is worth paying for only if it needs at most 20.0% of local Instagram users.",
+                "Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age."
+            ]
+        },
+        "actions": [
+            {
+                "id": "publish",
+                "kind": "publish",
+                "title": "Create the version B ad in Meta Ads (paused)",
+                "detail": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress.",
+                "policy": "needs_approval",
+                "why_policy": "Publishing is public and hard to undo: you decide. It is created paused.",
+                "status": "proposed",
+                "evidence": [
+                    "q_ab2b844c_6",
+                    "s1:B:11",
+                    "s1:B:5",
+                    "s1:A:2",
+                    "s1:A:5"
+                ]
+            }
+        ],
+        "budget_input": 500
+    },
+    "validity": {
+        "decisions": 38,
+        "repaired_share": 0.3684,
+        "distinct_reason_ratio": 1,
+        "top_reason_opener": {
+            "text": "interesting honey oat",
+            "share": 0.033
+        },
+        "scroll_past_share": 0.921,
+        "stance_sd_by_world": [
+            {
+                "world": "s1:A",
+                "sd": 0.045
+            },
+            {
+                "world": "s1:B",
+                "sd": 0.097
+            }
+        ],
+        "silenced": 1,
+        "guard": {
+            "decisions_with_a_check": 0,
+            "by_check": {}
+        }
+    },
+    "trace": {
+        "log_file": "logs/20261027-south-congress-coffe-6264.jsonl",
+        "models_used": {
+            "nvidia:private/nvidia/nemotron-3.5-super-120b-a12b": 3,
+            "nightshift:nvidia/nemotron-3.5-lightning-30b-a3b": 13,
+            "nightshift:nvidia/nemotron-3-ultra-550b-a55b": 1
+        },
+        "queries": {
+            "count": 18,
+            "by_engine": {
+                "zetaris": 7,
+                "local-duckdb": 11
+            }
+        },
+        "timing_ms": {
+            "total": 413087,
+            "crowd_ms": 51126,
+            "sim_ms": 39690,
+            "report_ms": 322063,
+            "decision_ms": 65
+        }
+    },
+    "ui_url": "http://localhost:8001/#/run/20261027-south-congress-coffe-6264"
+}

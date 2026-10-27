@@ -1,0 +1,4 @@
+{
+    "error": "run exceeded 600s and was stopped",
+    "hint": "Lower crowd, rounds or seeds, or raise RUN_TIMEOUT_MS."
+}
