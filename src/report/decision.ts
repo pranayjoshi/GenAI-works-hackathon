@@ -131,9 +131,9 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean; keepV
   reasons.push(`${leader} ${v.winner ? 'wins' : 'leads'} on intent to visit: ${pct(Math.max(pA, pB))} vs ${pct(Math.min(pA, pB))}, a ${gapPts.toFixed(1)}-point gap with a 95% interval of ±${(v.pooled.ci_half * 100).toFixed(1)} points, and ${leader} is ahead in ${(v as any).seeds_agree ?? '?'} of ${v.per_seed?.length ?? '?'} seeds. ${leader} is ${pBetterPct}% likely to be the better version.`);
   if (n && audienceN) reasons.push(`A live split test would need about ${n.toLocaleString('en-US')} people per version (${share !== null ? pct(share) : 'more than all'} of the local ${P} users) and paid impressions to detect this gap. Ripple ran it on the simulated crowd for $0 of ad spend.`);
   else if (n) reasons.push(`A live split test would need about ${n.toLocaleString('en-US')} people per version and paid impressions to detect this gap. Ripple ran it on the simulated crowd for $0 of ad spend. The local ${P} audience for ${st.spec.place} is unknown, so it cannot be compared with that.`);
-  else reasons.push(`The two versions tie in the simulation, so no live test could separate them. Ripple ran it for $0 of ad spend.`);
+  else reasons.push(`The two drafts tie in the simulation, so no live test could separate them. Ripple ran it for $0 of ad spend.`);
   if (audienceN) reasons.push(`There are about ${audienceN.toLocaleString('en-US')} ${P} users in ${st.spec.place} (Census x Pew join).`);
-  if (wantC) reasons.push(`A sharper Version C, drafted from what people objected to, could widen the gap. It is worth acting on only if it moves intent by at least ${(mde * 100).toFixed(1)} points, the smallest gap that would be worth acting on.`);
+  if (wantC) reasons.push(`A sharper rewrite (C), drafted from what people objected to, could widen the gap. It is worth acting on only if it moves intent by at least ${(mde * 100).toFixed(1)} points, the smallest gap that would be worth acting on.`);
 
   agentLog({ run_id: st.spec.run_id, agent_name: 'DecisionAgent', action: 'decide', status: 'success', input_summary: `gap ${gapPts.toFixed(1)} pts, ${audienceN.toLocaleString('en-US')} local ${P} users`, output_summary: `${call}: launch ${leader}, ${pBetterPct}% likely better; a live test would need ${n ? n.toLocaleString('en-US') : 'n/a'} per version (${share !== null ? pct(share) : 'n/a'} of audience); bar ${(mde * 100).toFixed(1)} pts`, refs: { call, query_id: audienceQ?.query_id } });
   let variant: Decision['variant'] = opts.keepVariant ? st.decision?.variant ?? null : null;
@@ -163,11 +163,11 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean; keepV
   const actions: DecisionAction[] = [];
   if (wantC) {
     actions.push({ id: 'draft_c', kind: 'draft_variant', title: 'Draft a sharper version from what people objected to', detail: variant ? `"${variant.text}"${variant.honesty.ok ? ' (passed the honesty check)' : ` (honesty check: ${variant.honesty.issues.join('; ')})`}` : opts.draft ? 'No Version C: the Rewriter returned nothing usable, so there is no C to simulate or launch. Try again from the Ask why stage.' : 'Rewrite brief ready; draft runs on request.', policy: 'auto', why_policy: 'A draft spends nothing and is never published on its own.', status: variant ? 'done' : 'proposed', evidence: ev.slice(1) });
-    actions.push({ id: 'simulate_c', kind: 'simulate_variant', title: `Simulate version C against ${leader} on the same crowd`, detail: `Worth acting on only if C moves intent by at least ${(mde * 100).toFixed(1)} points.`, policy: 'auto', why_policy: 'Simulation spends no ad money; it runs on the local model.', status: 'proposed', evidence: [] });
+    actions.push({ id: 'simulate_c', kind: 'simulate_variant', title: `Simulate the suggested rewrite (C) against ${leader} on the same audience`, detail: `Worth acting on only if C moves intent by at least ${(mde * 100).toFixed(1)} points.`, policy: 'auto', why_policy: 'Simulation spends no ad money; it runs on the local model.', status: 'proposed', evidence: [] });
   }
   actions.push(launchAction(leader, leaderPost.text, v.winner ? null : { p: pBetterPct, gap: gapPts }, st.spec.zip, P, ev));
 
-  const headline = `Launch ${leader}: it ${v.winner ? 'wins' : 'leads'} by ${gapPts.toFixed(1)} points and is ${pBetterPct}% likely to be the better version.${wantC ? ' A sharper Version C could widen the gap.' : ''}${call === 'cant_size' ? ` (The local ${P} audience for ${st.spec.place} is unknown, so a live test cannot be sized.)` : ''}`;
+  const headline = `Launch ${leader}: it ${v.winner ? 'wins' : 'leads'} by ${gapPts.toFixed(1)} points and is ${pBetterPct}% likely to be the better version.${wantC ? ' A sharper rewrite (C) could widen the gap.' : ''}${call === 'cant_size' ? ` (The local ${P} audience for ${st.spec.place} is unknown, so a live test cannot be sized.)` : ''}`;
 
   return {
     run_id: st.spec.run_id, created: new Date().toISOString(), call, headline, reasons,
@@ -182,7 +182,7 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean; keepV
 /** The one paid step: ONE paused ad of the version to launch (campaign, ad set, ad), after the owner approves. */
 function launchAction(version: string, text: string, note: { p: number; gap: number } | null, zip: string, P: string, evidence: string[]): DecisionAction {
   return {
-    id: 'launch', kind: 'publish', title: `Launch Version ${version} in Meta Ads (paused)`,
+    id: 'launch', kind: 'publish', title: `Launch ${version === 'C' ? 'the suggested rewrite (C)' : `Draft ${version}`} in Meta Ads (paused)`,
     detail: `${note ? `Ripple puts ${version} ahead by ${note.gap.toFixed(1)} points (${note.p}% likely to be better); launch it, or launch the version you prefer. ` : ''}One paused campaign, one ad set, one ad: ${P}, ZIP ${zip}. "${text}"`,
     policy: 'needs_approval', why_policy: 'It sets up ad spend and a public post in your ad account: you decide. Everything is created paused.', status: 'proposed', evidence,
   };
@@ -260,11 +260,11 @@ function verificationDecision(st: RunState): Decision {
   const v = st.verdict!;
   const [A, B] = st.spec.posts;
   const leader = v.pooled.a >= v.pooled.b ? A.variant : B.variant;
-  const headline = `Verification run: Version C against ${st.spec.parent_run}'s leader on the same crowd. ${v.headline}`;
+  const headline = `Verification run: the suggested rewrite (C) against ${st.spec.parent_run}'s leader on the same audience. ${v.headline}`;
   const pb = (v as any).p_better ?? 0.5;
   return {
     run_id: st.spec.run_id, created: new Date().toISOString(), call: 'verification', headline,
-    reasons: [`This run only checks whether Version C beats the leader on the same crowd. The launch decision is on the parent run ${st.spec.parent_run}.`],
+    reasons: [`This run only checks whether the suggested rewrite (C) beats the leader on the same audience. The launch decision is on the parent run ${st.spec.parent_run}.`],
     verdict: { headline: v.headline, a: v.pooled.a, b: v.pooled.b, gap_pts: Math.abs(v.pooled.a - v.pooled.b) * 100, ci_half_pts: v.pooled.ci_half * 100, winner: v.winner ?? null, leader, p_better: pb },
     audience: { local_instagram_users: 0, place: st.spec.place, source: 'not computed for a verification run' },
     sample_size: { metric: 'intent to visit (simulated)', p_a: v.pooled.a, p_b: v.pooled.b, per_version: null, total: null, share_of_audience: null, alpha: 0.05, power: 0.8 },

@@ -5,7 +5,7 @@
  * - Small multiples: vocal vs silent share per round, cumulative deciders.
  * Timeline entries are cumulative snapshots per round: {round, hour_label, exposures, deciders, intent, engaged, vocal, hides, stance_sum, calls}.
  * Styles live in css/verdict.css (prefix sg-). */
-import { h, s, mount, clear, pct, num, fmtInt, vcolor, cssVar } from '../../core/dom.js';
+import { h, s, mount, clear, pct, num, fmtInt, vcolor, cssVar, draftName } from '../../core/dom.js';
 import { reduced, countUp } from '../../core/motion.js';
 import { createStage, dotTexture } from '../../core/three-kit.js';
 
@@ -67,7 +67,7 @@ export default {
     const stageBox = h('div.sg-stagebox', view2d, host3d, empty, tip);
     const minis = h('div.sg-minis');
     const chartCard = h('div.card.sg-card',
-      h('div.card-head', h('div', h('h2', 'Signals by round'), h('span.sub', 'Same crowd, same schedule; only the post differs.')),
+      h('div.card-head', h('div', h('h2', 'Signals by round'), h('span.sub', 'Same audience, same schedule; only the content differs.')),
         h('div.sg-tools', h('div.ws-seg.sg-metrics', metricBtns), h('div.ws-seg', btn2d, btn3d))),
       legend, stageBox, note);
     el.append(h('div.sg-wrap', h('div.sg-grid', chartCard, minis)));
@@ -173,7 +173,7 @@ export default {
           plot.append(s('circle', { cx: p.x, cy: p.y, r: 4.2 * easeOutBack(sc), fill: col, stroke: 'var(--panel-solid)', 'stroke-width': 2 }));
         });
       });
-      svg.setAttribute('aria-label', `${to.M.label} by round for ${to.vs.map((v, i) => { const last = to.raw[i].findLast?.((x) => x != null); return last == null ? `Version ${v}: no data yet` : `Version ${v}: ${to.M.fmt1(last)}`; }).join(', ')}`);
+      svg.setAttribute('aria-label', `${to.M.label} by round for ${to.vs.map((v, i) => { const last = to.raw[i].findLast?.((x) => x != null); return last == null ? `${draftName(v)}: no data yet` : `${draftName(v)}: ${to.M.fmt1(last)}`; }).join(', ')}`);
       applyHover();
       if (three) three.apply(from, to, k, reveal);
     }
@@ -214,7 +214,7 @@ export default {
     function fillTip(m, r, xpx) {
       const rows = m.vs.map((v, i) => {
         const c = m.cnt[i][r], val = m.raw[i][r];
-        return h('div.sg-tip-row', h('i', { style: { background: vcolor(v) } }), h('b', `Version ${v}`), h('span.mono', val == null ? 'no data yet' : m.M.fmt1(val)), c && val != null ? h('small', m.M.sub(c)) : null);
+        return h('div.sg-tip-row', h('i', { style: { background: vcolor(v) } }), h('b', `${draftName(v)}`), h('span.mono', val == null ? 'no data yet' : m.M.fmt1(val)), c && val != null ? h('small', m.M.sub(c)) : null);
       });
       const a = m.raw[0]?.[r], b = m.raw[1]?.[r];
       let gap = null;
@@ -466,7 +466,7 @@ export default {
       mount(legend, m.vs.map((v, i) => {
         const val = m.raw[i].findLast?.((x) => x != null), idx = m.raw[i].reduce((a, x, j) => (x != null ? j : a), -1);
         const num_ = h('b.mono', val == null ? '-' : ''); num_._cu = lastLeg[v] ?? 0; if (val != null) { lastLeg[v] = val; if (m.M.kind === 'rate') countUp(num_, val * 100, (x) => `${x.toFixed(1)}%`, 700); else if (m.M.kind === 'signed') countUp(num_, val, m.M.fmt1, 700); else countUp(num_, val, fmtInt, 700); }
-        return h('div.sg-leg', h('i', { style: { background: vcolor(v) } }), h('span.sg-leg-k', `Version ${v}`), ' ', num_, ' ', h('small', idx >= 0 ? `after round ${idx + 1}` : 'no rounds yet'));
+        return h('div.sg-leg', h('i', { style: { background: vcolor(v) } }), h('span.sg-leg-k', `${draftName(v)}`), ' ', num_, ' ', h('small', idx >= 0 ? `after round ${idx + 1}` : 'no rounds yet'));
       }), m.events.length ? h('div.sg-leg.ev', h('i.flag'), h('span.sg-leg-k', `${m.events.length} injected event${m.events.length > 1 ? 's' : ''}`), ' ', h('small', m.events.map((e) => `round ${e.round + 1}`).join(', '))) : null,
       S.replay ? h('span.chip.on', `replaying round ${Math.max(0, (S.replayLim ?? 0) + 1)}`) : null);
       const any = m.raw.some((a) => a.some((x) => x != null));
@@ -484,11 +484,11 @@ export default {
       return { card, stats, chart, foot };
     };
     const vocalCard = miniCard('Vocal vs silent', 'share of deciders who commented or shared');
-    const decCard = miniCard('Deciders so far', 'cumulative, against the target crowd');
+    const decCard = miniCard('Deciders so far', 'cumulative, against the target audience size');
     minis.append(vocalCard.card, decCard.card);
 
     function statBlock(v, val, unit, sub) {
-      return h('div.sg-stat', h('span.sg-stat-k', h('i', { style: { background: vcolor(v) } }), `Version ${v}`),
+      return h('div.sg-stat', h('span.sg-stat-k', h('i', { style: { background: vcolor(v) } }), `${draftName(v)}`),
         h('b.sg-stat-v.mono', val, unit ? h('small', unit) : null), h('small.sg-stat-s', sub));
     }
     /** both versions on one small chart: y from 0 to hi with three labelled gridlines; optional dashed reference */
@@ -530,7 +530,7 @@ export default {
         return c ? statBlock(v, pct(c.vocal / c.deciders, 0), 'vocal', `${fmtInt(c.vocal)} of ${fmtInt(c.deciders)} spoke up`)
           : statBlock(v, '-', '', 'waiting for deciders');
       }));
-      miniChart(vocalCard.chart, m, m.vs.map((v, i) => ({ v, vals: vocal[i] })), vhi, (x) => pct(x, 0), 'Vocal share per round for both versions');
+      miniChart(vocalCard.chart, m, m.vs.map((v, i) => ({ v, vals: vocal[i] })), vhi, (x) => pct(x, 0), 'Vocal share per round for both drafts');
       const anyDec = vocal.flat().some((x) => x != null);
       vocalCard.foot.textContent = !anyDec ? 'Appears once people start deciding.'
         : vmax === 0 ? 'Nobody has commented or shared yet: every decider so far stayed silent, so both lines sit on 0%.'
@@ -543,10 +543,10 @@ export default {
         const c = lastOf(m.cnt[i]);
         const num_ = h('span', c ? '' : '0'); num_._cu = lastDec[v] ?? 0;
         if (c) { lastDec[v] = c.deciders; countUp(num_, c.deciders, fmtInt, 600); }
-        return statBlock(v, num_, target ? ` / ${fmtInt(target)}` : '', c ? (target ? `${pct(c.deciders / target, 0)} of the crowd` : `${fmtInt(c.exposures)} exposures`) : 'waiting for deciders');
+        return statBlock(v, num_, target ? ` / ${fmtInt(target)}` : '', c ? (target ? `${pct(c.deciders / target, 0)} of the audience` : `${fmtInt(c.exposures)} exposures`) : 'waiting for deciders');
       }));
-      miniChart(decCard.chart, m, m.vs.map((v, i) => ({ v, vals: dec[i] })), dhi, (x) => fmtInt(Math.round(x)), 'Cumulative deciders per round for both versions', target ? { v: target, label: `target ${fmtInt(target)}` } : null);
-      decCard.foot.textContent = 'Each person decides at most once per exposure; the line flattens when the crowd has seen the post.';
+      miniChart(decCard.chart, m, m.vs.map((v, i) => ({ v, vals: dec[i] })), dhi, (x) => fmtInt(Math.round(x)), 'Cumulative deciders per round for both drafts', target ? { v: target, label: `target ${fmtInt(target)}` } : null);
+      decCard.foot.textContent = 'Each person decides at most once per exposure; the line flattens when the audience has seen the post.';
       if (m.cnt.flat().some(Boolean) && !linesDrawn && !drawT) drawT = setTimeout(() => { linesDrawn = true; drawT = 0; }, 160);
     }
 

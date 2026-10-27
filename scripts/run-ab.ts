@@ -1,4 +1,4 @@
-/** CLI: run an A/B test end to end. Example: npm run run:ab -- --crowd 120 --rounds 12 --seeds 1 */
+/** CLI: run a reaction simulation (two drafts in counterfactual worlds) end to end. Example: npm run run:ab -- --crowd 120 --rounds 12 --seeds 1 */
 import { startRun, type RunInput } from '../src/sim/run.js';
 import { CAFE_DEMO } from '../src/demo.js';
 

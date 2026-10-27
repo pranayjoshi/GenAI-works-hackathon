@@ -97,7 +97,9 @@ export function reasonLines(r) {
   if (coh.length) out.push(h('div.chips', { style: { marginTop: '4px' } }, coh.map((c) => h('span.chip', { title: 'The private feeling wins over the public action: the guard changed the logged action or intent to match how they actually felt.' }, `resolved: ${checkLabel(c)}`))));
   return out;
 }
-export const variantChip = (v) => h('span.chip.' + String(v || 'a').toLowerCase(), `Version ${v}`);
+/** Display name of a variant: the poster's drafts are A and B; C is the agent's suggested rewrite. */
+export const draftName = (v) => (String(v).toUpperCase() === 'C' ? 'Rewrite C' : `Draft ${v}`);
+export const variantChip = (v) => h('span.chip.' + String(v || 'a').toLowerCase(), draftName(v));
 export const vcolor = (v) => `var(--${String(v).toLowerCase()})`;
 export const AGE_BANDS = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
 export const INCOME_BANDS = ['<$25k', '$25-50k', '$50-75k', '$75-100k', '$100-150k', '$150k+'];

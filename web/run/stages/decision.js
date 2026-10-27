@@ -1,4 +1,4 @@
-/* Decision stage: Ripple is the A/B test; this says what to do with the result (launch the winner or leader, try a sharper C).
+/* Spend gate stage (id 'decision'): Ripple is the A/B test; this says what to do with the result (launch the winner or leader, try a sharper C).
  * Reads the `decision` from the run snapshot (S.decision is not in the shared state, so this stage keeps its own copy
  * from GET /api/runs/:id/decision, which builds one without an LLM if the run has none).
  * Shape: see src/report/decision.ts (Decision). Approve/Reject: POST /api/runs/:id/decision/actions/:action {choice}.
@@ -44,7 +44,7 @@ export default {
     function sizeChart(d) {
       const need = d.sample_size.total, aud = d.audience.local_instagram_users, cap = d.affordable.max_share;
       if (need == null || !aud) {
-        return h('div.dc-size', h('p.muted', need == null ? 'The two versions are tied in the simulation, so no sample size can be worked out.' : 'The local audience size is not available.'));
+        return h('div.dc-size', h('p.muted', need == null ? 'The two drafts are tied in the simulation, so no sample size can be worked out.' : 'The local audience size is not available.'));
       }
       const share = need / aud;
       const scale = Math.max(1, share);                  // bar width = audience; overflow shown when need > audience
@@ -52,7 +52,7 @@ export default {
       const over = share > cap;
       return h('div.dc-size',
         h('div.dc-size-nums',
-          h('div', h('b.dc-big', fmtInt(need)), h('span', ' people a live test needs'), h('div.expl', `${fmtInt(d.sample_size.per_version)} per version, to detect this gap at ${pctStr(d.sample_size.alpha, 0)} significance and ${pctStr(d.sample_size.power, 0)} power`)),
+          h('div', h('b.dc-big', fmtInt(need)), h('span', ' people a live test needs'), h('div.expl', `${fmtInt(d.sample_size.per_version)} per draft, to detect this gap at ${pctStr(d.sample_size.alpha, 0)} significance and ${pctStr(d.sample_size.power, 0)} power`)),
           h('div', h('b.dc-big', fmtInt(aud)), h('span', ' local users on the platform'), h('div.expl', d.audience.place + ' (estimate)'))),
         h('div.dc-bar', { role: 'img', 'aria-label': `${fmtInt(need)} people for a live test is ${pctStr(share, 0)} of ${fmtInt(aud)} local Instagram users. The budget line is at ${pctStr(cap, 0)}.` },
           h('div.dc-bar-fill' + (over ? '.over' : ''), { style: { width: `${needW}%` } }),
@@ -60,7 +60,7 @@ export default {
         h('div.dc-bar-legend',
           h('span', h('i.dc-sw.need' + (over ? '.over' : '')), `${fmtInt(need)} for a live test = ${pctStr(share, 0)} of local users`),
           h('span', h('i.dc-sw.line'), `${pctStr(cap, 0)} budget line = ${fmtInt(d.affordable.per_version * 2)} people`)),
-        h('p.expl', over ? 'A live test would need more people than the budget line allows. Ripple ran it on the simulated crowd for $0 of ad spend.' : 'A live test would fit under the budget line. Ripple ran it for $0 of ad spend.'),
+        h('p.expl', over ? 'A live test would need more people than the budget line allows. Ripple ran it on the simulated audience for $0 of ad spend.' : 'A live test would fit under the budget line. Ripple ran it for $0 of ad spend.'),
         h('div.dc-src', d.audience.query_id ? [h('span.muted', 'Audience number comes from query '), qidChip(d.audience.query_id)] : null, h('span.muted', ` ${d.audience.source}.`)));
     }
 
@@ -85,10 +85,10 @@ export default {
 
     function versionC(d) {
       const v = d.variant;
-      if (!v) return sec('Version C', 'No draft yet', null, h('p.muted', 'No Version C was drafted for this decision. The Ask why stage can draft one.'));
+      if (!v) return sec('Suggested rewrite', 'No rewrite yet', null, h('p.muted', 'The agent has not drafted a rewrite for this run. The Why stage can draft one.'));
       const ok = v.honesty?.ok;
-      return sec('Version C', 'A bolder version, drafted from the objections', 'a draft, never posted on its own',
-        h('div.dc-post.dc-c', { style: { '--vc': 'var(--c)' } }, h('img.dc-thumb', { src: `/api/runs/${encodeURIComponent(id)}/creative/c.svg`, alt: 'Version C ad creative', loading: 'lazy' }), h('div', h('span.dc-post-tag', 'Version C draft'), h('p', v.text))),
+      return sec('Suggested rewrite', 'The agent\'s rewrite (C), drafted from the objections', 'a draft, never posted on its own',
+        h('div.dc-post.dc-c', { style: { '--vc': 'var(--c)' } }, h('img.dc-thumb', { src: `/api/runs/${encodeURIComponent(id)}/creative/c.svg`, alt: 'Suggested rewrite (C) creative', loading: 'lazy' }), h('div', h('span.dc-post-tag', 'Rewrite C'), h('p', v.text))),
         v.rationale ? h('p.dc-why', h('b', 'Why: '), v.rationale) : null,
         v.targets?.length ? h('div.chips', { style: { marginBottom: '12px' } }, v.targets.map((t) => h('span.chip', t))) : null,
         h('div.dc-honesty.' + (ok ? 'ok' : 'warn'),
@@ -108,11 +108,11 @@ export default {
       const val = k === 'A' ? r.a : k === 'B' ? r.b : null;
       const sim = k === 'C' ? d.actions.find((a) => a.kind === 'simulate_variant')?.result : null;
       if (sim && sim.status === 'done' && sim.gap_pts != null) {
-        const txt = `C ${sim.gap_pts >= 0 ? '+' : ''}${sim.gap_pts.toFixed(1)} pts vs ${sim.leader} on the same crowd`;
-        return h('a.ad-intent', { href: `#/run/${encodeURIComponent(sim.run_id)}/verdict`, title: 'Open the Version C run', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), txt, h('span', ' →'));
+        const txt = `C ${sim.gap_pts >= 0 ? '+' : ''}${sim.gap_pts.toFixed(1)} pts vs ${sim.leader} on the same audience`;
+        return h('a.ad-intent', { href: `#/run/${encodeURIComponent(sim.run_id)}/verdict`, title: 'Open the suggested-rewrite run', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), txt, h('span', ' →'));
       }
       const text = val != null ? `${k} ${(val * 100).toFixed(1)}% simulated intent` : `${k}: drafted, not simulated yet`;
-      return h('a.ad-intent', { href: `#/run/${encodeURIComponent(id)}/verdict`, title: 'Open the Verdict stage', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), text, h('span', ' →'));
+      return h('a.ad-intent', { href: `#/run/${encodeURIComponent(id)}/verdict`, title: 'Open the Result stage', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), text, h('span', ' →'));
     }
     function adCard(d, v, launched) {
       const k = letterOf(v.label), st = launched, pl = placement;
@@ -144,7 +144,7 @@ export default {
       const launched = a && a.status === 'approved' ? (res?.mode === 'live' && res.ok ? 'live' : 'preview') : null;
       const tog = h('div.ad-toggle', { role: 'tablist' }, ['feed', 'story'].map((p) => h('button' + (placement === p ? '.on' : ''), { role: 'tab', 'aria-selected': String(placement === p), onclick: () => { placement = p; draw(); } }, p === 'feed' ? 'Feed' : 'Story')));
       const tag = vs.length > 1 ? `${letterOf(vs[0].label)} vs ${letterOf(vs[1].label)}` : letterOf(vs[0].label);
-      return sec('Ad preview', `How ${tag} would look in people's feeds`, launched === 'live' ? 'created in your ad account, paused' : 'generated from the post text; nothing is live',
+      return sec('Preview', `How ${tag} would look in people's feeds`, launched === 'live' ? 'created in your ad account, paused' : 'generated from the post text; nothing is live',
         h('div.ad-tools', tog, h('span.expl', 'Click an ad to enlarge it.')),
         h('div.ad-row', vs.map((v) => adCard(d, v, launched))));
     }
@@ -157,13 +157,13 @@ export default {
     function launchPlan(d) {
       const p = d.plan, t = p.targeting || {};
       const row = (k, v) => h('div.dc-kv', h('dt', k), h('dd', v));
-      return sec('Launch plan', 'What gets launched', 'nothing here has been posted or paid for',
+      return sec('Action plan', 'Drafted by the agent; waits for your approval', 'nothing here has been posted or paid for',
         h('div.dc-plan',
           h('div.dc-variants', p.variants.map((v) => h('div.dc-post', { style: { '--vc': variantVar(v.label.replace(/^.*?([ABC])\b.*$/i, '$1')) } }, h('span.dc-post-tag', v.label), h('p', v.text)))),
           h('dl.dc-kvs',
             row('Targeting', `${t.platform || 'Instagram'}, ${t.place || ''}${t.zip ? ` (${t.zip})` : ''}${t.age_bands?.length ? `, ages ${t.age_bands.join(', ')}` : ''}`),
             t.note ? row('Targeting note', t.note) : null,
-            row('People per version', `${fmtInt(p.per_version)} (${fmtInt(p.total)} in total)`),
+            row('People per draft', `${fmtInt(p.per_version)} (${fmtInt(p.total)} in total)`),
             row('Success metric', p.success_metric),
             row('Decision rule', p.decision_rule),
             row('Stop rule', p.stop_rule)),
@@ -183,10 +183,10 @@ export default {
     }
     async function simulate(d, btn) {
       const text = d.variant?.text;
-      if (!text) return fail(new Error('There is no Version C draft to simulate.'));
+      if (!text) return fail(new Error('There is no suggested rewrite to simulate.'));
       btn.disabled = true; mount(btn, spin(), ' Starting...');
       try { const n = await api(`/api/runs/${encodeURIComponent(id)}/version-c/run`, { method: 'POST', body: { text } }); location.hash = `#/run/${n.run_id}`; }
-      catch (e) { fail(e); btn.disabled = false; mount(btn, 'Simulate C on the same crowd'); }
+      catch (e) { fail(e); btn.disabled = false; mount(btn, 'Simulate the suggested rewrite against the leader'); }
     }
     function actionCard(d, a) {
       const auto = a.policy === 'auto', [stCls, stLabel] = STATUS[a.status] || ['', a.status];
@@ -206,15 +206,15 @@ export default {
       }
       if (!auto && a.status === 'proposed' && a.result && a.result.ok === false) box.append(h('div.dc-act-done', metaResult(a.result), h('p.muted', 'The launch failed; nothing was marked approved. You can approve again to retry.')));
       if (auto && a.kind === 'simulate_variant' && a.status === 'proposed') {
-        const b = h('button.btn.primary', { title: 'Runs a new simulation on the local model; it can take a while' }, 'Simulate C on the same crowd');
+        const b = h('button.btn.primary', { title: 'Runs a new simulation on the local model; it can take a while' }, 'Simulate the suggested rewrite against the leader');
         b.onclick = () => simulate(d, b);
-        box.append(h('div.dc-act-btns', b, h('span.expl', 'Starts a new run: same crowd, graph and schedule.')));
+        box.append(h('div.dc-act-btns', b, h('span.expl', 'Starts a new run: same audience, graph and schedule.')));
       }
       if (!auto && (a.status === 'approved' || a.status === 'rejected')) {
         box.append(h('div.dc-act-done',
           n?.note || a.result?.note ? h('p', n?.note || a.result.note) : h('p.muted', a.decided_at ? `Decided ${new Date(a.decided_at).toLocaleString()}.` : null),
           a.status === 'approved' && a.result ? metaResult(a.result) : null,
-          a.status === 'approved' ? h('a.btn.sm', { href: n?.launch_plan || `/api/runs/${encodeURIComponent(id)}/launch-plan.json`, download: '' }, 'Download launch plan') : null));
+          a.status === 'approved' ? h('a.btn.sm', { href: n?.launch_plan || `/api/runs/${encodeURIComponent(id)}/launch-plan.json`, download: '' }, 'Download action plan') : null));
       }
       if (a.kind === 'simulate_variant' && a.result) box.append(verifyResult(a.result));
       return box;
@@ -245,24 +245,24 @@ export default {
 
     /* ---------------------------------------------------------- render */
     function draw() {
-      if (loading && !D) return mount(root, h('div.dc-wait.muted', spin(), ' Working out the decision...'));
-      if (!D) return mount(root, h('div.banner.bad', loadErr ? `Could not load the decision: ${loadErr}` : 'No decision yet.'),
+      if (loading && !D) return mount(root, h('div.dc-wait.muted', spin(), ' Working out the spend gate...'));
+      if (!D) return mount(root, h('div.banner.bad', loadErr ? `Could not load the spend gate: ${loadErr}` : 'No spend gate result yet.'),
         h('p'), h('button.btn', { onclick: load }, 'Try again'));
       const d = D, [cls, label] = CALL[d.call] || ['', d.call];
       if (d.call === 'verification') {
-        return mount(root, h('header.dc-head', h('div.dc-eyebrow', 'Decision', h('span.chip.warn', 'Verification run'), h('span.muted', 'no spend decision on this run')),
+        return mount(root, h('header.dc-head', h('div.dc-eyebrow', 'Spend gate', h('span.chip.warn', 'Verification run'), h('span.muted', 'nothing to spend on this run')),
           h('h2.dc-headline', d.headline)), sec('Why', 'Reasons', null, h('ul.dc-reasons', (d.reasons || []).map((r) => h('li', r)))));
       }
       mount(root,
         h('header.dc-head',
-          h('div.dc-eyebrow', 'Decision', h('span.chip.' + cls, label), h('span.muted', 'computed from the finished run, no model call')),
+          h('div.dc-eyebrow', 'Spend gate', h('span.chip.' + cls, label), h('span.muted', 'computed from the finished run, no model call')),
           h('h2.dc-headline', d.headline)),
         sec('The numbers', 'What a live split test would have needed, vs people you can reach', null, sizeChart(d)),
         sec('Why', 'Reasons', null, h('ul.dc-reasons', d.reasons.map((r) => h('li', r)))),
         sec('In their words', 'Why people hesitated, and what drew them', 'each quote links to the action it came from',
           h('div.dc-cols', themeCol('Why people hesitated', 'objections', d.brief?.objections || []), themeCol('What drew them', 'likes', d.brief?.likes || []))),
         versionC(d), adPreview(d), launchPlan(d),
-        sec('Next steps', 'Actions', 'what runs on its own, and what waits for you', h('ul.dc-acts', d.actions.map((a) => actionCard(d, a)))), adZoom());
+        sec('Next steps', 'Actions', 'free, reversible steps run on their own; anything that spends or publishes waits for you', h('ul.dc-acts', d.actions.map((a) => actionCard(d, a)))), adZoom());
       if (!reduced() && !shown) { shown = true; stagger(root, { y: 14, gap: 50, ms: 520 }); }
     }
 

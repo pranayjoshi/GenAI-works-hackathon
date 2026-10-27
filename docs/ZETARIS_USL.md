@@ -26,7 +26,7 @@ It takes about 4 minutes, most of it JVM start-up and the Upworthy scans. Each r
 
 ## 1a. Use case and data sources
 
-**Use case.** A small business (the demo is a café in Austin, ZIP 78704) wants to know whether a new ad is worth paying to test. Ripple builds a crowd of local people from public data, runs the ad in a simulated feed, and decides whether a real A/B test is worth the money. To do that it needs answers to plain questions:
+**Use case.** A small business (the demo is a café in Austin, ZIP 78704) wants to know how the people around it will react to a new post, and why, before paying to test it. Ripple builds a simulated audience of local people from public data, runs the post in a simulated feed, explains who reacted and why with evidence, and decides whether a real A/B test is worth the money. To do that it needs answers to plain questions:
 
 - How many adults live in the ZIP, by age and sex?
 - How many of them use Instagram (or another platform)?

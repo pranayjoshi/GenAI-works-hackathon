@@ -6,11 +6,11 @@ import { api } from './api.js';
 import { qidChip } from './ui.js';
 
 export const SOURCES = [
-  { table: 'census.acs', name: 'US Census Bureau ACS 5-year', origin: 'Census Reporter API (live, cached per ZIP)', use: 'Age, income, education and household tables for the ZIP: the natural shape of the crowd.', status: 'public', statusText: 'Public, live', short: 'Census ACS', match: /^ACS /, pending: 'registered on the first run for a ZIP' },
+  { table: 'census.acs', name: 'US Census Bureau ACS 5-year', origin: 'Census Reporter API (live, cached per ZIP)', use: 'Age, income, education and household tables for the ZIP: the natural shape of the audience.', status: 'public', statusText: 'Public, live', short: 'Census ACS', match: /^ACS /, pending: 'registered on the first run for a ZIP' },
   { table: 'pew.platform_use', name: 'Pew Research Center', origin: 'Social Media Fact Sheet, hand-entered', use: 'Instagram use by age band: who in that ZIP is actually on the platform.', status: 'public', statusText: 'Public', short: 'Pew Instagram', match: /^Pew/ },
   { table: 'priors.behaviour', name: 'Behaviour priors', origin: 'Ripple, labelled assumptions', use: 'Base rates for scroll, like, share and hide, tuned per persona.', status: 'modeled', statusText: 'Modeled', short: 'Priors', match: /^Behaviour/ },
   { table: 'biz.customers', name: 'Business customer list', origin: 'Customer upload (demo file is synthetic)', use: 'A copula over visits, ticket and tenure turns real customers into persona traits.', status: 'synthetic', statusText: 'Synthetic demo', short: 'Customers', match: /^Customer/ },
-  { table: 'upworthy.tests', name: 'Upworthy Research Archive', origin: 'Real historical A/B tests, CC BY 4.0', use: 'Backtest only: does the simulated verdict match what headlines actually did?', status: 'public', statusText: 'Public, CC BY 4.0', short: 'Upworthy', match: /^Upworthy/, backtest: true },
+  { table: 'upworthy.tests', name: 'Upworthy Research Archive', origin: 'Real historical A/B tests, CC BY 4.0', use: 'Reality check only: does the simulated result match what headlines actually did?', status: 'public', statusText: 'Public, CC BY 4.0', short: 'Upworthy', match: /^Upworthy/, backtest: true },
 ];
 const STATUS_CLS = { public: 'good', modeled: 'warn', synthetic: 'b' };
 
@@ -27,7 +27,7 @@ const engineChip = (eng, pending, loading) => eng
 /** Compact strip for the setup screen. */
 export function sourcesStrip() {
   const root = h('section.src-strip', { 'aria-label': 'Data sources' });
-  const lead = h('div.src-strip-lead', h('b', 'Your crowd will be built from'), h('span', 'federated through Zetaris'));
+  const lead = h('div.src-strip-lead', h('b', 'Your audience will be built from'), h('span', 'federated through Zetaris'));
   const items = h('div.src-strip-items');
   root.append(lead, items);
   const draw = (info) => {
@@ -65,7 +65,7 @@ export function sourcesPanel() {
         h('div.src-origin', x.origin),
         h('p', x.use),
         h('footer', h('code.src-tbl', x.table), h('span.src-rows', t && typeof t.rows === 'number' ? h('b', fmtInt(t.rows)) : null, t && typeof t.rows === 'number' ? ' rows' : (info ? (x.pending || 'not loaded') : 'checking...')), engineChip(eng, x.pending, !info),
-          x.backtest ? h('span.src-note', 'backtest only') : qq.length ? h('span.src-qs', qq.slice(0, 3).map((q) => qidChip(q.query_id))) : null));
+          x.backtest ? h('span.src-note', 'reality check only') : qq.length ? h('span.src-qs', qq.slice(0, 3).map((q) => qidChip(q.query_id))) : null));
     });
     const join = qs.find((q) => /Census x Pew/i.test(q.label || ''));
     const joinBox = h('div.src-join',

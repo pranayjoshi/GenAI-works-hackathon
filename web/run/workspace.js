@@ -8,7 +8,7 @@
  *
  * A stage is mounted the first time it is opened and kept alive (hidden) afterwards, so it keeps
  * receiving bus events. ctx gives it the state and the bus; it never opens its own EventSource. */
-import { $, h, s, mount, clear, spin, fmtInt, hourStr } from '../core/dom.js';
+import { $, h, s, mount, clear, spin, fmtInt, hourStr, draftName } from '../core/dom.js';
 import { current, createBus } from '../core/state.js';
 import { api, fail } from '../core/api.js';
 import { toast } from '../core/ui.js';
@@ -17,15 +17,15 @@ import { setAmbientMood } from '../core/ambient.js';
 
 export const STAGES = [
   { id: 'pipeline', label: 'Agents', hint: 'Live multi-agent workflow', icon: 'M5 3v4M5 17v4M19 3v4M19 17v4M3 5h4M17 5h4M3 19h4M17 19h4M7 5h10M7 19h10M5 7v10M19 7v10M9 12h6', load: () => import('./stages/pipeline.js') },
-  { id: 'crowd', label: 'Crowd', hint: 'Who was sampled, and from where', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', load: () => import('./stages/crowd.js') },
-  { id: 'worlds', label: 'Twin worlds', hint: 'Two feeds, same people, one post differs', icon: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 2v20M2 12h20', load: () => import('./stages/worlds.js') },
+  { id: 'crowd', label: 'Audience', hint: 'Who was sampled, and from which data', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', load: () => import('./stages/crowd.js') },
+  { id: 'worlds', label: 'Counterfactual worlds', hint: 'Two feeds, same people; only the content differs', icon: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 2v20M2 12h20', load: () => import('./stages/worlds.js') },
   { id: 'signals', label: 'Signals', hint: 'Intent by round, events, momentum', icon: 'M3 3v18h18M7 15l4-4 3 3 6-7', load: () => import('./stages/signals.js') },
-  { id: 'verdict', label: 'Verdict', hint: 'Winner, interval, segments', icon: 'M12 15l-3.5 2 1-4L6.5 10l4-.3L12 6l1.5 3.7 4 .3-3 3 1 4z M4 21h16', load: () => import('./stages/verdict.js') },
-  { id: 'report', label: 'Report', hint: 'Claims with receipts', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5', load: () => import('./stages/report.js') },
-  { id: 'decision', label: 'Decision', hint: 'Spend a real test or not, launch plan, approvals', icon: 'M12 2v20M5 8l7-6 7 6M4 22h16M7 12h10M9 17h6', load: () => import('./stages/decision.js') },
-  { id: 'ask', label: 'Ask why', hint: 'Interview people, segments, focus group, Version C', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', load: () => import('./stages/ask.js') },
+  { id: 'verdict', label: 'Result', hint: 'Who leads, the interval, segments', icon: 'M12 15l-3.5 2 1-4L6.5 10l4-.3L12 6l1.5 3.7 4 .3-3 3 1 4z M4 21h16', load: () => import('./stages/verdict.js') },
+  { id: 'report', label: 'Report', hint: 'Reasons, each with its evidence', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5', load: () => import('./stages/report.js') },
+  { id: 'decision', label: 'Spend gate', hint: 'What to do next, action plan, approvals', icon: 'M12 2v20M5 8l7-6 7 6M4 22h16M7 12h10M9 17h6', load: () => import('./stages/decision.js') },
+  { id: 'ask', label: 'Why', hint: 'Ask the audience why: people, segments, focus group, suggested rewrite', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', load: () => import('./stages/ask.js') },
 ];
-export const PHASES = [['data', 'Data'], ['audience', 'Audience'], ['sampling', 'Sampling'], ['voices', 'Voices'], ['running', 'Running'], ['analyzing', 'Analyzing'], ['report', 'Report'], ['done', 'Done']];
+export const PHASES = [['data', 'Data'], ['audience', 'Audience'], ['sampling', 'Sampling'], ['voices', 'Voices'], ['running', 'Simulating'], ['analyzing', 'Investigating'], ['report', 'Report'], ['done', 'Done']];
 const FEED_CAP = 150;
 
 let active = null;   // the live workspace, for onParams
@@ -149,9 +149,9 @@ export default function workspace(view, params) {
       sp?.parent_run ? h('a.chip', { href: `#/run/${sp.parent_run}` }, 'follow-up to ' + sp.parent_run.slice(-4)) : null,
       fair.length ? fair.map((f) => {
         const keys = Object.keys(f.base_shapes || {}); const hash = Object.values(f.base_shapes || {})[0] || f.fingerprint || '';
-        return h('span.chip.' + (f.identical ? 'good' : 'bad'), { title: `Base log fingerprint ${f.fingerprint}. The twin worlds start from the same crowd, graph and schedule.` },
-          f.identical ? `twins identical ${keys.join(' = ')} ✓ ` : `base logs differ, seed ${f.seed} ✗ `, h('span.mono', String(hash).slice(0, 8)));
-      }) : h('span.chip', { title: 'Shown once the twin worlds have forked' }, 'twin check pending'),
+        return h('span.chip.' + (f.identical ? 'good' : 'bad'), { title: `Base log fingerprint ${f.fingerprint}. The counterfactual worlds start from the same audience, graph and schedule.` },
+          f.identical ? `worlds identical ${keys.join(' = ')} ✓ ` : `base logs differ, seed ${f.seed} ✗ `, h('span.mono', String(hash).slice(0, 8)));
+      }) : h('span.chip', { title: 'Shown once the counterfactual worlds have forked' }, 'fairness check pending'),
       S.status === 'done' || S.status === 'error' ? null : h('span.chip.ws-stream.' + S.stream, { title: 'Server-sent events connection' }, S.stream));
     mount(ui.tools,
       sp && sp.seeds?.length > 1 ? h('div.ws-seg', sp.seeds.map((sd) => h('button' + (sd === S.seed ? '.on' : ''), { onclick: () => ctx.setSeed(sd), title: `Show seed ${sd}` }, `Seed ${sd}`))) : null,
@@ -299,7 +299,7 @@ export default function workspace(view, params) {
         S.verdict = e.verdict;
         refetch().then(() => {
           bus.emit('verdict', S.verdict);
-          if (!S.verdictShown) { S.verdictShown = true; if (cur !== 'verdict') toast(S.verdict.call === 'winner' ? `Verdict: Version ${S.verdict.winner} wins` : `Verdict: Version ${S.verdict.leader || (S.verdict.pooled.a >= S.verdict.pooled.b ? 'A' : 'B')} leads`, false, { label: 'Open verdict', onclick: () => ctx.go('verdict') }); }
+          if (!S.verdictShown) { S.verdictShown = true; if (cur !== 'verdict') toast(S.verdict.call === 'winner' ? `Result: ${draftName(S.verdict.winner)} wins` : `Result: ${draftName(S.verdict.leader || (S.verdict.pooled.a >= S.verdict.pooled.b ? 'A' : 'B'))} leads`, false, { label: 'Open result', onclick: () => ctx.go('verdict') }); }
         });
         break;
       case 'report': S.report = e.report; bus.emit('report', S.report); break;

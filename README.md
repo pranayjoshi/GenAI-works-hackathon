@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="docs/images/hero.jpg" alt="Ripple: rehearse your A/B test before you pay for it. Two versions of a café's Instagram post, product-first and story-first." width="100%">
+  <img src="docs/images/hero.jpg" alt="Ripple simulates how the public will react to what you post, and shows you why. Two drafts of a café's Instagram post, product-first and story-first, seen by the same simulated audience." width="100%">
 </p>
 
 <h1 align="center">Ripple</h1>
 
 <p align="center">
-  <b>Test your post on a simulated crowd before you spend a dollar.</b><br>
-  Twin-world A/B tests on simulated people sampled from real Census and Pew data, with an agent that decides whether a real test is worth paying for.
+  <b>Ripple simulates how the public will react to what you post, and shows you why.</b><br>
+  An agent that simulates public reaction to anything you post (ads, tweets, LinkedIn comments, announcements) on an audience built from real Census and Pew data, then explains who reacts, who doesn't, and why, with evidence for every reason.
 </p>
 
 <p align="center">
-  <img alt="Open Agent Hackathon 2026, Track 3" src="https://img.shields.io/badge/Open%20Agent%20Hackathon%202026-Track%203%20%C2%B7%20Reasoning%20Architecture-4C7DF0">
+  <img alt="Open Agent Hackathon 2026, Track 2" src="https://img.shields.io/badge/Open%20Agent%20Hackathon%202026-Track%202%20%C2%B7%20The%20Agent%20That%20Can%20Explain%20Why-4C7DF0">
   <img alt="NVIDIA Nemotron" src="https://img.shields.io/badge/NVIDIA-Nemotron-76B900?logo=nvidia&logoColor=white">
   <img alt="Meterless" src="https://img.shields.io/badge/Meterless-Nightshift%20%C2%B7%20H--MEM%20%C2%B7%20World%20Model%20%C2%B7%20Markovian-8B7BF2">
   <img alt="Zetaris" src="https://img.shields.io/badge/Zetaris-data%20layer%20%2B%20USL-E8873A">
@@ -23,6 +23,7 @@
 
 <p align="center">
   <a href="#-quick-start-for-judges">Quick start</a> ·
+  <a href="#-how-ripple-explains-why">How it explains why</a> ·
   <a href="#-see-it">Screenshots</a> ·
   <a href="#-how-it-works">How it works</a> ·
   <a href="#-results-so-far">Results</a> ·
@@ -33,23 +34,46 @@
 
 ---
 
-Ripple A/B tests an ad, post or announcement on a simulated crowd sampled from the audience it targets. Two identical crowds see version A and version B. You watch both feeds fill live, then get the winner with a margin (or "too close to call"), who preferred which version and why in their own words, and a version C. The agent also decides whether a real paid test could tell the two posts apart at the audience size the business can reach. If not, it says so, and nothing is spent until the owner approves.
+Anything public is posted blind. An ad, a tweet, a LinkedIn comment, a launch announcement or a statement goes out, and you don't know how different people will react until they do. When something lands badly, or lands in silence, you never learn why: the people who scrolled past don't tell you, and the reasons behind a reaction aren't in any dashboard.
+
+Ripple runs that reaction first, as an agent loop: **Build the audience → Simulate → Investigate → Explain → Recommend (gated).** It builds a synthetic audience from real US Census and Pew rows for the place you are posting to, with a receipt for every trait. It simulates a day of that audience seeing your drafts in counterfactual worlds that are identical except for the content, with memory, competing posts and shares that spread through a follower graph. It investigates the run's own event log with SQL, explains each reason with the query or action it came from, and recommends what to do next, holding anything that spends or publishes for the owner. You get who reacts, who stays silent, how each group feels, and why, with evidence. Give it two drafts and it also says which one leads in the simulation and why; the counterfactual worlds are what keep that comparison fair.
+
+Three things make it an agent rather than a pipeline:
+
+- **It uses tools.** The report agent queries its own run log with SQL (segment breakdowns, timeline, reaction samples, audience vs Census) and must cite the query id behind every number.
+- **It critiques and revises itself.** A code critic rejects uncited numbers and invented prices, a model critic rejects overclaiming, and an honesty check rejects rewrites that hide the price or offer. One revision, then ship.
+- **It has a permission model.** Free, reversible actions go ahead on their own, such as drafting a rewrite from the objections. Anything that spends money or publishes waits for the owner's approval.
+
+## 🔎 How Ripple explains why
+
+Every reason in a Ripple result points back to evidence you can open. The investigation draws on four kinds of source:
+
+| Source | What it answers | How it is cited |
+|---|---|---|
+| **US Census ACS and Pew Research**, federated through Zetaris | Who is in the audience, and how many people on the platform the poster can reach | Every persona field carries the query id and table cell it came from |
+| **The run's own event log**, queried with SQL | Who reacted, how and when; who stayed silent; what people kept to themselves; how intent shifted around a competing post | Every claim in the report lists its query ids; every quote is an action id |
+| **Each person's H-MEM memory** | Why one person did what they did | Interview and focus-group answers cite the memory lines they use; asked about something they never saw, a person says so |
+| **The critics** | Whether the explanation is supported by the data | Code critic, model critic and honesty-check results are written to the trace |
+
+The report agent works like an analyst with a database: it calls tools that run SQL over the run's action log joined to the personas ([src/report/tools.ts](src/report/tools.ts)), writes claims, and then has to get them past a code critic. A percentage must match a fraction in the rows it cites, a count must match an integer cell, a price must appear in the post, and a claim with no query id is rejected ([src/report/agent.ts](src/report/agent.ts)). A model critic then reads the report for overclaiming and can send it back once with `request_revision`. The result is a set of reasons grouped by theme, each with its quotes, each quote one click from the simulated action and the person behind it.
+
+### It knows what it doesn't know
 
 > [!IMPORTANT]
-> Ripple is not a prediction of real customer behaviour, and on our backtest it did not beat chance (see [Results](#-results-so-far)). Its value is the uncertainty it measures and the spend decision built on it.
+> Ripple reports **simulated** reactions. It does not forecast real-world sentiment or real winners. We tested whether it could: on 50 real Upworthy headline A/B tests, a 4B local model running the simulated audience scored 22.5 of 50, which cannot be told apart from a coin flip (see [Results](#-results-so-far)). The design accounts for that. Ripple reports every simulated reaction with its measured uncertainty (a 95% interval and agreement across seeds) and the evidence behind it, and its spend gate is built on that uncertainty and the real audience size, not on the simulation picking a winner.
 
-Built for the Open Agent Hackathon 2026, Track 3 (Reasoning Architecture) and the NVIDIA Nemotron award. Sponsor tech: NVIDIA Nemotron, Meterless (Nightshift and the H-MEM, World Model and Markovian engines), Zetaris. Details: [docs/SPONSOR_TECH.md](docs/SPONSOR_TECH.md).
+Built for the Open Agent Hackathon 2026, Track 2 (The Agent That Can Explain Why) and the NVIDIA Nemotron award. Sponsor tech: NVIDIA Nemotron, Meterless (Nightshift and the H-MEM, World Model and Markovian engines), Zetaris. Details: [docs/SPONSOR_TECH.md](docs/SPONSOR_TECH.md).
 
 ### At a glance: the 600-person café run
 
 <table>
   <tr>
     <td align="center"><h3>600</h3>simulated Instagram users in ZIP 78704</td>
-    <td align="center"><h3>2 × 2</h3>seeds × twin worlds, hash-verified</td>
+    <td align="center"><h3>2 × 2</h3>seeds × counterfactual worlds, hash-verified</td>
     <td align="center"><h3>4,146</h3>simulated reactions</td>
-    <td align="center"><h3>±5.5 pts</h3>interval: too close to call</td>
-    <td align="center"><h3>3,828</h3>people per version a real test needs</td>
-    <td align="center"><h3>Don't pay</h3>the agent's spend decision</td>
+    <td align="center"><h3>±5.5 pts</h3>interval: no measurable difference</td>
+    <td align="center"><h3>3,828</h3>people per draft a real paid test needs</td>
+    <td align="center"><h3>Spend gate: don't pay</h3>the agent's call on a real test</td>
   </tr>
 </table>
 
@@ -67,7 +91,7 @@ docker build -t oah-submission .
 docker run --rm -p 8000:8000 -e SAMPLE_MODE=true oah-submission
 ```
 
-Verified on 27 Oct from a fresh clone: the image builds, and with no `.env`, no Zetaris and no Nightshift all three `input_examples` return a full result (verdict, report, spend decision) in about a second each. In that mode the crowd is the offline persona model and the trace says so (`served_by: offline-model`).
+Verified on 27 Oct from a fresh clone: the image builds, and with no `.env`, no Zetaris and no Nightshift all three `input_examples` return a full result (result, report, spend gate) in about a second each. In that mode the crowd is the offline persona model and the trace says so (`served_by: offline-model`).
 
 **2. Docker with Nightshift and Zetaris on the host.** Start Nightshift and the Zetaris bundle on your machine first ([docs/SPONSOR_SETUP.md](docs/SPONSOR_SETUP.md)), fill `.env`, point the base URLs at `host.docker.internal`, then:
 
@@ -85,7 +109,7 @@ npm ci && npm start
 
 Open http://localhost:8787 and press **Load example**. With nothing set it uses local Nemotron through Ollama (`ollama pull nemotron-3-nano:4b`).
 
-**Call the API.** `POST /run` takes JSON in and returns JSON out for one full A/B run (`GET /health` checks the server). In Docker it is on port 8000; with `npm start`, use port 8787 (`PORT` in `.env`).
+**Call the API.** `POST /run` takes JSON in and returns JSON out for one full reaction simulation (`GET /health` checks the server). In Docker it is on port 8000; with `npm start`, use port 8787 (`PORT` in `.env`).
 
 ```bash
 curl -X POST http://localhost:8000/run -H "Content-Type: application/json" -d @input_examples/example_1.json
@@ -96,9 +120,9 @@ curl -X POST http://localhost:8000/run -H "Content-Type: application/json" -d @i
 | Entry | What |
 |---|---|
 | `POST /run`, `GET /health` | Judges' programmatic entry: structured input, structured output ([src/runApi.ts](src/runApi.ts), routes in [src/api.ts](src/api.ts)) |
-| `http://localhost:8787` | The UI: new test form, live run, stages Agents, Crowd, Twin worlds, Signals, Verdict, Report, Decision, Ask why |
-| `npm run run:ab -- --crowd 120 --rounds 12 --seeds 2` | A/B run from the command line |
-| `npm run backtest -- --slice scored --n 50` | Upworthy backtest |
+| `http://localhost:8787` | The UI: new simulation form, live run, stages Agents, Audience, Counterfactual worlds, Signals, Result, Report, Spend gate, Why |
+| `npm run run:ab -- --crowd 120 --rounds 12 --seeds 2` | A reaction simulation from the command line |
+| `npm run backtest -- --slice scored --n 50` | Reality check: the Upworthy backtest |
 | `npm run probe` | Checks every provider, source and the federation engine |
 
 `POST /run` limits (from the input schema): `crowd` 20 to 300 (default 60), `rounds` 6 to 32 (default 8), `seeds` 1 to 3, a 5-digit `zip` (or an `address` that contains one), a run timeout of 10 minutes (`RUN_TIMEOUT_MS`).
@@ -124,7 +148,7 @@ Copy `.env.example` to `.env`. Everything is optional; values below are placehol
 
 ### Sample mode, honestly
 
-`SAMPLE_MODE=true` needs no credentials. For each model call, Ripple first looks for an exact recorded answer for the same prompt in `samples/recordings.sqlite` and replays it (`served_by: replay(...)`). If none matches, the crowd decisions come from an offline persona-driven decision model ([src/sim/offline.ts](src/sim/offline.ts)). It scores each person's sampled traits (price sensitivity, skepticism, customer status, role, activity, age) against features parsed from the post text (discount, price, new, local, urgency), with seeded randomness. Its answers are real logic on your input and are logged `served_by: offline-model`. They are not a language model's reading of the post. Census rows fall back to cached geographies when the API is unreachable. With no model at all, the report is the code-built fallback (`report.fallback: true`), Version C is skipped with a logged error ("No model provider answered"), and short runs recall few or no H-MEM lines, because the offline model does not read memories. The trace marks each of these. A sample-mode result shows the pipeline working; it is not evidence about your posts.
+`SAMPLE_MODE=true` needs no credentials. For each model call, Ripple first looks for an exact recorded answer for the same prompt in `samples/recordings.sqlite` and replays it (`served_by: replay(...)`). If none matches, the crowd decisions come from an offline persona-driven decision model ([src/sim/offline.ts](src/sim/offline.ts)). It scores each person's sampled traits (price sensitivity, skepticism, customer status, role, activity, age) against features parsed from the post text (discount, price, new, local, urgency), with seeded randomness. Its answers are real logic on your input and are logged `served_by: offline-model`. They are not a language model's reading of the post. Census rows fall back to cached geographies when the API is unreachable. With no model at all, the report is the code-built fallback (`report.fallback: true`), the suggested rewrite (C) is skipped with a logged error ("No model provider answered"), and short runs recall few or no H-MEM lines, because the offline model does not read memories. The trace marks each of these. A sample-mode result shows the agent loop working; it is not evidence about your posts.
 
 ## 👀 See it
 
@@ -133,15 +157,15 @@ Screens from the saved copy-only demo run `20261027-south-congress-coffe-1458` (
 <table>
   <tr>
     <td width="50%"><img src="docs/images/sources.jpg" alt="Data sources panel: five sources, each answered by Zetaris, with licence chips, row counts, query ids and the Census × Pew join that sizes the local Instagram audience"><br><b>Data sources.</b> Five sources federated through Zetaris, each with its licence, engine and query ids, and the one join that sizes the reachable audience.</td>
-    <td width="50%"><img src="docs/images/crowd.jpg" alt="Crowd stage: 600 simulated people as a sphere of points, age bars against the natural share, and one person's profile with traits"><br><b>The crowd.</b> 600 people sampled from Census and Pew rows. Open anyone to see their traits and the receipt for every field.</td>
+    <td width="50%"><img src="docs/images/crowd.jpg" alt="Audience stage: 600 simulated people as a sphere of points, age bars against the natural share, and one person's profile with traits"><br><b>The audience.</b> 600 people sampled from Census and Pew rows. Open anyone to see their traits and the receipt for every field.</td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/images/worlds.jpg" alt="Twin worlds stage: the feeds of world A and world B side by side, with one person's memory timeline open"><br><b>Twin worlds.</b> Identical crowds, identical schedules; only the post differs. Each person keeps their own H-MEM memory.</td>
-    <td width="50%"><img src="docs/images/signals.jpg" alt="Signals stage: intent rate by round for version A and B, an injected competitor event at round 9, vocal vs silent, deciders so far"><br><b>Signals.</b> Intent by round in both worlds, an injected competitor event, and vocal vs silent reactions.</td>
+    <td width="50%"><img src="docs/images/worlds.jpg" alt="Counterfactual worlds stage: the feeds of world A and world B side by side, with one person's memory timeline open"><br><b>Counterfactual worlds.</b> Identical audiences, identical schedules; only the content differs. Each person keeps their own H-MEM memory.</td>
+    <td width="50%"><img src="docs/images/signals.jpg" alt="Signals stage: intent rate by round for Draft A and Draft B, an injected competitor event at round 9, vocal vs silent, deciders so far"><br><b>Signals.</b> Intent by round in both worlds, an injected competitor event, and vocal vs silent reactions.</td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/images/report.jpg" alt="Report stage: reasons grouped into themes such as put off by price and drawn by taste, each quote linked to its action id, and the critic quality gate"><br><b>Report.</b> Reasons grouped by theme; every quote links to its action, and a critic gates the report.</td>
-    <td width="50%"><img src="docs/images/ask.jpg" alt="Ask why focus group: simulated people around a table answering the moderator, each labelled with id, age and segment"><br><b>Ask why.</b> Interview one person, a segment or a focus group. Answers come only from their own memory.</td>
+    <td width="50%"><img src="docs/images/ask.jpg" alt="Why stage, focus group: simulated people around a table answering the moderator, each labelled with id, age and segment"><br><b>Why.</b> Ask the audience why: one person, a segment or a focus group. Answers come only from their own memory.</td>
   </tr>
 </table>
 
@@ -155,7 +179,7 @@ flowchart LR
   end
   subgraph RIPPLE["Ripple agents"]
     direction TB
-    DA["DataAgent: SQL with receipts"] --> CB["Crowd builder: sampler + copula"] --> TW["Twin worlds A and B"] --> RD["Report, critic, decision"]
+    DA["Build the audience: SQL with receipts"] --> CB["Audience builder: sampler + copula"] --> TW["Simulate: counterfactual worlds A and B"] --> RD["Investigate and explain: report, critics, spend gate"]
   end
   subgraph METER["Meterless"]
     direction TB
@@ -163,7 +187,7 @@ flowchart LR
   end
   subgraph NV["NVIDIA Nemotron"]
     direction TB
-    L["3.5 Lightning: crowd, voices"] --- SV["3.5 Super VL: reasoning"] --- U["3 Ultra: critic"] --- N["3 Nano 4B: local fallback"]
+    L["3.5 Lightning: audience, voices"] --- SV["3.5 Super VL: reasoning"] --- U["3 Ultra: critic"] --- N["3 Nano 4B: local fallback"]
   end
   DATA -->|"federated SQL"| RIPPLE
   RIPPLE <-->|"engines and every model call"| METER
@@ -185,25 +209,44 @@ flowchart LR
 
 ### What happens in a run
 
-1. **Paste two versions** of a post, the business, its ZIP and the goal.
-2. **The Audience agent names the segments** (core and spillover). It never sets their size. Shares come from a federated join of live US Census rows and Pew Research platform-use rates.
-3. **The crowd is sampled from data, not invented.** Age, gender, income and education are drawn from ACS 5-year tables for that ZIP (sex by age, householder age by income, education). Instagram use comes from Pew by age and gender. Behaviour parameters come from labelled priors. Existing-customer habits come from a Gaussian copula fitted to the customer list. Every field carries a receipt: the query id and the table cell it came from. A model writes only each person's one-line voice, after it sees the numbers, and never sees their gender.
-4. **Twin worlds.** For each seed, one base world (people, follower graph, wake schedule, ad serving schedule) is built and then forked. World A and world B share an identical base log, verified by hash. The only event that differs is the post.
+The twelve steps below follow the agent loop: Build the audience (1 to 3), Simulate (4 to 6), Investigate (7 to 8), Explain (9), Recommend, gated (10 to 11), and a reality check on the whole method (12).
+
+**Build the audience**
+
+1. **Give it your drafts.** Paste two drafts of the post, who is posting, the ZIP and the goal.
+2. **The Audience agent names the segments** (core and spillover). It never sets their size. Shares come from a federated join of live US Census rows and Pew Research platform-use rates. In the form you can adjust which age bands count as the core group and how large its share is.
+3. **The audience is sampled from data, not invented.** Age, gender, income and education are drawn from ACS 5-year tables for that ZIP (sex by age, householder age by income, education). Instagram use comes from Pew by age and gender. Behaviour parameters come from labelled priors. Existing-customer habits come from a Gaussian copula fitted to the customer list. Every field carries a receipt: the query id and the table cell it came from. A model writes only each person's one-line voice, after it sees the numbers, and never sees their gender.
+
+**Simulate**
+
+4. **Counterfactual worlds.** For each seed, one base world (people, follower graph, wake schedule, ad serving schedule) is built and then forked. World A and world B share an identical base log, verified by hash. The only event that differs is the content.
 5. **A simulated day, round by round.** People wake on a US time-of-day curve. Only people whose feed changed cost a model call. Each call is a batch of people with their persona, their recalled memories and their new feed items. Each person picks an action (scroll past, like, comment, share, save, tap through, hide), a feeling, whether they'd visit, and a private reason. Shares land in followers' feeds next round, and comments show under the post.
 6. **Loud is not lost.** Every person has a private stance and a propensity to speak. Someone may decide to comment and then keep it to themselves. The report counts vocal and silent reactions separately and shows what people "kept to themselves".
-7. **Verdict in code.** A version wins only if it wins every seed and the pooled gap is larger than the 95% confidence interval. Otherwise the answer is "too close to call".
-8. **Report agent with tools.** It queries the run's action log through SQL (segment breakdowns, timeline, reaction samples, crowd vs Census). Every claim must cite a query id, and every quote is an action id. A code critic rejects uncited numbers and invented prices. A model critic rejects overclaiming. One revision, then ship.
-9. **Ask why.** Interview any person. They answer only from their own memory and cite the memory lines they use. Asked about something they never saw, they say so. You can also ask a whole segment or run a focus group.
-10. **Version C.** A rewriter drafts a post aimed at the losing segments' objections. An honesty check rejects drafts that hide the price or offer. One click simulates C against the winner on the same crowd.
-11. **The decision and the action.** The run ends with a spend decision, not just a verdict. A power calculation on the simulated gap, against the number of Instagram users the business can actually reach (Census × Pew join), answers one question: is a real A/B test of these posts worth paying for? If not, the agent cancels it and drafts a bolder version from the quoted objections, with an honesty check. It then writes a launch plan for the test that is worth running: variants, targeting, people per version, the success metric, and the decision and stop rules. Free, reversible steps need no approval: cancelling the pointless test and drafting the new version. Simulating C against the leader on the same crowd is one click. The agent then checks the result against its own bar, the smallest gap an affordable real test could detect, and updates the decision. Anything that spends money or publishes waits for the owner's approval. Approving creates, through the Marketing API, one campaign with two ad sets (one per version, identical ZIP and age targeting, the same fixed daily budget) and one ad each, all created paused. This is two paused ad sets, not Meta's split-test study object. The code refuses any other status. Without Meta credentials Ripple shows the exact requests and sends nothing. Live launch is optional: a live attempt in our sandbox currently fails at ad creative ("Select a Facebook Page"), so the demo shows the preview ([docs/META_SETUP.md](docs/META_SETUP.md)).
-12. **Reality check.** The Upworthy backtest measures how often the crowd picks the real winner of real headline A/B tests, against a coin flip and against a single prompt on the same models.
+
+**Investigate**
+
+7. **The result, in code.** A draft wins only if it wins every seed and the pooled gap is larger than the 95% confidence interval. Otherwise the result says which draft leads, by how much, with its interval and how likely it is to be the better draft; no measurable difference is itself a result.
+8. **Report agent with tools.** It queries the run's action log through SQL (segment breakdowns, timeline, reaction samples, audience vs Census). Every claim must cite a query id, and every quote is an action id. A code critic rejects uncited numbers and invented prices. A model critic rejects overclaiming. One revision, then ship.
+
+**Explain**
+
+9. **Ask the audience why.** Interview any person. They answer only from their own memory and cite the memory lines they use. Asked about something they never saw, they say so. You can also ask a whole segment or run a focus group.
+
+**Recommend (gated)**
+
+10. **The agent's suggested rewrite (C).** A rewriter drafts a post aimed at the losing segments' objections. An honesty check rejects drafts that hide the price or offer. One click simulates the suggested rewrite against the leader on the same audience.
+11. **The spend gate and the action plan.** The run ends with a spend gate, not just a result. A power calculation on the simulated gap, against the number of Instagram users the business can actually reach (Census × Pew join), answers one question: is a real paid A/B test of these posts worth paying for? If not, the agent cancels it and drafts a bolder version from the quoted objections, with an honesty check. It then writes an action plan for the test that is worth running: variants, targeting, people per version, the success metric, and the decision and stop rules. Free, reversible steps need no approval: cancelling the pointless test and drafting the new version. Simulating C against the leader on the same audience is one click. The agent then checks the result against its own bar, the smallest gap an affordable real test could detect, and updates the decision. Anything that spends money or publishes waits for the owner's approval. Approving creates, through the Marketing API, one campaign with two ad sets (one per version, identical ZIP and age targeting, the same fixed daily budget) and one ad each, all created paused. This is two paused ad sets, not Meta's split-test study object. The code refuses any other status. Without Meta credentials Ripple shows the exact requests and sends nothing. Live launch is optional: a live attempt in our sandbox currently fails at ad creative ("Select a Facebook Page"), so the demo shows the preview ([docs/META_SETUP.md](docs/META_SETUP.md)).
+
+**Reality check**
+
+12. **Reality check.** The Upworthy backtest measures how often the simulated audience picks the real winner of real headline A/B tests, against a coin flip and against a single prompt on the same models.
 
 ### The agents
 
 ```mermaid
 flowchart TB
-  IN(["Input: business, ZIP, posts A and B"]) --> BUILD
-  subgraph BUILD["1 · Build the crowd"]
+  IN(["Input: who is posting, ZIP, Draft A and Draft B"]) --> BUILD
+  subgraph BUILD["1 · Build the audience"]
     direction LR
     AUD["AudienceAgent: names segments"] --> DATA["DataAgent: Zetaris SQL"] --> VOI["VoiceWriter"]
   end
@@ -213,11 +256,11 @@ flowchart TB
     CA["CrowdAgent"] --> G["Guard"] --> MA["MemoryAgent: H-MEM"]
   end
   SIM --> DECIDE
-  subgraph DECIDE["3 · Decide, with critique"]
+  subgraph DECIDE["3 · Investigate, explain, recommend"]
     direction LR
-    V["Verdict in code"] --> RW["ReportWriter"] <-->|"request_revision"| RC["ReportCritic"] --> DEC["DecisionAgent"] --> VC["VersionCWriter + HonestyCheck"]
+    V["Result in code"] --> RW["ReportWriter: SQL tools"] <-->|"request_revision"| RC["ReportCritic"] --> DEC["DecisionAgent: spend gate"] --> VC["Suggested rewrite + HonestyCheck"]
   end
-  DECIDE --> OWN{"Owner approval"}
+  DECIDE --> OWN{"Owner approval (gated)"}
   OWN -->|"approved"| LA["LaunchAgent: Meta, paused"]
   OWN -->|"not yet"| STOP(["Nothing is spent"])
 
@@ -238,13 +281,13 @@ Agent roles (names as they appear in the trace):
 | AudienceAgent | Names core and spillover segments; never sets sizes | `src/audience/` |
 | DataAgent | Every SQL query: engine, row count, query id | `src/data/federation.ts` |
 | VoiceWriter | One-line voice per person, after it sees the sampled numbers | `src/audience/` |
-| CrowdAgent | Batch decisions per world and round | `src/sim/crowd.ts` |
+| CrowdAgent | Batch decisions for the simulated audience, per world and round | `src/sim/crowd.ts` |
 | MemoryAgent | H-MEM store and recall per person | `src/memory/hmem.ts` |
 | Guard | Rule-based fact and coherence check on every decision | `src/sim/engine.ts`, `tests/guard.test.ts` |
 | ReportWriter, ReportCritic | Report with query-cited claims; code and model critique, then `request_revision` and a revision | `src/report/` |
-| DecisionAgent | Power calculation, spend decision, launch plan | `src/report/decision.ts` |
-| VersionCWriter, HonestyCheck | Drafts C from quoted objections; rejects drafts that hide price or offer | `src/report/` |
-| Interviewer | Ask-why answers from memory lines only | `src/report/` |
+| DecisionAgent | Power calculation, spend gate, action plan | `src/report/decision.ts` |
+| VersionCWriter, HonestyCheck | Drafts the suggested rewrite (C) from quoted objections; rejects drafts that hide price or offer | `src/report/` |
+| Interviewer | "Why" answers from memory lines only | `src/report/` |
 | LaunchAgent | Meta requests, paused only | `src/actions/meta.ts` |
 | ModelRouter | Logs model and `served_by` for every request | `src/llm.ts` |
 
@@ -255,11 +298,11 @@ Agent roles (names as they appear in the trace):
 |---|---|
 | Model client: provider chain, served_by, trace, zod validation with one repair, record/replay | `src/llm.ts` |
 | Federated SQL and sources | `src/data/federation.ts`, `src/data/sources.ts`, `data/sources/` |
-| Crowd builder | `src/audience/` |
-| Engine: graph, schedule, twin worlds, rounds, crowd calls, metrics | `src/sim/` |
+| Audience builder | `src/audience/` |
+| Engine: graph, schedule, counterfactual worlds, rounds, audience calls, metrics | `src/sim/` |
 | Per-agent memory on H-MEM | `src/memory/hmem.ts` |
-| Report, interviews, focus group, version C, spend decision and launch plan | `src/report/` |
-| Upworthy backtest | `src/backtest/`, `scripts/backtest.ts` |
+| Report, interviews, focus group, suggested rewrite (C), spend gate and action plan | `src/report/` |
+| Reality check (Upworthy backtest) | `src/backtest/`, `scripts/backtest.ts` |
 | UI | `web/` |
 | Vendored Meterless engines (Apache-2.0, unchanged) | `engines/` |
 
@@ -268,29 +311,29 @@ Agent roles (names as they appear in the trace):
 <!-- RESULTS -->
 ## 📊 Results so far
 
-Local Nemotron 3 Nano 4B unless stated. The backtest and the 600-person demo run came from a laptop on Nemotron 3 Nano 4B through Ollama, with DuckDB for queries. They do not come from Nightshift or Zetaris. The hosted checks (the Version C run `344c` and the 20-person hosted test described under Sponsor technology) are labelled where they appear. [docs/SPONSOR_SETUP.md](docs/SPONSOR_SETUP.md) shows how to turn each path on.
+Local Nemotron 3 Nano 4B unless stated. The backtest and the 600-person demo run came from a laptop on Nemotron 3 Nano 4B through Ollama, with DuckDB for queries. They do not come from Nightshift or Zetaris. The hosted checks (the suggested-rewrite run `344c` and the 20-person hosted test described under Sponsor technology) are labelled where they appear. [docs/SPONSOR_SETUP.md](docs/SPONSOR_SETUP.md) shows how to turn each path on.
 
 ### Reality check: the Upworthy backtest
 
-We ran the crowd on 50 held-out Upworthy headline A/B tests (the scored slice). The crowd had 40 simulated people, 4 rounds and 1 seed. It picked the real winner outright 21 times and tied 3 times, a score of 22.5 of 50 with ties counted as half.
+We ran the simulated audience on 50 held-out Upworthy headline A/B tests (the scored slice). It had 40 simulated people, 4 rounds and 1 seed. It picked the real winner outright 21 times and tied 3 times, a score of 22.5 of 50 with ties counted as half.
 
 | Method | Score | Rate | 95% CI (Wilson) |
 |---|---|---|---|
-| Ripple crowd | 22.5 / 50 | 45.0% | 32.1 to 58.7% |
+| Ripple simulated audience | 22.5 / 50 | 45.0% | 32.1 to 58.7% |
 | Single prompt, same model, thinking on | 24 / 50 | 48.0% | 34.8 to 61.5% |
 | Single prompt, same model, thinking off | 25 / 50 | 50.0% | 36.6 to 63.4% |
 | Coin flip | | 50.0% | |
 
-None of the three methods can be told apart from chance on the 4B model, because every interval includes 50%. The crowd and the single prompts do not differ measurably either. An exact McNemar test with the 3 crowd ties excluded gives 10 vs 12 discordant tests, p = 0.83. Fifty tests cannot detect a difference smaller than about 15 points. The result file is [samples/backtest/2026-10-27T04-59-44-210Z.json](samples/backtest/2026-10-27T04-59-44-210Z.json).
+None of the three methods can be told apart from chance on the 4B model, because every interval includes 50%. The simulated audience and the single prompts do not differ measurably either. An exact McNemar test with its 3 ties excluded gives 10 vs 12 discordant tests, p = 0.83. Fifty tests cannot detect a difference smaller than about 15 points. The result file is [samples/backtest/2026-10-27T04-59-44-210Z.json](samples/backtest/2026-10-27T04-59-44-210Z.json).
 
-What this means: a 4B local model does not predict which headline wins, and neither does one prompt to it. Ripple's value on this model is the parts a single prompt can't give you. You get who reacted and why, what people kept to themselves, how a competitor's post moved intent, and a version C tested on the same crowd. Each of those is tied to an action you can open. Rerunning the backtest on hosted Nemotron is one command once a key is set:
+What this means: a 4B local model does not predict which headline wins, and neither does one prompt to it. So Ripple does not claim to forecast real reactions. Its value on this model is the explanation a single prompt can't give you: who reacted in the simulation and why, what people kept to themselves, how simulated intent shifted around a competitor's post, and a suggested rewrite tested on the same audience. Each of those is tied to an action you can open. Rerunning the backtest on hosted Nemotron is one command once a key is set:
 
 ```bash
 npm run backtest -- --slice scored --n 50
 ```
 
 <details>
-<summary><b>How the backtest tests were picked</b></summary>
+<summary><b>How the reality-check tests were picked</b></summary>
 
 Upworthy headline-only tests, meaning the same image and lede, where the best and worst package each had at least 1,000 impressions. The click-through gap had to be at least 30% relative, with a two-proportion z of at least 2.58 on the real clicks. Tests created between 2013-06-25 and 2014-01-10 were excluded. That leaves 982 tests, ordered by the md5 of the test id. Ranks 1 to 20 are the dev slice, used for tuning and never scored. Ranks 21 to 70 are the scored slice.
 
@@ -304,22 +347,22 @@ The run is saved in [runs/20261027-south-congress-coffe-e52a](runs/20261027-sout
 > [!NOTE]
 > **The decision:** "Don't pay to A/B test these two posts: they are too close to tell apart with the people South Congress Coffee can reach. Test a bolder version instead."
 >
-> **Its own check:** Version C, drafted from the quoted price objections, moved intent by +1.1 points against A on the same 600 people (hosted Lightning via Nightshift, 11.7 minutes). That is short of the bar, so the agent keeps A and does not pay for a real test of C.
+> **Its own check:** the suggested rewrite (C), drafted from the quoted price objections, moved intent by +1.1 points against A on the same 600 people (hosted Lightning via Nightshift, 11.7 minutes). That is short of the bar, so the agent keeps A and does not pay for a real test of C.
 
 <details open>
 <summary><b>The full run, point by point</b></summary>
 
-- **The crowd.** 600 simulated Instagram users in ZIP 78704, drawn from ACS 2024 5-year Census rows and national Pew Instagram usage rates. The core group, aged 25 to 34, is deliberately oversampled to 50%. About a fifth carry habits from a synthetic customer list.
-- **The day.** One simulated day in 12 two-hour rounds, 07:00 to 07:00, run twice (2 seeds, same people). Each seed has twin worlds that start from a base log verified identical by hash. Only the post differs.
-- **The verdict: too close to call.** Intent to visit was 29.6% for A and 26.7% for B, a 2.9-point gap inside a ±5.5-point 95% interval. A was ahead in both seeds, but neither seed was significant on a paired test, and the two versions were tied until the competitor's post. We report no measurable difference between the two posts.
+- **The audience.** 600 simulated Instagram users in ZIP 78704, drawn from ACS 2024 5-year Census rows and national Pew Instagram usage rates. The core group, aged 25 to 34, is deliberately oversampled to 50%. About a fifth carry habits from a synthetic customer list.
+- **The day.** One simulated day in 12 two-hour rounds, 07:00 to 07:00, run twice (2 seeds, same people). Each seed has counterfactual worlds that start from a base log verified identical by hash. Only the post differs.
+- **The result: no measurable difference.** Intent to visit was 29.6% for A and 26.7% for B, a 2.9-point gap inside a ±5.5-point 95% interval. A was ahead in both seeds, but neither seed was significant on a paired test, and the two versions were tied until the competitor's post. We report no measurable difference between the two posts.
 - **The competitor's post.** "30% off all lattes" was injected at round 8 of 12 into both worlds. Before it, A and B were tied in both seeds: 35.3% vs 35.6%, and 37.2% vs 37.2%. After it, stated intent fell in all four worlds, including among people who had already decided. A finished ahead of B (31.8% vs 28.0% in seed 1, 27.4% vs 25.4% in seed 2). That gap is not statistically distinguishable, it was concentrated in people who first saw the post at or after the competitor's post, and an interrupted earlier attempt gave a different split. We have no run without the competitor event, so we describe when the gap opened, not what caused it.
 - **Loud is not lost.** Across the four worlds, 874 reactions were written but kept private. The simulated person drafted a reply, and their modelled propensity to speak decided not to post it; that propensity is a labelled prior, not a measurement. 439 of those were reactions to the café's post and 435 to the competitor's. Only 68 reactions to the café's post became public comments, plus 83 under the competitor news. No one shared either post in this run.
 - **The guard.** A rule-based fact-and-coherence guard screened every decision before it was logged. It fired on 731 of 4,146 (17.6%). Most often it forced a positive action paired with a negative feeling to scroll-past (245), cancelled a would-visit from someone who strongly disliked the post (204), and withheld reasons that claimed the person had seen the post before (123, plus 71 in comments) or invented a price (87, plus 22).
 - **Quality checks.** There were 4,146 simulated reactions across four worlds: 2,088 to the café post and 2,058 to the competitor's. 0.9% came from model output that needed a repair or a default. 97.8% of the non-empty private reasons are distinct strings, and 70% of reactions were scroll-past.
-- **The decision.** Detecting a 2.9-point gap needs about 3,828 people per version, 7,656 in all, at 5% significance and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. A test capped at 20% of the local audience, 2,700 per version, can only detect a gap of about 3.5 points. The agent cancelled the A vs B test and drafted version C from the price objections, and the draft passed the honesty check. A real test of A vs C waits for the owner's approval. This decision does not rely on the crowd predicting a winner: it uses the measured uncertainty and the real audience size. See [launch_plan.json](runs/20261027-south-congress-coffe-e52a/launch_plan.json).
+- **The decision.** Detecting a 2.9-point gap needs about 3,828 people per version, 7,656 in all, at 5% significance and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. A test capped at 20% of the local audience, 2,700 per version, can only detect a gap of about 3.5 points. The agent cancelled the A vs B test and drafted the suggested rewrite (C) from the price objections, and the draft passed the honesty check. A real test of A vs C waits for the owner's approval. This decision does not rely on the crowd predicting a winner: it uses the measured uncertainty and the real audience size. See the action plan, [launch_plan.json](runs/20261027-south-congress-coffe-e52a/launch_plan.json).
 - **The decision's own check.** The agent simulated C against A on the same 600 people (one click in the UI), on hosted Nemotron 3.5 Lightning through Nightshift, in 11.7 minutes ([runs/20261027-south-congress-coffe-344c](runs/20261027-south-congress-coffe-344c)). C moved intent by +1.1 points (14.6% vs 13.5%), short of the bar, so the decision is to keep A and not pay for a real test of C. The Meta launch stays available behind the owner's approval, marked not recommended. Only that C run used hosted models; the numbers above are from the local 4B model.
 - **Compute.** The whole run used Nemotron 3 Nano 4B locally through Ollama on an M1 Pro laptop: 602 crowd calls with 0.99M input tokens, or 640 calls and 1.12M input tokens including voices, report and review. The one segment-naming call was replayed from a response the same model recorded earlier. The run took 3.3 hours, and the video shows the saved run, not a live one.
-- **Offline replay.** `npm run smoke` replays a recorded 40-person café run with no model provider and checks that it reproduces the same verdict. The 600-person run's per-call recordings were damaged by concurrent writers to the shared recordings file, so that run is kept as its saved action log rather than as a call-by-call replay.
+- **Offline replay.** `npm run smoke` replays a recorded 40-person café run with no model provider and checks that it reproduces the same result. The 600-person run's per-call recordings were damaged by concurrent writers to the shared recordings file, so that run is kept as its saved action log rather than as a call-by-call replay.
 
 </details>
 
@@ -330,10 +373,10 @@ Full write-up: [docs/SPONSOR_TECH.md](docs/SPONSOR_TECH.md). Setup: [docs/SPONSO
 | Sponsor | What it does in Ripple | Why it is load-bearing | Proof |
 |---|---|---|---|
 | **Meterless Nightshift** | Primary provider (`127.0.0.1:8088/v1`, runtime token, `meterless-app` header). `served_by` is logged per call | Every model call tries it first | `src/llm.ts`; `served_by` in `runs/trace.jsonl` |
-| **NVIDIA Nemotron** | Crowd and voice: `nemotron-3.5-lightning-30b-a3b`. Reason, interview, rewriter: `nemotron-3.5-super-vl-120b-a12b`. Report review, critic and honesty check: `nemotron-3-ultra-550b-a55b`. Last fallback: local `nemotron-3-nano:4b` | All agent reasoning is Nemotron | `src/config.ts`; the 600-person demo run used the local 4B |
-| **Zetaris** | Local hackathon bundle 2.4.3. Source tables registered as Lightning file-store tables in database `dryrun`. In the hosted test, all 7 audience-building queries ran on Zetaris | The crowd's age, income, platform use and priors come from these queries; each persona field carries the query id | `scripts/zetaris-mount.sh`, `scripts/zetaris-register.sh`, `tests/zetaris-contract.test.ts`, query `engine` in the trace |
-| **Meterless H-MEM** | One memory per person per world; recalled before each decision; interviews may cite only these lines | It is the memory the "Ask why" answers come from | `src/memory/hmem.ts`, `tests/conformance.test.ts` |
-| **Meterless World Model** | Append-only world log; twin worlds are forks with hash-verified identical base logs | Makes the A/B comparison fair | `src/sim/world.ts`, `tests/fairness.test.ts` |
+| **NVIDIA Nemotron** | Simulated audience and voice: `nemotron-3.5-lightning-30b-a3b`. Reason, interview, rewriter: `nemotron-3.5-super-vl-120b-a12b`. Report review, critic and honesty check: `nemotron-3-ultra-550b-a55b`. Last fallback: local `nemotron-3-nano:4b` | All agent reasoning is Nemotron | `src/config.ts`; the 600-person demo run used the local 4B |
+| **Zetaris** | Local hackathon bundle 2.4.3. Source tables registered as Lightning file-store tables in database `dryrun`. In the hosted test, all 7 audience-building queries ran on Zetaris | The audience's age, income, platform use and priors come from these queries; each persona field carries the query id | `scripts/zetaris-mount.sh`, `scripts/zetaris-register.sh`, `tests/zetaris-contract.test.ts`, query `engine` in the trace |
+| **Meterless H-MEM** | One memory per person per world; recalled before each decision; interviews may cite only these lines | It is the memory the "Why" answers come from | `src/memory/hmem.ts`, `tests/conformance.test.ts` |
+| **Meterless World Model** | Append-only world log; counterfactual worlds are forks with hash-verified identical base logs | Makes the side-by-side comparison fair | `src/sim/world.ts`, `tests/fairness.test.ts` |
 | **Meterless Markovian** | One step per round with bounded carryover | Keeps prompt size flat over 12 rounds | `src/sim/engine.ts` |
 
 The 20-person hosted test (27 Oct): crowd and voice, and report review, were served by Nightshift. The reasoning and interview role fell back to direct NVIDIA because Nightshift currently excludes Super VL (`model_excluded`). Local Ollama is the last fallback. Run `20261027-south-congress-coffe-28ba` (20 people, 3 rounds): 12 crowd calls and 1 voice call served by `nightshift:nvidia/nemotron-3.5-lightning-30b-a3b`, 2 review calls by `nightshift:nvidia/nemotron-3-ultra-550b-a55b`, 4 reasoning calls by direct NVIDIA; all 7 audience-building queries answered by `zetaris`. Per-run `sim.*` tables stay on DuckDB, and the UI labels them.
@@ -344,7 +387,7 @@ The "Build with Zetaris" write-up is [docs/ZETARIS_USL.md](docs/ZETARIS_USL.md).
 
 ## 🔍 Traces
 
-Every run writes `logs/<run_id>.jsonl` and `logs/agent-trace.jsonl`, and prints one line per event to stdout ([logs/README.md](logs/README.md)). The excerpt below is unedited from `logs/20261027-south-congress-coffe-c068.jsonl`. That run was a 50-person test in sample mode with no provider, so the ModelRouter line shows `served_by: none` and the crowd batch shows `offline-model`:
+Every run writes `logs/<run_id>.jsonl` and `logs/agent-trace.jsonl`, and prints one line per event to stdout ([logs/README.md](logs/README.md)). The excerpt below is unedited from `logs/20261027-south-congress-coffe-c068.jsonl`. That run was a 50-person test in sample mode with no provider, so the ModelRouter line shows `served_by: none` and the audience batch shows `offline-model`:
 
 ```jsonl
 {"ts":"2026-10-27T18:30:26.174Z","run_id":"20261027-south-congress-coffe-c068","agent_name":"Orchestrator","action":"build_crowd","target_agent":"AudienceAgent","status":"started","input_summary":"South Congress Coffee, Austin, TX 78704, 50 people"}
@@ -378,23 +421,23 @@ Unedited, from `runs/trace.jsonl`, a probe on 27 Oct 17:33 UTC; this file is loc
 | `example_2.json` | Ironwood Strength Club, Columbus 43201 | 50% off membership vs small-group coaching |
 | `example_3.json` | Wicker Park Bakehouse, Chicago 60622 | sourdough quality vs free coffee before 9am, plus a new bakery's free-croissant post injected at round 3 |
 
-`output_examples/example_{1,2,3}.json` are the responses the Docker image returned for those inputs in sample mode, with no credentials: generated by the run, not written by hand, and nothing reads them back. The verdicts and decisions differ by input (B wins / too close / too close, with `launch_winner` vs `run_ab`). `output_examples/hosted/` holds a response from a live run through Nightshift and Zetaris.
+`output_examples/example_{1,2,3}.json` are the responses the Docker image returned for those inputs in sample mode, with no credentials: generated by the run, not written by hand, and nothing reads them back. The results and decisions differ by input (B wins / too close / too close, with `launch_winner` vs `run_ab`). `output_examples/hosted/` holds a response from a live run through Nightshift and Zetaris.
 
 ```bash
 npm test
 ```
 
-runs all suites (twin-world fairness, verdict rule, guard, decision, Meta launch, Zetaris contract against a fake server built from the OpenAPI spec, and engine conformance). The Meterless engine conformance test alone:
+runs all suites (counterfactual-world fairness, result rule, guard, decision, Meta launch, Zetaris contract against a fake server built from the OpenAPI spec, and engine conformance). The Meterless engine conformance test alone:
 
 ```bash
 npx vitest run tests/conformance.test.ts
 ```
 
-`npm run smoke` type-checks, runs the tests, then replays a recorded 40-person café run with no model provider and checks the same verdict.
+`npm run smoke` type-checks, runs the tests, then replays a recorded 40-person café run with no model provider and checks the same result.
 
 ## ⚠️ Limitations
 
-- The simulated people share one model family, so their views are narrower than a real crowd's.
+- The simulated people share one model family, so their views are narrower than a real audience's.
 - The backtest uses 2013 to 2015 news headlines from Upworthy, not small-business posts.
 - Clicks and stated intent are not visits.
 - The demo customer CSV is synthetic.
@@ -404,9 +447,23 @@ npx vitest run tests/conformance.test.ts
 - Meta: a live launch is optional. The code creates two paused ad sets in one campaign, not Meta's split-test study object, and a live attempt in our sandbox currently fails at ad creative ("Select a Facebook Page").
 - Sample mode's offline model is a rule-based stand-in, not a language model.
 
+## 🧭 Where this goes
+
+The café is the only demo, but nothing in the loop is specific to coffee. The same audience-build, simulate, investigate and explain steps apply wherever something is posted to the public and the reasons behind the reaction matter:
+
+- ads and promotions;
+- product launches;
+- social posts and thought leadership;
+- communications and PR;
+- agencies testing drafts for clients;
+- retail and hospitality small businesses;
+- public-interest messaging.
+
+Today the audience is the Instagram users of one ZIP, sampled from Census and Pew, with a core group you can adjust by age band.
+
 ## 📚 Data sources and licences
 
-- **Upworthy Research Archive** (CC BY 4.0): headline A/B tests used for the backtest.
+- **Upworthy Research Archive** (CC BY 4.0): headline A/B tests used for the reality check (backtest).
 - **US Census ACS 2024 5-year** tables via the Census Reporter API.
 - **Pew Research Center** Social Media Fact Sheet: Instagram use by age and gender.
 - **Labelled assumptions:** `data/sources/priors_behaviour.csv` (each row says MODELED PRIOR or ASSUMED).

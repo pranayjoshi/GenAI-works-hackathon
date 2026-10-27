@@ -4,7 +4,7 @@
  *  - Focus group:        POST /api/runs/:id/focus {size, turns}; live turns also arrive on bus 'focus' (S.focus)
  *  - Version C:          POST /api/runs/:id/version-c, then /version-c/run {text} -> #/run/<new id>
  * All tools need S.verdict (segments come from it), so the stage shows a locked state before that. */
-import { h, s, mount, spin, avatar, actPill, roundTime, hueOf, cssVar } from '../../core/dom.js';
+import { h, s, mount, spin, avatar, actPill, roundTime, hueOf, cssVar, draftName } from '../../core/dom.js';
 import { createStage } from '../../core/three-kit.js';
 import { current } from '../../core/state.js';
 import { api, fail } from '../../core/api.js';
@@ -41,10 +41,10 @@ const ICONS = {
     s('path', { class: 'spark', d: 'M40 4v6M37 7h6' })),
 };
 const TOOLS = [
-  { key: 'agent', title: 'Interview an agent', desc: 'Pick anyone from the crowd. They answer only from their own memory and cite the exact action.' },
+  { key: 'agent', title: 'Interview an agent', desc: 'Pick anyone from the simulated audience. They answer only from their own memory and cite the exact action as evidence.' },
   { key: 'segment', title: 'Ask a segment', desc: 'Put one question to up to six people from a segment and read the pattern.' },
-  { key: 'focus', title: 'Focus group', desc: 'A moderator seats six people around a table, shows both posts and runs a short discussion.' },
-  { key: 'c', title: 'Version C', desc: 'The rewriter answers the objections, an honesty check guards the offer, then C runs against the winner.' },
+  { key: 'focus', title: 'Focus group', desc: 'A moderator seats six people around a table, shows both drafts and runs a short discussion.' },
+  { key: 'c', title: 'Suggested rewrite', desc: 'The agent rewrites the post to answer the objections, an honesty check guards the offer, then the rewrite (C) is simulated against the leader.' },
 ];
 
 /* ---------------------------------------------------------------- focus group: 3D round table
@@ -216,10 +216,10 @@ export default {
     /* ------------------------------------------------------------ locked state */
     const lockedView = () => h('div.ak-locked',
       h('div.ak-lock', s('svg', { viewBox: '0 0 48 48' }, s('rect', { x: 10, y: 21, width: 28, height: 20, rx: 5 }), s('path', { class: 'shackle', d: 'M16 21v-6a8 8 0 0 1 16 0v6' }), s('circle', { cx: 24, cy: 31, r: 2.6 }))),
-      h('h2', 'Ask why opens after the verdict'),
+      h('h2', 'Why opens after the result'),
       S.status === 'done' || S.status === 'error'
-        ? h('p.muted', 'Segments, interviews and the focus group read from the finished twin worlds. This run has no verdict, so these tools stay closed.')
-        : [h('p.muted', 'Segments, interviews and the focus group read from the finished twin worlds. Hang on until both feeds are scored.'), h('div.chip', spin(), S.detail || S.phase || 'running')]);
+        ? h('p.muted', 'Segments, interviews and the focus group read from the finished counterfactual worlds. This run has no result, so these tools stay closed.')
+        : [h('p.muted', 'Segments, interviews and the focus group read from the finished counterfactual worlds. Hang on until both feeds are scored.'), h('div.chip', spin(), S.detail || S.phase || 'running')]);
 
     /* ------------------------------------------------------------ tool: interview an agent */
     function buildAgent() {
@@ -242,7 +242,7 @@ export default {
         const ps = S.personas || [];
         if (built === ps.length) return;
         built = ps.length; draw();
-        if (!ps.length) { mount(grid, h('div.empty', 'The crowd is not sampled yet.')); count.textContent = ''; return; }
+        if (!ps.length) { mount(grid, h('div.empty', 'The audience is not sampled yet.')); count.textContent = ''; return; }
         mount(grid, ps.map((p) => {
           const t = h('button.ak-tile', { 'data-id': p.id, title: `${p.id}: ${p.age}, ${p.role}, ${p.income_band}`, style: { '--h': hueOf(p.id) }, onclick: () => current.openAgent?.(p.id) },
             avatar(p.id, '', () => {}), h('b', p.id), h('span', `${p.age ?? '?'} · ${p.role || '?'}`));
@@ -279,8 +279,8 @@ export default {
       const q = h('input', { type: 'text', value: 'Why did you prefer one of these posts over the other?', 'aria-label': 'Question' });
       const out = h('div.ak-answers', h('div.ak-answers-empty', h('div.ak-answers-grid', [0, 1, 2].map(() => h('div.ak-ghost-card', h('i'), h('i'), h('i')))), h('p.muted', 'Answers appear here as one card per person, each citing the moment they decided.')));
       const segRow = h('div.chips'), varRow = h('div.ak-seg-switch', { role: 'group', 'aria-label': 'Variant' });
-      const drawSegs = () => mount(segRow, segs.length ? segs.map((k) => h('button.chip' + (k === st.seg ? '.on' : ''), { title: k, onclick: () => { st.seg = k; drawSegs(); } }, segLabel(k))) : h('span.muted', 'The verdict has no segments.'));
-      const drawVar = () => mount(varRow, [['', 'Either version'], ...ctx.variants().map((v) => [v, `Only people who saw ${v}`])].map(([v, l]) => h('button' + (v === st.variant ? '.on' : ''), { onclick: () => { st.variant = v; drawVar(); } }, l)));
+      const drawSegs = () => mount(segRow, segs.length ? segs.map((k) => h('button.chip' + (k === st.seg ? '.on' : ''), { title: k, onclick: () => { st.seg = k; drawSegs(); } }, segLabel(k))) : h('span.muted', 'The result has no segments.'));
+      const drawVar = () => mount(varRow, [['', 'Either draft'], ...ctx.variants().map((v) => [v, `Only people who saw ${v}`])].map(([v, l]) => h('button' + (v === st.variant ? '.on' : ''), { onclick: () => { st.variant = v; drawVar(); } }, l)));
       drawSegs(); drawVar();
       const btn = h('button.btn.primary', 'Ask the segment');
       const presets = ['Why did you prefer one of these posts over the other?', 'What put you off?', 'What would make you actually visit?'];
@@ -307,7 +307,7 @@ export default {
       };
       q.addEventListener('keydown', (e) => { if (e.key === 'Enter') btn.click(); });
       const body = h('div', h('div.ak-form',
-        h('div', h('label', 'Segment'), segRow), h('div', h('label', 'Version'), varRow),
+        h('div', h('label', 'Segment'), segRow), h('div', h('label', 'Draft'), varRow),
         h('div', h('label', 'Question'), q, h('div.chips', { style: { marginTop: '8px' } }, presets.map((t) => h('button.chip', { onclick: () => { q.value = t; } }, t)))), h('div', btn)), out);
       return { el: body };
     }
@@ -453,16 +453,16 @@ export default {
       const win = S.verdict?.winner;
       // before drafting: the same layout the diff will use, so the pane is furnished and nothing jumps later
       const preview = () => h('div.ak-c-grid.ak-c-preview',
-        h('div.ak-c-col.w', h('label', win ? `Current winner (Version ${win})` : 'Current posts'),
-          h('div.ak-post-stack', (win ? posts.filter((p) => p.variant === win) : posts).map((p) => h('div.ak-post', { style: { '--vc': `var(--${String(p.variant).toLowerCase()}, var(--accent))` } }, h('span.ak-post-tag', `Version ${p.variant}`), p.text)))),
+        h('div.ak-c-col.w', h('label', win ? `Current leader (${draftName(win)})` : 'Current drafts'),
+          h('div.ak-post-stack', (win ? posts.filter((p) => p.variant === win) : posts).map((p) => h('div.ak-post', { style: { '--vc': `var(--${String(p.variant).toLowerCase()}, var(--accent))` } }, h('span.ak-post-tag', `${draftName(p.variant)}`), p.text)))),
         h('div.ak-c-mid', { 'aria-hidden': 'true' }, s('svg', { viewBox: '0 0 48 24' }, s('path', { d: 'M4 12h38M32 4l10 8-10 8' }))),
-        h('div.ak-c-col.c', h('label', 'Version C'),
+        h('div.ak-c-col.c', h('label', 'Suggested rewrite (C)'),
           h('div.ak-post.ak-c-slot', h('ol.ak-steps',
             h('li', h('b', 'Rewriter'), h('span.muted', 'answers the objections from the report')),
             h('li', h('b', 'Honesty check'), h('span.muted', 'keeps price and offer, no invented claims')),
-            h('li', h('b', 'Your edit'), h('span.muted', 'changed words are marked; edit before testing'))))));
+            h('li', h('b', 'Your edit'), h('span.muted', 'changed words are marked; edit before simulating'))))));
       const out = h('div.ak-c-out', preview());
-      const btn = h('button.btn.primary.lg', 'Draft version C');
+      const btn = h('button.btn.primary.lg', 'Draft the suggested rewrite');
       btn.onclick = async () => {
         btn.disabled = true; mount(btn, spin(), ' Rewriter and honesty check...');
         mount(out, h('div.ak-c-grid', h('div.skeleton.ak-skel.tall'), h('div.ak-c-mid'), h('div.skeleton.ak-skel.tall')));
@@ -474,7 +474,7 @@ export default {
       };
       function show(r) {
         let cText = r.c?.text || '', editing = false;
-        const ta = h('textarea', { 'aria-label': 'Version C text' }, cText);
+        const ta = h('textarea', { 'aria-label': 'Suggested rewrite text' }, cText);
         const left = h('div.ak-post'), right = h('div.ak-post'), stats = h('div.ak-diffstats');
         const redraw = () => {
           const d = wordDiff(r.winner_text, cText);
@@ -495,27 +495,27 @@ export default {
           ? h('div.ak-honesty.' + (hon.ok ? 'ok' : 'warn'), s('svg', { viewBox: '0 0 24 24' }, s('path', { class: 'shield', d: 'M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z' }), s('path', { class: 'mark', d: hon.ok ? 'M8 12.5l3 3 5-6' : 'M12 8v5M12 16v.5' })),
             h('div', h('b', 'Honesty check: '), hon.ok ? 'passed. Price and offer are kept, no invented claims.' : `flagged: ${(hon.issues || []).join('; ') || 'see the rewrite'}`))
           : h('div.ak-honesty.warn', h('div', h('b', 'Honesty check: '), 'no result returned.'));
-        const go = h('button.btn.primary.lg.ak-go', 'Test C vs winner on the same crowd');
+        const go = h('button.btn.primary.lg.ak-go', 'Simulate the suggested rewrite against the leader');
         go.onclick = async () => {
           const text = (editing ? ta.value : cText).trim();
-          if (!text) return fail(new Error('Version C is empty.'));
+          if (!text) return fail(new Error('The suggested rewrite is empty.'));
           go.disabled = true; mount(go, spin(), ' Starting...');
           try { const n = await api(`/api/runs/${encodeURIComponent(runId)}/version-c/run`, { method: 'POST', body: { text } }); location.hash = `#/run/${n.run_id}`; }
-          catch (e) { fail(e); go.disabled = false; mount(go, 'Test C vs winner on the same crowd'); }
+          catch (e) { fail(e); go.disabled = false; mount(go, 'Simulate the suggested rewrite against the leader'); }
         };
         tiltOffs.push(magnetic(go, 0.12));
         const grid = h('div.ak-c-grid',
-          h('div.ak-c-col.w', h('label', `Current winner (Version ${r.winner ?? '?'})`), left),
+          h('div.ak-c-col.w', h('label', `Current leader (${draftName(r.winner ?? '?')})`), left),
           h('div.ak-c-mid', { 'aria-hidden': 'true' }, s('svg', { viewBox: '0 0 48 24' }, s('path', { d: 'M4 12h38M32 4l10 8-10 8' }))),
-          h('div.ak-c-col.c', h('div.row.spread', h('label', { style: { margin: 0 } }, 'Version C'), editBtn), rightBox, stats));
+          h('div.ak-c-col.c', h('div.row.spread', h('label', { style: { margin: 0 } }, 'Suggested rewrite (C)'), editBtn), rightBox, stats));
         mount(out, grid,
           r.c?.rationale ? h('p.ak-why', h('b', 'Why: '), r.c.rationale) : null,
           r.c?.targets?.length ? h('div.chips', { style: { marginBottom: '12px' } }, r.c.targets.map((t) => h('span.chip', t))) : null,
-          honest, h('div.row.spread.ak-cta', h('span.muted', 'Runs on the same crowd, graph and schedule as this test.'), go));
+          honest, h('div.row.spread.ak-cta', h('span.muted', 'Runs on the same audience, graph and schedule as this simulation.'), go));
         stagger([grid, ...[...out.children].slice(1)], { y: 14, gap: 100, ms: 700 });
         anim(left.parentElement, [{ transform: 'translateX(-24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: EASE.expo });
       }
-      const body = h('div', h('p.muted', 'The Rewriter aims at the objections of the segments that preferred the other version, an honesty check keeps the price and offer visible, and you can edit before testing.'),
+      const body = h('div', h('p.muted', 'The Rewriter aims at the objections of the segments that preferred the other draft, an honesty check keeps the price and offer visible, and you can edit before simulating.'),
         h('div', { style: { margin: '12px 0' } }, btn), out);
       return { el: body };
     }
@@ -529,7 +529,7 @@ export default {
 
     function buildLauncher() {
       mount(launcher,
-        h('div.ak-intro', h('div.ak-eyebrow', 'Ask why'), h('h2', 'Interrogate the simulation'), h('p.muted', 'The verdict says what happened. These tools ask the people in the twin worlds why.')),
+        h('div.ak-intro', h('div.ak-eyebrow', 'Why'), h('h2', 'Ask the audience why'), h('p.muted', 'The result says what happened in the simulation. These tools ask the people in the counterfactual worlds why; interview answers cite the memory and actions they came from.')),
         h('div.ak-cards', TOOLS.map((t) => (cards[t.key] = h('button.ak-card', { 'data-tool': t.key, onclick: () => openTool(t.key) },
           h('span.ak-card-ic', ICONS[t.key]()), h('h3', t.title), h('p', t.desc), h('span.ak-open', 'Open', s('svg', { viewBox: '0 0 24 24' }, s('path', { d: 'M5 12h14M13 6l6 6-6 6' }))))))));
       TOOLS.forEach((t) => tiltOffs.push(tilt(cards[t.key], { max: 9, scale: 1.02 })));

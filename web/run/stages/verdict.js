@@ -4,7 +4,7 @@
  * segments (diverging bars), seeds + other measures, tipping points, validity + fact check.
  * Data: S.verdict {variants, call, winner, headline, metric, pooled{a,b,moe_a,moe_b,na,nb,diff,ci_half}, per_seed[], seeds_agree,
  * secondary{}, segments[]}, S.tipping, S.validity. Without a strict winner it shows "X leads" with P(better). Styles: css/verdict.css (prefix vd-). */
-import { h, s, mount, clear, pct, num, fmtInt, vcolor, avatar, checkLabel, cssVar } from '../../core/dom.js';
+import { h, s, mount, clear, pct, num, fmtInt, vcolor, avatar, checkLabel, cssVar, draftName } from '../../core/dom.js';
 import { roundTime } from '../../core/dom.js';
 import { reduced, countUp, riseWords, EASE } from '../../core/motion.js';
 import { createStage, dotTexture } from '../../core/three-kit.js';
@@ -19,7 +19,7 @@ const segLabel = (key) => {
   return v;
 };
 const GROUPS = [['role', 'Audience role'], ['age', 'Age'], ['income', 'Household income'], ['customer', 'Customer status']];
-const PHASE_TEXT = { queued: 'Queued', building: 'Getting ready', data: 'Reading the data', audience: 'Choosing the audience', sampling: 'Sampling the crowd', voices: 'Giving people voices', running: 'Simulating both worlds', analyzing: 'Comparing the two worlds', report: 'Writing the report', done: 'Finishing' };
+const PHASE_TEXT = { queued: 'Queued', building: 'Getting ready', data: 'Reading the data', audience: 'Choosing the audience', sampling: 'Sampling the audience', voices: 'Giving people voices', running: 'Simulating both worlds', analyzing: 'Comparing the two worlds', report: 'Writing the report', done: 'Finishing' };
 const SECONDARY = [
   ['engagement_rate', 'Engagement rate', 'share of exposures that got a like, comment, share, save or tap', pct, 'rate'],
   ['tap_rate', 'Tap-through rate', 'deciders who tapped through', pct, 'rate'],
@@ -55,21 +55,21 @@ export default {
     function buildWait() {
       mode = 'wait'; key = null;
       const phase = h('div.vd-wait-phase'), detail = h('div.vd-wait-detail'), bar = h('i'), prog = h('div.vd-wait-prog', h('div.vd-wait-bar', bar), h('small'));
-      const title = h('h2', 'Deliberating'), expl = h('p.expl', 'The verdict appears once both worlds finish. It is computed from every decision, not from a peek at the running totals.');
+      const title = h('h2', 'Deliberating'), expl = h('p.expl', 'The result appears once both worlds finish. It is computed from every simulated decision, not from a peek at the running totals.');
       waitEls = { phase, detail, bar, label: prog.querySelector('small'), title, expl };
       mount(root, h('div.card.vd-wait',
         h('div.vd-orbit', { 'aria-hidden': 'true' }, h('i.ring'), h('i.ring.r2'), h('i.dot.a', 'A'), h('i.dot.b', 'B'), h('i.core')),
-        h('div.vd-wait-copy', h('span.tag', 'Verdict'), title, phase, detail, prog, expl)));
+        h('div.vd-wait-copy', h('span.tag', 'Result'), title, phase, detail, prog, expl)));
       fadeIn(root.firstChild, 0, 18, 700);
     }
     function updateWait() {
       if (!waitEls) return;
       const err = S.status === 'error';
-      waitEls.phase.textContent = err ? 'The run stopped before a verdict was computed.' : (PHASE_TEXT[S.phase] || S.phase || 'Waiting');
+      waitEls.phase.textContent = err ? 'The run stopped before a result was computed.' : (PHASE_TEXT[S.phase] || S.phase || 'Waiting');
       waitEls.detail.textContent = err ? (S.error || '') : (S.detail || '');
-      waitEls.title.textContent = err ? 'No verdict' : 'Deliberating';
-      waitEls.expl.textContent = err ? 'A verdict needs both worlds to finish. Whatever was simulated before the stop is still in Twin worlds and Signals; start a new test to get a verdict.'
-        : 'The verdict appears once both worlds finish. It is computed from every decision, not from a peek at the running totals.';
+      waitEls.title.textContent = err ? 'No result' : 'Deliberating';
+      waitEls.expl.textContent = err ? 'A result needs both worlds to finish. Whatever was simulated before the stop is still in Counterfactual worlds and Signals; start a new simulation to get a result.'
+        : 'The result appears once both worlds finish. It is computed from every simulated decision, not from a peek at the running totals.';
       const rounds = S.spec?.rounds || 0;
       const cur = Math.max(-1, ...ctx.worldIds().map((w) => S.counters[w]?.round ?? -1));
       const f = rounds ? clamp((cur + 1) / rounds, 0, 1) : 0;
@@ -92,15 +92,15 @@ export default {
         const lead = v.winner === variant && !tie;
         const valEl = h('span.vd-val', '0%'), moeEl = h('small', moe == null ? '' : ` ± ${(moe * 100).toFixed(1)} pts`);
         const card = h('div.vd-side.' + String(variant).toLowerCase() + (lead ? '.lead' : tie ? '.level' : '.trail'),
-          h('div.row.spread', h('b', `Version ${variant}`), lead ? h('span.chip.good', 'winner') : null),
+          h('div.row.spread', h('b', `${draftName(variant)}`), lead ? h('span.chip.good', 'winner') : null),
           h('div.vd-big', valEl, moeEl),
           h('div.muted', `${fmtInt(n)} simulated people deciding, ${metricName(v.metric)}`));
         countUp(valEl, val, (x) => pct(x), 1300);
         return card;
       };
-      const headline = h('h2.vd-headline', v.headline || `Version ${leaderOf(v)} ${tie ? 'leads' : 'wins'}`);
+      const headline = h('h2.vd-headline', v.headline || `${draftName(leaderOf(v))} ${tie ? 'leads' : 'wins'}`);
       const explain = tie
-        ? `The gap is small enough that its interval includes zero or the seeds do not all agree, so this is a lean, not a certainty: ${Math.round(pBetterOf(v) * 100)}% likely that ${leaderOf(v)} is the better version.`
+        ? `The gap is small enough that its interval includes zero or the seeds do not all agree, so this is a lean in the simulation, not a certainty: ${Math.round(pBetterOf(v) * 100)}% likely that ${leaderOf(v)} is the better draft.`
         : `The interval excludes zero and ${v.seeds_agree ?? '?'} of ${(v.per_seed || []).length} seeds agree.`;
       const host = h('div.vd-3d', { 'aria-hidden': 'true' });
       const ciHost = h('div.vd-ci');
@@ -114,7 +114,7 @@ export default {
             h('div.vd-pair', side(va, p.a, p.moe_a, p.na), side(vb, p.b, p.moe_b, p.nb)),
             h('p.expl.vd-why', explain)),
           host),
-        h('div.card.vd-ci-card', h('div.card-head', h('h3', 'Difference, with its margin of error'), h('span.sub', `Version ${va} minus Version ${vb}; the bar is the 95% interval`)), ciHost),
+        h('div.card.vd-ci-card', h('div.card-head', h('h3', 'Difference, with its margin of error'), h('span.sub', `${draftName(va)} minus ${draftName(vb)}; the bar is the 95% interval`)), ciHost),
         h('div.card.vd-sections', tabsEl, panel));
       riseWords(headline, { gap: 40 });
       fadeIn(root.children[1], 0, 20, 700); fadeIn(root.children[2], 0, 24, 800);
@@ -360,10 +360,10 @@ export default {
         const gap = (x.a - x.b) * 100;
         const small = Math.min(x.na ?? 0, x.nb ?? 0) < 20;
         const detail = h('div.vd-seg-detail', h('div.vd-seg-detail-in',
-          h('div.vd-kv', h('span', `Version ${va}`), h('b', `${pct(x.a, 1)} of ${fmtInt(x.na)} people`)),
-          h('div.vd-kv', h('span', `Version ${vb}`), h('b', `${pct(x.b, 1)} of ${fmtInt(x.nb)} people`)),
+          h('div.vd-kv', h('span', `${draftName(va)}`), h('b', `${pct(x.a, 1)} of ${fmtInt(x.na)} people`)),
+          h('div.vd-kv', h('span', `${draftName(vb)}`), h('b', `${pct(x.b, 1)} of ${fmtInt(x.nb)} people`)),
           h('div.vd-kv', h('span', 'Gap'), h('b', `${gap >= 0 ? '+' : ''}${gap.toFixed(1)} pts (${va} - ${vb})`)),
-          h('div.vd-kv', h('span', 'Prefers'), h('b', x.prefers ? `Version ${x.prefers}` : 'tie')),
+          h('div.vd-kv', h('span', 'Prefers'), h('b', x.prefers ? `${draftName(x.prefers)}` : 'tie')),
           h('p.expl', x.clear ? 'Clear: the gap is beyond the noise and each side has at least 20 people.' : `Not clear: a clear call needs a gap beyond the noise and at least 20 people on each side${small ? `. Here the smaller side has ${Math.min(x.na ?? 0, x.nb ?? 0)}.` : '.'}`)));
         const l = h('i', { style: { width: `${((x.a || 0) / scale) * 100}%`, background: vcolor(va) } }), r = h('i', { style: { width: `${((x.b || 0) / scale) * 100}%`, background: vcolor(vb) } });
         const row = h('div.vd-seg' + (x.clear ? '.clear' : ''),
@@ -379,7 +379,7 @@ export default {
       });
       return h('div.vd-seg-wrap',
         h('div.vd-seg-head', gtabs, h('span.sub', `${metricName(v.metric)}; "clear" needs a gap beyond the noise and at least 20 people each side. Click a row for details.`)),
-        h('div.vd-seg-legend', h('span', h('i', { style: { background: vcolor(va) } }), `Version ${va}`), h('span', h('i', { style: { background: vcolor(vb) } }), `Version ${vb}`)),
+        h('div.vd-seg-legend', h('span', h('i', { style: { background: vcolor(va) } }), `${draftName(va)}`), h('span', h('i', { style: { background: vcolor(vb) } }), `${draftName(vb)}`)),
         list);
     }
 
@@ -424,7 +424,7 @@ export default {
       return h('div.vd-tip-grid', Object.entries(tp).map(([wid, t], i) => {
         const variant = String(wid).split(':').pop();
         const c = h('div.vd-tipcard',
-          h('div.card-head', h('h3', 'Tipping point'), h('span.chip.' + variant.toLowerCase(), `Version ${variant}`)),
+          h('div.card-head', h('h3', 'Tipping point'), h('span.chip.' + variant.toLowerCase(), `${draftName(variant)}`)),
           h('div.sub', `${wid}: the share that reached the most people`),
           t && t.record ? h('div', { style: { marginTop: '12px' } },
             h('div.row', avatar(t.record.agent_id), h('div', h('b', t.record.agent_id), h('div.muted', `shared at ${roundTime(t.record.hour)}`))),
@@ -455,7 +455,7 @@ export default {
         { k: 'Stance spread (sd)', v: (val.stance_sd_by_world || []).map((x) => num(x.sd)).join(' / ') || '-', f: null, ex: `Standard deviation of private stance in each world${(val.stance_sd_by_world || []).length ? ` (${val.stance_sd_by_world.map((x) => `${x.world}: ${num(x.sd)}`).join(', ')})` : ''}. Near zero means everyone thinks alike.` },
         { k: 'Top reason opener', v: val.top_reason_opener ? pct(val.top_reason_opener.share) : 'none', f: val.top_reason_opener ? val.top_reason_opener.share : null, ex: val.top_reason_opener ? `Most common first three words of a reason: "${val.top_reason_opener.text}" (${pct(val.top_reason_opener.share)}). A big share flags templated answers.` : 'Most common first three words of a reason. A big share flags templated answers. None stood out.' },
         { k: 'Silenced reactions', v: fmtInt(val.silenced), f: null, ex: 'Times someone wanted to say something and kept it to themselves (the speak gate).' },
-        { k: 'Decisions', v: fmtInt(val.decisions), f: null, ex: 'Total decisions logged across all twin worlds.' },
+        { k: 'Decisions', v: fmtInt(val.decisions), f: null, ex: 'Total decisions logged across all counterfactual worlds.' },
       ];
       if (guard) items.push({ k: 'Decisions with a check', v: pct(val.decisions ? guard.decisions_with_a_check / val.decisions : 0, 0), f: val.decisions ? guard.decisions_with_a_check / val.decisions : 0, ex: `${fmtInt(guard.decisions_with_a_check)} of ${fmtInt(val.decisions)} decisions had a fact check fire before anything was logged or quoted.` });
       valSel = Math.min(valSel, items.length - 1);
@@ -467,11 +467,11 @@ export default {
       gauges.forEach((g, i) => fadeIn(g, 0, 12, 480 + i * 55));
       const checks = guard ? Object.entries(guard.by_check || {}).sort((a, b) => b[1] - a[1]) : [];
       return h('div.vd-valid',
-        h('div.vd-sub', h('h3', 'Validity'), h('span.sub', 'did the crowd behave like a crowd? Click a gauge for what it means.')),
+        h('div.vd-sub', h('h3', 'Validity'), h('span.sub', 'did the simulated audience behave like a real one? Click a gauge for what it means.')),
         h('div.vd-gauges', gauges), exEl,
         guard ? h('div.vd-guard',
           h('div.vd-sub', h('h3', 'Fact check'), h('span.sub', `${pct(val.decisions ? guard.decisions_with_a_check / val.decisions : 0)} of decisions had a check fire (${fmtInt(guard.decisions_with_a_check)} of ${fmtInt(val.decisions)})`)),
-          h('p.expl', 'Before anything is logged or quoted, a guard withholds invented prices, details from the other version, false “seen it before” claims and identity tropes, and resolves likes that contradict a negative feeling.'),
+          h('p.expl', 'Before anything is logged or quoted, a guard withholds invented prices, details from the other draft, false “seen it before” claims and identity tropes, and resolves likes that contradict a negative feeling.'),
           checks.length ? h('div.vd-checks', checks.map(([k, c], i) => { const mx = checks[0][1] || 1; const bar = h('i', { style: { width: `${(c / mx) * 100}%` } }); grow(bar, 'left', 100 + i * 50); return h('div.vd-check', { title: k }, h('span', checkLabel(k)), h('div.vd-pbar', bar), h('b.mono', fmtInt(c))); })) : h('div.muted', 'No check fired in this run.')) : null);
     }
 

@@ -4,7 +4,7 @@
  * Below 820px one world shows at a time (flip toggle with a 3D card turn). The duel is two planets (three.js, 2D canvas
  * fallback): size and orbiting dots follow deciders, glow follows intent rate, the beam's thickness follows the gap. Counters come from S.counters[wid] only; a dash
  * means "not reported yet". Ported from legacy/app.js buildWorlds / updateCounters / feedCard / addAction / renderInject. */
-import { h, s, mount, pct, fmtInt, fmtInt as fmtIntRaw, avatar, actPill, reasonLines, variantChip, vcolor, roundTime, cssVar, ICONS } from '../../core/dom.js';
+import { h, s, mount, pct, fmtInt, fmtInt as fmtIntRaw, avatar, actPill, reasonLines, variantChip, vcolor, roundTime, cssVar, ICONS, draftName } from '../../core/dom.js';
 import { countUp, tilt, reduced, stagger, EASE } from '../../core/motion.js';
 import { createStage, dotTexture } from '../../core/three-kit.js';
 import { api, fail } from '../../core/api.js';
@@ -527,7 +527,7 @@ export default {
       const cap = h('p.wx-caption' + (long ? '.clamp' : ''), post ? post.text : 'Post text not available yet');
       if (long) cap.addEventListener('click', () => cap.classList.toggle('clamp'));
       w.postEl = h('article.wx-post',
-        h('header', h('span.wx-post-av', (handle.replace(/^@/, '')[0] || v).toUpperCase()), h('div', h('b', handle || `Version ${v}`), h('small', `Sponsored · Version ${v}`)), variantChip(v)),
+        h('header', h('span.wx-post-av', (handle.replace(/^@/, '')[0] || v).toUpperCase()), h('div', h('b', handle || `${draftName(v)}`), h('small', `Sponsored · ${draftName(v)}`)), variantChip(v)),
         cap,
         h('footer', icon(ICONS.like), icon(ICONS.comment), icon(ICONS.share), h('span'), icon(ICONS.save)));
       cleanups.push(tilt(w.postEl, { max: 5, scale: 1.01 }));
@@ -537,7 +537,7 @@ export default {
         h('div.wx-whead', variantChip(v), h('h3', `World ${v}`), w.title),
         w.postEl,
         h('div.wx-counters',
-          cell('deciders', 'Deciders', 'People who have decided, of the target crowd size'), cell('intent', 'Intent', 'Intent rate: deciders who would act on the post'),
+          cell('deciders', 'Deciders', 'People who have decided, of the target audience size'), cell('intent', 'Intent', 'Intent rate: deciders who would act on the post'),
           cell('hides', 'Hides', 'People who hid the post'), cell('stance', 'Stance', 'Mean stance, -1 to +1'),
           cell('calls', 'Calls', 'Model calls made in this world'), cell('exposures', 'Seen', 'Exposures: times the post was shown')),
         h('div.wx-meter', { title: 'Vocal = commented or shared; silent = everyone else who decided' }, h('div.wx-meter-h', h('span', 'Vocal vs silent'), w.mLabel), h('div.meter', w.mV, w.mS)),

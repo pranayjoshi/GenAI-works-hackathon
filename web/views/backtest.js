@@ -21,7 +21,7 @@ function outcome(o, t) {
   const c = typeof o.correct === 'number' ? o.correct : o.pick == null ? null : o.pick === 'tie' ? 0.5 : o.pick === t.real_winner ? 1 : 0;
   return c === 1 ? 'right' : c === 0 ? 'wrong' : c === 0.5 ? 'tie' : 'none';
 }
-const METHODS = [['crowd', 'Ripple crowd'], ['single_reason', 'Single prompt (reasoning model)'], ['single_crowd', 'Single prompt (crowd model)']];
+const METHODS = [['crowd', 'Ripple simulated audience'], ['single_reason', 'Single prompt (reasoning model)'], ['single_crowd', 'Single prompt (crowd model)']];
 const TONE = { right: 'good', wrong: 'bad', tie: 'warn', none: '' };
 const runTitle = (r, i) => r.started || r.config?.created || r.created || `run ${i + 1}`;
 
@@ -90,7 +90,7 @@ function mcnemarBlock(m, r) {
       `Against ${label[k] || 'the baseline'}, the two methods disagreed on ${disc} tests: the crowd was right on ${v.b}, the baseline on ${v.c}` + (v.excluded_ties ? ` (${v.excluded_ties} tied pairs left out)` : '') + '. ',
       h('b', sig ? `That gap is unlikely to be chance (p = ${v.p.toFixed(3)}).` : `That gap is not statistically significant (p = ${v.p.toFixed(2)}).`));
   });
-  return h('div.lib-mc', h('h3', 'Crowd vs single prompt (McNemar exact test)'), plain,
+  return h('div.lib-mc', h('h3', 'Simulated audience vs single prompt (McNemar exact test)'), plain,
     h('details.lib-raw', h('summary', 'Raw values'), h('pre.sql', JSON.stringify(m, null, 2))));
 }
 
@@ -107,8 +107,8 @@ export default function view(el) {
   let dead = false, stage = null, cleanups = [], offResize = null;
   const root = h('div.view-page.lib-page');
   el.append(root);
-  root.append(h('header.lib-hero', h('h1', 'Backtest: does the crowd pick real winners?'),
-    h('p.muted', 'Real A/B headline tests from the Upworthy Research Archive. The crowd sees both headlines; we check its pick against the real click-through winner.')));
+  root.append(h('header.lib-hero', h('h1', 'Reality check: does the simulated audience pick real winners?'),
+    h('p.muted', 'Real A/B headline tests from the Upworthy Research Archive. The simulated audience sees both headlines; we check its pick against the real click-through winner. This is how we know Ripple does not forecast real winners, and why it reports simulated reactions with their uncertainty.')));
   const box = h('div.lib-bt', h('div.card.lib-skel', { style: { height: '220px' } }));
   root.append(box);
 
@@ -118,7 +118,7 @@ export default function view(el) {
     if (dead) return;
     const runs = (data?.runs || []).filter((r) => r && r.scores);
     if (!runs.length) {
-      return mount(box, h('div.card', h('h2', 'No backtest has been run yet'),
+      return mount(box, h('div.card', h('h2', 'No reality check has been run yet'),
         h('p.muted', { style: { marginTop: '8px' } }, 'Method: take exploratory tests from the Upworthy Research Archive (4,873 exploratory tests, CC BY 4.0), keep the best-versus-worst headline pairs, show both to a general US crowd sampled from Census and Pew, and record which headline the crowd would tap. Score each pick against the real click-through winner, and compare it with a single prompt to a reasoning model, a single prompt to the crowd model, and a coin flip.'),
         h('p', 'Run it with:'), h('code.code', 'npm run backtest'),
         h('p.muted', { style: { marginTop: '10px' } }, 'Results are shown exactly as measured, with Wilson 95% intervals. These are headlines, not small-business posts.')));
@@ -175,7 +175,7 @@ export default function view(el) {
       const testsPanel = h('section.lib-panel', { role: 'tabpanel', hidden: true },
         h('div.card-head', h('h2', 'Per-test results'), h('div.lib-seg.wrap', { role: 'group', 'aria-label': 'Filter tests' }, fBtns)), ui.list);
       ui.panels = { overview, map, tests: testsPanel };
-      const picker = runs.length > 1 ? h('label.lib-picker', h('span.muted', 'Backtest run'), h('select', { onchange: (e) => { idx = Number(e.target.value); tab = 'overview'; build(); } },
+      const picker = runs.length > 1 ? h('label.lib-picker', h('span.muted', 'Reality-check run'), h('select', { onchange: (e) => { idx = Number(e.target.value); tab = 'overview'; build(); } },
         runs.map((x, i) => h('option', { value: i, selected: i === idx }, runTitle(x, i))))) : null;
       mount(box, h('div.lib-bar', h('div.lib-tabs', { role: 'tablist' }, ui.ink, ui.tabBtns.map((x) => x[1])), picker),
         h('div.lib-panels', overview, map, testsPanel));
@@ -198,7 +198,7 @@ export default function view(el) {
       const chip = (k, name) => { const o = outcome(t[k], t); return h('span.chip.' + TONE[o], { title: t[k]?.reason || '' }, `${name} ${o === 'none' ? 'n/a' : o === 'tie' ? 'tie' : `${t[k]?.pick} ${o}`}`); };
       const panel = h('div.lib-acc-panel', h('div.lib-acc-inner',
         h('div.lib-heads', [['A', t.a, a], ['B', t.b, b]].map(([v, side, ctr]) => h('div.lib-head.' + v.toLowerCase() + (t.real_winner === v ? '.win' : ''),
-          h('div.lib-head-top', h('span.chip.' + v.toLowerCase(), `Version ${v}`), t.real_winner === v ? h('span.chip.good', 'real winner') : null),
+          h('div.lib-head-top', h('span.chip.' + v.toLowerCase(), `Headline ${v}`), t.real_winner === v ? h('span.chip.good', 'real winner') : null),
           h('p', side?.headline || ''), ctrBar(ctr, max, v.toLowerCase()), side?.impressions ? h('small.muted', `${side.impressions.toLocaleString()} impressions`) : null))),
         co ? h('div.lib-split', h('div.lib-split-lab', h('span', 'Crowd tap-through'), h('small.muted', `A ${pct(co.a_tap, 1)}${co.a_taps != null ? ` (${co.a_taps}/${co.a_n})` : ''} vs B ${pct(co.b_tap, 1)}${co.b_taps != null ? ` (${co.b_taps}/${co.b_n})` : ''}`)),
           h('div.lib-splitbar', h('i.a', { style: { '--w': `${aShare}%` } }), h('i.b', { style: { '--w': `${100 - aShare}%` } }))) : null,

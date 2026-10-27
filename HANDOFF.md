@@ -15,7 +15,7 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
 3. **Upload the video** (YouTube unlisted or Drive "anyone with link"). Test the link in a private browser window.
 4. **Slides:** turn `docs/pitch/DECK.md` (12 slides) into a deck. Use screenshots from `docs/images/` and `media/frames/`; the frames are in the release zip.
 5. **Submission form:**
-   - Track 3.
+   - Track 2 (The Agent That Can Explain Why). The project was repositioned from Track 3 on branch `rebrand/explain-why`.
    - Repo URL, video link, deck.
    - Sponsor explanation: paste from `docs/SPONSOR_TECH.md`.
    - **Declare pre-existing components:** the vendored Meterless engines in `engines/` (upstream commit 1742dec, 19 Oct; see `engines/VENDORED_FROM.txt`).
@@ -23,14 +23,14 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
 
 ## 2. State of the project (all committed and pushed)
 
-- **Product:** Ripple (formerly Dry Run). The UI is at `npm start` → http://localhost:8787. The judge API is `POST /run` (Docker on port 8000; see README).
-- **Headline demo run:** `runs/20261027-south-congress-coffe-1458`. A copy-only A/B (same latte, same $6.50, only the wording differs).
+- **Product:** Ripple (formerly Dry Run): simulates how the public will react to what you post, and shows you why. The UI is at `npm start` → http://localhost:8787. The judge API is `POST /run` (Docker on port 8000; see README).
+- **Headline demo run:** `runs/20261027-south-congress-coffe-1458`. A copy-only pair of drafts (same latte, same $6.50, only the wording differs).
   - 600 simulated people, 2 seeds, 12 rounds, with a competitor post at round 8.
   - Crowd on Nemotron 3.5 Lightning via Meterless Nightshift; reasoning on Nemotron Super via direct NVIDIA (Nightshift excludes Super VL); review on Ultra via Nightshift.
   - All 7 audience queries ran on Zetaris.
-  - Verdict: too close to call, A 24.8% vs B 23.4% (±5.1).
+  - Result: no measurable difference, A 24.8% vs B 23.4% (±5.1).
   - Decision: a real test needs 29,274 people, 108% of the ZIP's 27,006 Instagram users, so don't pay.
-- **Version C check:** `runs/20261027-south-congress-coffe-13b7`. C 30.1% vs A 29.0%, +1.0 pt, below the bar, so keep A. The honesty check passed (Ultra via Nightshift).
+- **Suggested-rewrite (C) check:** `runs/20261027-south-congress-coffe-13b7`. C 30.1% vs A 29.0%, +1.0 pt, below the bar, so keep A. The honesty check passed (Ultra via Nightshift).
 - **Claim-checked numbers** for the voiceover, deck and Q&A: `docs/pitch/DEMO_PLAN.md` (numbers sheet), `docs/pitch/JUDGE_QA.md`, `docs/pitch/DECK.md`, `docs/SPONSOR_TECH.md`, `samples/README-runs.md`.
 - **Voiceover text:** `docs/pitch/VOICEOVER.md`. The video pipeline is in `scripts/video/`.
 - **Checks:**
@@ -56,7 +56,7 @@ for v in $(grep -o '^META_[A-Z_]*' .env); do export $v=; done; RUNS_DIR=$PWD/med
 ```
 
 3. (Only if re-recording) Record the Decide and Act scenes on run `20261027-south-congress-coffe-1458` in the **dark theme**. The recording scripts are in `scripts/video/` (see `rec-saved.mjs`).
-   - **Decide:** the Decision stage (29,274 needed vs 27,006 reachable), then Version C and the C result (+1.0 pt, keep A).
+   - **Decide:** the Spend gate stage (29,274 needed vs 27,006 reachable), then the suggested rewrite (C) and the C result (+1.0 pt, keep A).
    - **Act:** the "How A vs C would look in people's feeds" Instagram mockups. Toggle Feed/Story, click to enlarge, then Approve → "Preview — nothing sent".
 4. Rebuild with `bash scripts/video/make.sh`, then check that the duration is still under 4:00.
 5. **ElevenLabs voice (optional).** The pipeline uses `ELEVENLABS_API_KEY` from `.env` when it works, and falls back to the macOS voice.
@@ -71,3 +71,9 @@ for v in $(grep -o '^META_[A-Z_]*' .env); do export $v=; done; RUNS_DIR=$PWD/med
 - **`samples/recordings.sqlite`:** a live run overwrites recordings in it. It's committed in its current state.
 - **Zetaris speed:** under Rosetta, a new ZIP's first Zetaris query can take about a minute. Stick to ZIP 78704 for live demos.
 - **Wording:** say "simulated people", never "predicts customers". The competitor post's effect is timing only, not causal. The Meta launch is "two paused ad sets with identical targeting", not Meta's split-test object.
+
+## 5. Rebrand TODO (Track 2)
+
+- **Regenerate `docs/images/hero.jpg`.** The image still carries the old tagline ("rehearse your A/B test before you pay for it"). Regenerate it with the new line: "Ripple simulates how the public will react to what you post, and shows you why." The README alt text is already updated.
+- **Video and voiceover.** The rendered video and `docs/pitch/VOICEOVER.md` / `VIDEO_SCRIPT.md` use the old A/B-test framing and were left as they are, because they must match the rendered cut. Re-record or add a Track 2 intro card if there is time.
+- **Saved demo decisions vs README.** Commit `7f926cb` rebuilt the stored decisions as "Launch A: it leads by ..." (leader/winner). The README's demo-run note and "At a glance" still quote the earlier "don't pay" spend-gate decision. Reconcile one with the other before submitting.

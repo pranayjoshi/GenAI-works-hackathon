@@ -473,7 +473,7 @@ async function createThreeView(host, cb) {
 
 /* ------------------------------------------------------------------ SVG fallback view (no WebGL) */
 function createSvgView(host, cb) {
-  const svg = s('svg', { class: 'cw-svg', role: 'img', 'aria-label': 'Crowd scatter' });
+  const svg = s('svg', { class: 'cw-svg', role: 'img', 'aria-label': 'Audience scatter' });
   host.append(svg);
   let W = 1, H = 1, circles = [], data = null, colors = null, layoutKey = 'sphere', filt = null;
   const view = (v) => { // fixed oblique projection of the 3D layout
@@ -530,7 +530,7 @@ export default {
     seg.append(segInk, ...segBtns);
     const labelLayer = h('div.cw-labels', { 'aria-hidden': 'true' });
     const tip = h('div.cw-tip', { hidden: true });
-    const sampName = h('b', 'Sampling the crowd');
+    const sampName = h('b', 'Sampling the audience');
     const sampDetail = h('span.cw-samp-detail');
     const sampFallback = h('div.cw-grid-fb', { 'aria-hidden': 'true' });
     for (let i = 0; i < 96; i++) {
@@ -543,7 +543,7 @@ export default {
     const hint = h('div.cw-hint');
     const heroSub = h('span.sub');
     const hero = h('section.card.cw-hero',
-      h('header.cw-hero-top', h('div', h('h2', 'The crowd'), heroSub), seg),
+      h('header.cw-hero-top', h('div', h('h2', 'The audience'), heroSub), seg),
       host, h('footer.cw-hero-bot', legend, hint));
 
     /* ---- panels */
@@ -672,9 +672,9 @@ export default {
       sampling.classList.toggle('still', S.status === 'error' && !has);
       if (!has) {
         const err = S.status === 'error';
-        sampName.textContent = err ? 'The run stopped before the crowd was sampled' : 'Sampling the crowd';
+        sampName.textContent = err ? 'The run stopped before the audience was sampled' : 'Sampling the audience';
         sampDetail.textContent = err ? (S.error || '') : (S.detail || 'Joining Census and Pew, then drawing people from the joint distribution.');
-        heroSub.textContent = err ? 'No crowd to show' : 'Waiting for the sample';
+        heroSub.textContent = err ? 'No audience to show' : 'Waiting for the sample';
         mount(legend); mount(hint); tip.hidden = true;
         if (view && !err) view.setSampling(true); else view?.setSampling(false);
         viewSig = '';
@@ -702,7 +702,7 @@ export default {
     const dashBody = (txt) => h('div.cw-wait', h('div.cw-skel'), h('div.cw-skel.s'), h('div.cw-skel.m'), h('small', txt));
     function renderStats(ps, sr) {
       const b = panels.stats.body;
-      if (!ps.length) { mount(b, dashBody(S.status === 'error' ? 'No crowd was sampled.' : 'Counts appear once the crowd is sampled.')); return; }
+      if (!ps.length) { mount(b, dashBody(S.status === 'error' ? 'No audience was sampled.' : 'Counts appear once the audience is sampled.')); return; }
       const core = ps.filter((p) => p.role === 'core').length, cust = ps.filter((p) => p.customer).length, share = core / ps.length;
       const val = (n, f) => { const e = h('b', '-'); countUp(e, n, f); return e; };
       const tick = (v, cls, label) => (fin(v) == null ? null : h('u.' + cls, { title: `${label} ${pct(v)}`, style: { left: `${clamp(v, 0, 1) * 100}%` } }));
@@ -712,20 +712,20 @@ export default {
         h('div.cw-stats',
           h('div.cw-stat', h('span.l', 'People'), val(ps.length, (x) => fmtInt(Math.round(x))), h('small', fin(S.spec?.crowdSize) != null ? `requested ${fmtInt(S.spec.crowdSize)}` : '')),
           h('div.cw-stat', h('span.l', 'Core / spillover'), val(core, (x) => `${Math.round(x)} / ${Math.round(ps.length - x)}`), h('small', `${pct(share, 0)} core`)),
-          h('div.cw-stat', h('span.l', { title: 'Existing customers' }, 'Customers'), val(cust, (x) => fmtInt(Math.round(x))), h('small', cust ? 'existing, from the synthetic demo list' : 'none in this crowd')),
+          h('div.cw-stat', h('span.l', { title: 'Existing customers' }, 'Customers'), val(cust, (x) => fmtInt(Math.round(x))), h('small', cust ? 'existing, from the synthetic demo list' : 'none in this audience')),
           h('div.cw-stat', h('span.l', 'Voice fallbacks'), fin(sr.voice_fallbacks) == null ? h('b', '-') : val(+sr.voice_fallbacks, (x) => fmtInt(Math.round(x))), h('small', fin(sr.voice_rejected) == null ? 'rejected: -' : `${fmtInt(sr.voice_rejected)} rejected`))),
-        h('div.cw-core', h('div.row.spread', h('small', 'Core share of the crowd'), h('small.mono', `${pct(share, 0)}${fin(sr.target_core_share) != null ? ` | target ${pct(sr.target_core_share, 0)}` : ''}${fin(sr.natural_core_share) != null ? ` | natural ${pct(sr.natural_core_share, 0)}` : ''}`)), split,
+        h('div.cw-core', h('div.row.spread', h('small', 'Core share of the audience'), h('small.mono', `${pct(share, 0)}${fin(sr.target_core_share) != null ? ` | target ${pct(sr.target_core_share, 0)}` : ''}${fin(sr.natural_core_share) != null ? ` | natural ${pct(sr.natural_core_share, 0)}` : ''}`)), split,
           h('div.cw-detail.expl', 'Fill: share of core people in the sample. Ticks: the target share and the natural share in the data (when the run reports them).')),
         fin(sr.instagram_users_est) != null ? h('div.cw-ig', h('span.l', 'Audience estimate'), val(+sr.instagram_users_est, (x) => fmtInt(Math.round(x))), h('small', 'Instagram users (Census x Pew join)')) : h('div.cw-ig.off', h('small', 'No audience estimate in this run.')));
     }
     function renderDist(id, title, ps, keys, field, nat) {
       const p = panels[id], hasNat = nat && typeof nat === 'object' && Object.keys(nat).length > 0;
-      if (!ps.length) { mount(p.body, dashBody(S.status === 'error' ? 'No crowd was sampled, so there are no shares.' : 'Shares appear once the crowd is sampled.')); p.subEl.textContent = ''; return; }
+      if (!ps.length) { mount(p.body, dashBody(S.status === 'error' ? 'No audience was sampled, so there are no shares.' : 'Shares appear once the audience is sampled.')); p.subEl.textContent = ''; return; }
       const cnt = keys.map((k) => ps.filter((q) => catOf(q, field) === k).length), shares = cnt.map((c) => c / ps.length);
       const natV = keys.map((k) => (hasNat ? fin(nat[k]) : null));
       const sc = 0.94 / Math.max(0.01, ...shares, ...natV.filter((x) => x != null));
-      p.subEl.textContent = hasNat ? 'Bar: crowd. Tick: natural share.' : 'Bar: crowd. No natural share in this run.';
-      const cap = h('div.cw-cap', hasNat ? 'Hover a row. Bars are scaled to the largest share.' : 'The run reports no natural shares for this field, so only the crowd is shown.');
+      p.subEl.textContent = hasNat ? 'Bar: audience. Tick: natural share.' : 'Bar: audience. No natural share in this run.';
+      const cap = h('div.cw-cap', hasNat ? 'Hover a row. Bars are scaled to the largest share.' : 'The run reports no natural shares for this field, so only the audience is shown.');
       const dflt = cap.textContent;
       const rows = keys.map((k, i) => {
         const fill = h('i', { style: { width: `${shares[i] * sc * 100}%` } });
@@ -788,7 +788,7 @@ export default {
         if (!reduced()) c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 400, delay: 120 + i * 40, easing: EASE.expo, fill: 'backwards' });
         return c;
       }))
-        : ps.length ? h('small.muted', 'No queries were recorded for this crowd.') : dashBody(S.status === 'error' ? 'No sampling queries were recorded before the run stopped.' : 'Queries appear once the crowd is sampled.'));
+        : ps.length ? h('small.muted', 'No queries were recorded for this audience.') : dashBody(S.status === 'error' ? 'No sampling queries were recorded before the run stopped.' : 'Queries appear once the audience is sampled.'));
     }
     function syncPanels() {
       const ps = S.personas || [], sr = S.sample || {};

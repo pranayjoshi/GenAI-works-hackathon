@@ -1,7 +1,7 @@
 /* New test: a five-step wizard (business, drafts, audience, run settings, launch) under a compact "twin worlds" hero.
  * Ported from legacy/app.js section 5. API shapes: GET /api/demo, POST /api/audience, POST /api/runs (see src/api.ts).
  * State lives at module level so it survives navigation. 3D is created in mount and disposed in the returned cleanup. */
-import { h, s, mount, spin, fmtInt, sleepMs, AGE_BANDS, cssVar } from '../core/dom.js';
+import { h, s, mount, spin, fmtInt, sleepMs, AGE_BANDS, cssVar, draftName } from '../core/dom.js';
 import { api, fail } from '../core/api.js';
 import { toast, qidChip } from '../core/ui.js';
 import { reduced, EASE, stagger, tilt, magnetic, countUp } from '../core/motion.js';
@@ -32,10 +32,10 @@ function estimateCoreShare(join, bands) {
 }
 
 const STEPS = [
-  { key: 'business', label: 'Your business', hint: 'Who is posting' },
-  { key: 'drafts', label: 'Two drafts', hint: 'Version A and B' },
-  { key: 'audience', label: 'Audience', hint: 'Optional' },
-  { key: 'settings', label: 'Run settings', hint: 'Crowd and length' },
+  { key: 'business', label: 'Who is posting', hint: 'Business and place' },
+  { key: 'drafts', label: 'Your drafts', hint: 'Draft A and Draft B' },
+  { key: 'audience', label: 'Audience', hint: 'Optional: choose a core group' },
+  { key: 'settings', label: 'Run settings', hint: 'Audience size and length' },
   { key: 'launch', label: 'Launch', hint: 'Fold into worlds' },
 ];
 const FIELD_STEP = { business: 0, handle: 0, place: 0, zip: 0, goal: 0, postA: 1, postB: 1 };
@@ -60,7 +60,7 @@ function bridgeAt(t, out) {
 }
 function heroLabels(host) {
   const mk = (cls, a, b) => { const el = h('div.su-hl.' + cls, h('b', a), h('span', b)); host.append(el); return el; };
-  return { a: mk('a', 'World A', 'sees version A'), c: mk('c', 'Same crowd', ''), b: mk('b', 'World B', 'sees version B') };
+  return { a: mk('a', 'World A', 'sees Draft A'), c: mk('c', 'Same audience', ''), b: mk('b', 'World B', 'sees Draft B') };
 }
 
 function mountHero(host, initialCrowd) {
@@ -315,11 +315,11 @@ export default function mountSetup(view) {
 
   /* ---- hero ---- */
   const heroHost = h('div.su-orbs', { 'aria-hidden': 'true' });
-  const title = h('h1', 'Two drafts in. A verdict, with reasons, out.');
+  const title = h('h1', 'See how people react before you post, and why.');
   const hero = h('header.su-hero',
-    h('div.su-hero-copy', h('div.su-kicker', 'New test'), title,
-      h('p', 'A crowd sampled from live Census and Pew data sees each draft in a twin world: same people, same follower graph, same schedule. Only the post differs.'),
-      h('ul.su-hero-pts', h('li', h('b', '1 crowd'), ' sampled once'), h('li', h('b', '2 worlds'), ' in parallel'), h('li', h('b', '1 verdict'), ' with reasons'))),
+    h('div.su-hero-copy', h('div.su-kicker', 'New simulation'), title,
+      h('p', 'An audience sampled from live Census and Pew data sees each draft in a counterfactual world: same people, same follower graph, same schedule. Only the content differs. You get who reacts, how they feel and why, with the evidence for each reason.'),
+      h('ul.su-hero-pts', h('li', h('b', '1 audience'), ' sampled once'), h('li', h('b', '2 worlds'), ' in parallel'), h('li', h('b', '1 result'), ' with evidence'))),
     heroHost);
 
   /* ---- panel scaffolding ---- */
@@ -329,7 +329,7 @@ export default function mountSetup(view) {
 
   /* ---------- step 1: business ---------- */
   const exampleBtn = h('button.btn.sm', { onclick: loadExample }, 'Load example');
-  const p0 = panel(0, 'Tell the crowd who is posting. Business and ZIP are required; the rest sharpens the read.', exampleBtn,
+  const p0 = panel(0, 'Tell the audience who is posting. Business and ZIP are required; the rest sharpens the read.', exampleBtn,
     h('div.su-grid',
       field('business', 'Business', text('business', 'South Congress Coffee'), 'w2'),
       field('handle', 'Instagram handle', text('handle', '@southcongresscoffee'), 'w2'),
@@ -342,7 +342,7 @@ export default function mountSetup(view) {
   function postCard(v) {
     const key = 'post' + v, lc = v.toLowerCase();
     const handle = h('b.su-handle'), count = h('span.su-count'), peek = h('div.su-peek');
-    const ta = h('textarea', { placeholder: `Paste or write the caption for version ${v}`, value: S[key], maxlength: 4000, 'aria-label': `Version ${v} caption`,
+    const ta = h('textarea', { placeholder: `Paste or write the caption for Draft ${v}`, value: S[key], maxlength: 4000, 'aria-label': `${draftName(v)} caption`,
       oninput: (e) => { S[key] = e.target.value; upd(); railDone(); } });
     f[key] = ta;
     const upd = () => {
@@ -354,7 +354,7 @@ export default function mountSetup(view) {
     };
     syncers.push(upd); upd();
     const card = h('article.su-post.' + lc,
-      h('div.su-post-head', h('div.su-ava', v), h('div', handle, h('div.su-meta', 'Sponsored preview')), h('span.chip.' + lc, `Version ${v}`)),
+      h('div.su-post-head', h('div.su-ava', v), h('div', handle, h('div.su-meta', 'Sponsored preview')), h('span.chip.' + lc, `${draftName(v)}`)),
       wrap[key] = h('div.su-post-body', ta),
       h('div.su-post-foot', peek, count),
       h('div.su-glare'));
@@ -366,13 +366,13 @@ export default function mountSetup(view) {
     h('div.su-seam-node', s('svg', { viewBox: '0 0 48 32', width: 48, height: 32 }, s('circle', { cx: 18, cy: 16, r: 12, class: 'sa' }), s('circle', { cx: 30, cy: 16, r: 12, class: 'sb' }))),
     h('div.su-seam-cap', 'same people', h('br'), 'same graph', h('br'), 'same schedule'),
     h('i.su-seam-line'));
-  const p1 = panel(1, 'Write the two versions as they would appear. They run in twin worlds that differ only by this text.', null,
+  const p1 = panel(1, 'Write the two drafts as they would appear. They run in counterfactual worlds that differ only by this text.', null,
     h('div.su-twins', postCard('A'), seam, postCard('B')));
 
   /* ---------- step 3: audience ---------- */
   const audienceBox = h('div.su-aud');
   const proposeBtn = h('button.btn', { onclick: propose }, 'Propose audience');
-  const p2 = panel(2, 'Optional. The Audience agent names the segments from live Census and Pew rows; you adjust them. Skip it and the run proposes its own.', proposeBtn, audienceBox);
+  const p2 = panel(2, 'Optional. The audience is the ZIP\'s Instagram users. The Audience agent names a core group and a spillover group from live Census and Pew rows; you choose which age bands are core and how large their share is. Skip it and the run proposes its own.', proposeBtn, audienceBox);
   let playBars = () => {};
 
   function scanVisual(live) {
@@ -400,13 +400,13 @@ export default function mountSetup(view) {
     const arcCore = s('circle', { cx: 70, cy: 70, r: 52, class: 'dn core', 'stroke-dasharray': `0 ${C}` });
     const arcSp = s('circle', { cx: 70, cy: 70, r: 52, class: 'dn sp', 'stroke-dasharray': `0 ${C}`, 'stroke-dashoffset': 0 });
     const dnText = s('text', { x: 70, y: 68, class: 'dn-big', 'text-anchor': 'middle' }, '0%');
-    const donut = s('svg', { viewBox: '0 0 140 140', class: 'su-donut', role: 'img', 'aria-label': 'Core versus spillover share of the crowd' },
+    const donut = s('svg', { viewBox: '0 0 140 140', class: 'su-donut', role: 'img', 'aria-label': 'Core versus spillover share of the audience' },
       s('g', { transform: 'rotate(-90 70 70)' }, s('circle', { cx: 70, cy: 70, r: 52, class: 'dn track' }), arcSp, arcCore),
       dnText, s('text', { x: 70, y: 88, class: 'dn-sm', 'text-anchor': 'middle' }, 'core'));
     const stackCore = h('i.core'), stackSp = h('i.sp');
     const stack = h('div.su-stack', stackCore, stackSp);
     const legend = h('div.su-legend');
-    const slider = h('input', { type: 'range', min: 50, max: 70, step: 1, value: Math.round(share() * 100), 'aria-label': 'Core share of the crowd' });
+    const slider = h('input', { type: 'range', min: 50, max: 70, step: 1, value: Math.round(share() * 100), 'aria-label': 'Core share of the audience' });
     const shareLabel = h('b'), note = h('div.expl'), resetBtn = h('button.btn.sm.ghost', { onclick: () => { S.coreShareTouched = false; update(); } }, 'Use data default');
     slider.oninput = () => { S.coreShare = Number(slider.value) / 100; S.coreShareTouched = true; update(); };
 
@@ -449,7 +449,7 @@ export default function mountSetup(view) {
       stackCore.textContent = `Core ${pc}%`; stackSp.textContent = `Spillover ${100 - pc}%`;
       mount(legend, h('span', h('i.sw.core'), c.name), h('span', h('i.sw.sp'), sp.name));
       resetBtn.hidden = !S.coreShareTouched;
-      note.textContent = e != null ? `Data estimate from the join: about ${(e * 100).toFixed(0)}% (clamped to 50-70%). The exact value is computed when the crowd is sampled.` : 'Exact value is computed when the crowd is sampled.';
+      note.textContent = e != null ? `Data estimate from the join: about ${(e * 100).toFixed(0)}% (clamped to 50-70%). The exact value is computed when the audience is sampled.` : 'Exact value is computed when the audience is sampled.';
       rowEls.forEach(([el, band]) => { const pr = PEW[band]; el.classList.toggle('core', !!pr && S.coreBands.some((b) => PER[b] && overlap(pr, PER[b]) > 0)); });
       syncers.forEach((fn) => fn());
     }
@@ -462,7 +462,7 @@ export default function mountSetup(view) {
           h('div.expl', `Proposed by ${a.served_by || 'model'}${a.fallback ? ' (fallback: no reasoning model reachable)' : ''}. Segments are names only; shares come from the data.`))),
       h('div.su-share',
         h('div.su-share-vis', donut, h('div.su-share-side', stack, legend)),
-        h('div.su-share-ctl', h('div.row.spread', h('span.muted', 'Core share of the crowd'), shareLabel), slider, h('div.row.spread', note, resetBtn))),
+        h('div.su-share-ctl', h('div.row.spread', h('span.muted', 'Core share of the audience'), shareLabel), slider, h('div.row.spread', note, resetBtn))),
       h('div.card-head.su-join-head', h('h3', `Census x Pew: Instagram audience${a.geo ? ` in ${a.geo.geo_name}` : ''}`),
         h('span.row', h('span.chip', 'Engine: ' + a.join.engine), qidChip(a.join.query_id), tblBtn)),
       chart, tbl);
@@ -494,10 +494,10 @@ export default function mountSetup(view) {
     draw(); return h('div.su-set', h('label', label), row);
   }
   const custToggle = h('input', { type: 'checkbox', checked: S.useCustomers, onchange: (e) => { S.useCustomers = e.target.checked; settingsChanged(); } });
-  const p3 = panel(3, 'Bigger crowds and more seeds take longer. The 60-person quick run is the demo default.', null,
+  const p3 = panel(3, 'Bigger audiences and more seeds take longer. The 60-person quick run is the demo default.', null,
     h('div.su-settings',
       h('div.su-set-col',
-        choiceRow('Crowd size', 'crowdSize', CROWDS, (v) => String(v)),
+        choiceRow('Audience size', 'crowdSize', CROWDS, (v) => String(v)),
         choiceRow('Length', 'rounds', ROUNDS, (v) => `${v} rounds`),
         choiceRow('Seeds', 'seeds', [[1, 'one pass'], [2, 'check agreement']], (v) => `${v} seed${v > 1 ? 's' : ''}`),
         h('label.su-switch', custToggle, h('span.su-track', h('i')), h('span', 'Use customer list ', h('em', '(synthetic demo CSV)')))),
@@ -520,8 +520,8 @@ export default function mountSetup(view) {
   const fold = h('div.su-fold');
   const runBtn = h('button.btn.primary.su-run', { onclick: launch }, 'Run Ripple');
   cleanups.push(magnetic(runBtn, 0.18));
-  const foldLabel = h('div.su-fold-cap', 'Folding the two drafts into twin worlds...');
-  const p4 = panel(4, 'One last look. Launching samples the crowd and starts both worlds.', null,
+  const foldLabel = h('div.su-fold-cap', 'Folding the two drafts into counterfactual worlds...');
+  const p4 = panel(4, 'One last look. Launching samples the audience and starts both worlds.', null,
     h('div.su-launch', fold, h('div.su-launch-side', summary, runBtn, foldLabel)));
 
   function excerpt(t) { const x = t.trim().replace(/\s+/g, ' '); return x.length > 90 ? x.slice(0, 90).trimEnd() + '…' : x || 'Empty draft'; }
@@ -533,10 +533,10 @@ export default function mountSetup(view) {
     const core = S.audience && S.coreBands?.length ? `${S.coreBands.join(', ')} (${Math.round((crowdShare() ?? 0.6) * 100)}% core)` : 'the run proposes its own';
     const facts = [
       ['Business', S.business.trim() || null, 'business'], ['ZIP', S.zip.trim() || null, 'zip'],
-      ['Crowd', `${S.crowdSize} people, ${S.rounds} rounds, ${S.seeds} seed${S.seeds > 1 ? 's' : ''}`], ['Audience', core], ['Customer list', S.useCustomers ? 'used (synthetic demo CSV)' : 'not used'],
+      ['Audience size', `${S.crowdSize} people, ${S.rounds} rounds, ${S.seeds} seed${S.seeds > 1 ? 's' : ''}`], ['Audience', core], ['Customer list', S.useCustomers ? 'used (synthetic demo CSV)' : 'not used'],
     ];
     mount(summary, facts.map(([k, v, key]) => h('div.su-fact' + (v ? '' : '.miss'), { onclick: key ? () => flagMissing([key]) : null }, h('span', k), h('b', v || 'missing'))),
-      missing().includes('postA') || missing().includes('postB') ? h('div.su-fact.miss', { onclick: () => flagMissing(['postA', 'postB'].filter((k) => missing().includes(k))) }, h('span', 'Drafts'), h('b', 'a version is empty')) : null);
+      missing().includes('postA') || missing().includes('postB') ? h('div.su-fact.miss', { onclick: () => flagMissing(['postA', 'postB'].filter((k) => missing().includes(k))) }, h('span', 'Drafts'), h('b', 'a draft is empty')) : null);
   }
 
   async function launch() {
@@ -591,7 +591,7 @@ export default function mountSetup(view) {
   const railBtns = STEPS.map((st, i) => h('button.su-step', { type: 'button', 'data-i': i, onclick: () => go(i), 'aria-label': `Step ${i + 1}: ${st.label}` },
     h('span.su-num', h('em', String(i + 1)), s('svg', { viewBox: '0 0 16 16', width: 14, height: 14 }, s('path', { d: 'M3 8.5l3.2 3L13 4.5', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }))),
     h('span.su-st', h('b', st.label), h('small', st.hint))));
-  const rail = h('nav.su-rail', { 'aria-label': 'New test steps' }, ind, railBtns);
+  const rail = h('nav.su-rail', { 'aria-label': 'New simulation steps' }, ind, railBtns);
   const progFill = h('i'), progText = h('span');
   const progress = h('div.su-prog', h('div.su-prog-bar', progFill), progText);
   rail.append(progress);

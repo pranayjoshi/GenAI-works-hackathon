@@ -1,4 +1,4 @@
-/** Build (or rebuild) the spend decision and launch plan for a finished run. Usage: npx tsx scripts/decide.ts <run_id> [--no-draft] [--keep-variant] */
+/** Build (or rebuild) the spend gate and action plan for a finished run. Usage: npx tsx scripts/decide.ts <run_id> [--no-draft] [--keep-variant] */
 import { buildDecision, writeLaunchPlan } from '../src/report/decision.js';
 import { loadRun, persist, runDir } from '../src/sim/run.js';
 

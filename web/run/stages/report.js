@@ -3,7 +3,7 @@
  * objections vs likes as flippable quote cards plus a theme bubble chart, and the critic as a checklist.
  * Shape of S.report (from src/api.ts): { report: {summary, recommendation, tipping_note, claims[{text, query_ids}],
  * objections[{variant, theme, action_ids}], likes[...]}, quotes: {[action_id]: {...}}, tools[], critic, fallback, served_by[] }. */
-import { h, s, mount, variantChip, actPill, reasonLines, roundTime, spin } from '../../core/dom.js';
+import { h, s, mount, variantChip, actPill, reasonLines, roundTime, spin, draftName } from '../../core/dom.js';
 import { qidChip, openQuery } from '../../core/ui.js';
 import { current } from '../../core/state.js';
 import { riseWords, typeText, reduced, stagger, EASE } from '../../core/motion.js';
@@ -119,7 +119,7 @@ export default {
         const maxCh = Math.max(6, Math.floor(it.r / 4.2)), th = String(it.t.theme || '');
         const label = th.length > maxCh ? th.slice(0, maxCh - 1) + '\u2026' : th;
         const g = s('g', { class: 'rp-bub', tabindex: 0, role: 'button', 'aria-label': `${it.t.theme}, ${it.n} quote${it.n === 1 ? '' : 's'}`, style: `--vc:${variantVar(it.t.variant)};--i:${k}` },
-          s('title', {}, `${it.t.theme} (${it.n} quote${it.n === 1 ? '' : 's'}, Version ${it.t.variant})`),
+          s('title', {}, `${it.t.theme} (${it.n} quote${it.n === 1 ? '' : 's'}, ${draftName(it.t.variant)})`),
           s('g', { transform: `translate(${it.x.toFixed(1)} ${it.y.toFixed(1)})` }, s('g', { class: 'rp-bub-in', style: `animation-delay:${k * 90}ms` },
             s('circle', { r: it.r.toFixed(1) }),
             it.r > 27 ? s('text', { y: -it.r * 0.08, 'text-anchor': 'middle', class: 'l', style: `font-size:${Math.min(13, Math.max(8.5, it.r * 0.2)).toFixed(1)}px` }, label) : null,
@@ -156,7 +156,7 @@ export default {
         c.scrollIntoView({ block: 'center', behavior: reduced() ? 'auto' : 'smooth' });
         c.classList.remove('ping'); void c.offsetWidth; c.classList.add('ping');
       };
-      col.append(h('div.rp-cloud-wrap', themeCloud(list, kind, pick), h('div.rp-cloud-cap.muted', 'bubble size = number of quotes, colour = version')));
+      col.append(h('div.rp-cloud-wrap', themeCloud(list, kind, pick), h('div.rp-cloud-cap.muted', 'bubble size = number of quotes, colour = draft')));
       list.forEach((t, ti) => {
         const ids = t.action_ids || [];
         const block = onView(h('div.rp-theme', { style: { '--vc': variantVar(t.variant) } },
@@ -233,8 +233,8 @@ export default {
         root.classList.remove('has-report');
         if (S.verdict && running) mount(root, pendingView());
         else if (S.verdict) mount(root, emptyView('No report for this run', 'This is an older run, or the report step did not finish.'));
-        else if (running) mount(root, emptyView('The report comes after the verdict', 'Once both worlds finish and the verdict is computed, the report agent writes the briefing here.'));
-        else mount(root, emptyView('No report for this run', 'This run ended without a verdict, so no report was written.'));
+        else if (running) mount(root, emptyView('The report comes after the result', 'Once both worlds finish and the result is computed, the report agent investigates the run log and writes the reasons here, each with its evidence.'));
+        else mount(root, emptyView('No report for this run', 'This run ended without a result, so no report was written.'));
       }
       if (!reduced()) stagger(root, { y: 14, gap: 60, ms: 520 });
     }

@@ -28,7 +28,7 @@ Optional:
 3. Create the Page and copy its id into `.env`.
 4. Restart Ripple (`npm start`), open the demo run, go to the Decision card and press **Approve** on "Run the real test". Ripple creates the paused campaign and shows the ids with links to Ads Manager.
 
-Without these settings the Approve button still works: Ripple shows exactly what it would create (the same payloads) and exports the launch plan, and says that nothing was sent to Meta.
+Without these settings the Approve button still works: Ripple shows exactly what it would create (the same payloads) and exports the action plan, and says that nothing was sent to Meta.
 
 ## Safety
 

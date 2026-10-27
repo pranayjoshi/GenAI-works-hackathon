@@ -3,7 +3,7 @@
  * a side drawer per node, a three.js "engine room" (one column per model role: height = calls, spin = latency)
  * and a Nemotron panel (gauges, token bars, served_by, live ticker).
  * Driven by ctx.S and the bus: status, trace, action, round, snapshot, history, verdict, report, done, error, seed. */
-import { h, s, mount, fmtInt, vcolor, cssVar } from '../../core/dom.js';
+import { h, s, mount, fmtInt, vcolor, cssVar, draftName } from '../../core/dom.js';
 import { countUp, reduced } from '../../core/motion.js';
 import { createStage, dotTexture } from '../../core/three-kit.js';
 
@@ -19,31 +19,31 @@ const NODES = [
     short: 'Federated SQL (Zetaris / DuckDB) over four sources.', long: 'Census ACS demographics, Pew platform use, behavioural priors and your customer list, joined through federated SQL (Zetaris, DuckDB).' },
   { id: 'audience', i: 1, ord: 1, x: 395, y: R1, w: 200, h: 68, label: 'Audience agent', role: 'reason', rc: '--accent', go: 'crowd',
     short: 'Names the core and spillover segments.', long: 'Role reason. Reads the post and the business and names the core audience segments plus the spillover segments the post might reach.' },
-  { id: 'sampler', i: 2, ord: 2, x: 635, y: R1, w: 200, h: 68, label: 'Crowd sampler', rc: '--accent-2', go: 'crowd',
-    short: 'Copula sampling matched to Census marginals.', long: 'Draws a synthetic crowd whose age, income and role mix matches the Census marginals while keeping realistic correlations (a copula). Statistics, not a model call.' },
+  { id: 'sampler', i: 2, ord: 2, x: 635, y: R1, w: 200, h: 68, label: 'Audience sampler', rc: '--accent-2', go: 'crowd',
+    short: 'Copula sampling matched to Census marginals.', long: 'Draws a synthetic audience whose age, income and role mix matches the Census marginals while keeping realistic correlations (a copula). Statistics, not a model call.' },
   { id: 'voice', i: 3, ord: 3, x: 880, y: R1, w: 210, h: 68, label: 'Voice writer', role: 'voice', rc: '--accent-2', go: 'crowd',
     short: 'Writes each persona\'s own voice lines.', long: 'Role voice. Gives each sampled persona the words they would use in a comment or a private thought.' },
-  { id: 'twin0', i: 4, ord: 4, kind: 'twin', v: 0, x: 350, y: R2, w: 270, h: 96, label: 'Twin world A', role: 'crowd', rc: '--a', go: 'worlds',
-    short: 'Every simulated person decides. Same crowd, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this version. Both worlds share the same crowd, social graph and schedule, so only the post differs.' },
-  { id: 'twin1', i: 4, ord: 4, kind: 'twin', v: 1, x: 650, y: R2, w: 270, h: 96, label: 'Twin world B', role: 'crowd', rc: '--b', go: 'worlds',
-    short: 'Every simulated person decides. Same crowd, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this version. Both worlds share the same crowd, social graph and schedule, so only the post differs.' },
+  { id: 'twin0', i: 4, ord: 4, kind: 'twin', v: 0, x: 350, y: R2, w: 270, h: 96, label: 'Counterfactual world A', role: 'crowd', rc: '--a', go: 'worlds',
+    short: 'Every simulated person reacts. Same audience, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this draft. Both worlds share the same audience, social graph and schedule, so only the content differs.' },
+  { id: 'twin1', i: 4, ord: 4, kind: 'twin', v: 1, x: 650, y: R2, w: 270, h: 96, label: 'Counterfactual world B', role: 'crowd', rc: '--b', go: 'worlds',
+    short: 'Every simulated person reacts. Same audience, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this draft. Both worlds share the same audience, social graph and schedule, so only the content differs.' },
   { id: 'guard', i: 5, ord: 5, x: 135, y: R3, w: 240, h: 68, label: 'Fact-check guard', rc: '--bad', go: 'worlds',
-    short: 'Withholds invented prices, version leaks and contradictions.', long: 'Rule-based checks on every decision: invented prices, details leaked from the other version, false "seen it before" claims, duplicates, and private feelings that contradict the public action.' },
+    short: 'Withholds invented prices, draft leaks and contradictions.', long: 'Rule-based checks on every decision: invented prices, details leaked from the other draft, false "seen it before" claims, duplicates, and private feelings that contradict the public action.' },
   { id: 'analyst', i: 6, ord: 6, x: 395, y: R3, w: 200, h: 68, label: 'Analyst', rc: '--good', go: 'verdict',
-    short: 'Verdict, segment splits and the tipping point.', long: 'Computes the verdict with intervals, segment splits (role, age, income, customer status) and the tipping point. This step is statistics, not a model call.' },
+    short: 'Result, segment splits and the tipping point.', long: 'Computes the result with intervals, segment splits (role, age, income, customer status) and the tipping point. This step is statistics, not a model call.' },
   { id: 'report', i: 7, ord: 7, x: 635, y: R3, w: 200, h: 68, label: 'Report agent', role: 'reason', rc: '--accent', go: 'report',
-    short: 'Writes the claims, with SQL tool calls as receipts.', long: 'Role reason. Queries the run database with SQL tool calls and writes each claim with the query that backs it.' },
+    short: 'Investigates the run log with SQL tools; every claim cites its query.', long: 'Role reason. Queries the run database with SQL tool calls and writes each claim with the query that backs it.' },
   { id: 'critic', i: 8, ord: 8, x: 880, y: R3, w: 210, h: 68, label: 'Critic', role: 'review', rc: '--warn', go: 'report',
-    short: 'Reviews every claim against the data before it ships.', long: 'Role review. Checks the written report against the numbers and flags claims the data does not support.' },
-  { id: 'verdict', i: 9, ord: 9, x: 835, y: R4, w: 300, h: 64, label: 'Verdict and report', rc: '--good', go: 'verdict',
-    short: 'Which version leads or wins, with the statistics and the written report.', long: 'The finished answer: which version wins or leads, the gap with its 95% interval, and how likely it is to be the better version.' },
-  // "Ask why" side branch under the analyst, dimmer
+    short: 'Reviews every claim against the data; can send it back once.', long: 'Role review. Checks the written report against the numbers and flags claims the data does not support. A code critic runs first; the model critic can request one revision.' },
+  { id: 'verdict', i: 9, ord: 9, x: 835, y: R4, w: 300, h: 64, label: 'Result and report', rc: '--good', go: 'verdict',
+    short: 'Which draft leads or wins in the simulation, with the statistics and the reasons.', long: 'The finished answer: which draft wins or leads in the simulation, the gap with its 95% interval, and how likely it is to be the better version.' },
+  // "Why" side branch under the analyst, dimmer
   { id: 'interviewer', side: true, ord: 31, x: 120, y: R4, w: 195, h: 60, label: 'Interviewer', role: 'interview', rc: '--muted', go: 'ask',
     short: 'Asks one simulated person why.', long: 'Role interview. Answers "why did you do that" in the voice of one specific simulated person, using their own memories.' },
   { id: 'moderator', side: true, ord: 32, x: 335, y: R4, w: 195, h: 60, label: 'Focus group', role: 'interview', rc: '--muted', go: 'ask',
     short: 'Moderates a group of people.', long: 'Role interview. A moderator puts a question to a sampled group and records each turn.' },
   { id: 'rewriter', side: true, ord: 33, x: 550, y: R4, w: 195, h: 60, label: 'Rewriter', role: 'reason', rc: '--c', go: 'ask',
-    short: 'Drafts Version C.', long: 'Role reason. Rewrites the post into a Version C using what the crowd disliked, ready for a follow-up run.' },
+    short: 'Drafts the suggested rewrite (C).', long: 'Role reason. Rewrites the post into a suggested rewrite (C) using what the audience disliked, checked by the honesty check, ready for a follow-up run.' },
 ];
 const NODE = Object.fromEntries(NODES.map((n) => [n.id, n]));
 
@@ -97,9 +97,10 @@ export default {
     const summary = h('div.pl-summary');
     const replayBtn = h('button.btn.sm.pl-replay', { type: 'button', onclick: () => replayFlow() }, 'Replay flow');
     const head = h('div.pl-head',
-      h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Sources at the top, the verdict at the bottom; each row reads left to right.')),
+      h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Build the audience → Simulate → Investigate → Explain → Recommend (gated). Sources at the top, the result at the bottom; each row reads left to right.'),
+        h('p.muted', 'An agent, not a pipeline: it uses tools (SQL on its own run log), it critiques and revises itself (code critic, model critic, honesty check), and it waits for the owner before anything spends money or publishes.')),
       h('div.pl-head-r', summary, replayBtn));
-    const legend = h('div.pl-legend', h('span', h('i.lg.done'), 'done'), h('span', h('i.lg.now'), 'working now'), h('span', h('i.lg.future'), 'waiting'), h('span', h('i.lg.side'), 'Ask why (after the verdict)'), h('span.lg-pk', h('i.lg.pk'), 'one glowing packet = one model call'));
+    const legend = h('div.pl-legend', h('span', h('i.lg.done'), 'done'), h('span', h('i.lg.now'), 'working now'), h('span', h('i.lg.future'), 'waiting'), h('span', h('i.lg.side'), 'Why (after the result)'), h('span.lg-pk', h('i.lg.pk'), 'one glowing packet = one model call'));
     stageBox.append(legend);
     const nemo = h('section.pl-nemo');
     const eng = { view: h('div.pl-eng-view'), labs: {}, flat: h('div.pl-eng-flat'), st: null, cols: {}, sub: h('span.sub') };
@@ -262,10 +263,10 @@ export default {
         const recs = Object.entries(S.rec || {}).filter(([w]) => w.startsWith(`s${S.seed}:`)).flatMap(([, r]) => r);
         if (recs.length) txt = `${recs.filter((r) => r.checks?.length).length} flagged / ${recs.length} shown`;
       } else if (n.id === 'analyst') {
-        txt = S.verdict ? 'verdict ready' : '';
+        txt = S.verdict ? 'result ready' : '';
       } else if (n.id === 'verdict') {
         const v = S.verdict;
-        if (v) txt = v.call === 'winner' ? `Version ${v.winner} wins` : `Version ${v.leader || (v.pooled.a >= v.pooled.b ? 'A' : 'B')} leads`;
+        if (v) txt = v.call === 'winner' ? `${draftName(v.winner)} wins` : `${draftName(v.leader || (v.pooled.a >= v.pooled.b ? 'A' : 'B'))} leads`;
         nd.dataset.call = v ? (v.call === 'winner' ? 'win' : 'tie') : '';
       } else {
         const st = nodeStats(n);
@@ -364,7 +365,7 @@ export default {
       const stLabel = { done: 'Done', now: 'Working now', error: 'Failed here', future: 'Waiting', side: 'Optional follow-up' }[st];
       const log = (S.traceLog || []).filter((t) => stats && t.role === stats.role && t.ok !== undefined);
       const body = [
-        h('div.pl-d-top', h('div', h('h3', n.id.startsWith('twin') ? `Twin world ${variantOf(NODE[n.id].v)}` : n.label), n.role ? h('span.pl-role', n.role) : null, h('span.pl-state.' + st, stLabel)),
+        h('div.pl-d-top', h('div', h('h3', n.id.startsWith('twin') ? `Counterfactual world ${variantOf(NODE[n.id].v)}` : n.label), n.role ? h('span.pl-role', n.role) : null, h('span.pl-state.' + st, stLabel)),
           h('button.pl-x', { type: 'button', 'aria-label': 'Close details', onclick: closeDrawer }, '×')),
         h('p', n.long),
         st === 'now' && S.detail ? h('div.pl-d-now', S.detail) : null,
@@ -383,7 +384,7 @@ export default {
           h('div.pl-hist-h', h('small', 'Latency of the latest calls'), h('small.muted', log.length ? `${log.length} calls` : '')),
           histogram(log.map((t) => t.ms || 0)),
         ] : h('p.muted.pl-note', 'This step is statistics and rules, not a model call, so it has no model latency to show.'),
-        h('button.btn.primary.pl-go', { type: 'button', onclick: () => ctx.go(n.go) }, `Go to ${({ crowd: 'Crowd', worlds: 'Twin worlds', verdict: 'Verdict', report: 'Report', ask: 'Ask why' })[n.go] || n.go}`),
+        h('button.btn.primary.pl-go', { type: 'button', onclick: () => ctx.go(n.go) }, `Go to ${({ crowd: 'Audience', worlds: 'Counterfactual worlds', verdict: 'Result', report: 'Report', ask: 'Why' })[n.go] || n.go}`),
       ];
       mount(drawer, body.flat(3));   // mount() only flattens one level; the stats block nests deeper
       if (!soft && !reduced()) drawer.querySelectorAll('.pl-hist i').forEach((b, k) => b.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 600, delay: 120 + k * 40, easing: 'cubic-bezier(0.16,1,0.3,1)', fill: 'backwards' }));

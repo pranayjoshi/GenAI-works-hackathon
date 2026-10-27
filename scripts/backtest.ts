@@ -1,4 +1,4 @@
-/** CLI: Upworthy backtest. Example: npm run backtest -- --slice dev --n 20 --crowd 60 --rounds 8 --parallel 2 */
+/** CLI: reality check (Upworthy backtest). Example: npm run backtest -- --slice dev --n 20 --crowd 60 --rounds 8 --parallel 2 */
 import { runBacktest } from '../src/backtest/run.js';
 
 const args = process.argv.slice(2);

@@ -170,7 +170,7 @@ async function execute(st: RunState, inp: RunInput, preset?: StartOpts['crowd'])
     await ensureCensus([spec.geoId]);
     st.personas = preset.personas; st.proposal = preset.proposal; st.sampleReport = preset.sampleReport;
     timing.crowd_ms = 0;
-    phase(st, 'sampling', `Reusing the ${preset.personas.length}-person crowd from run ${spec.parent_run}`);
+    phase(st, 'sampling', `Reusing the ${preset.personas.length}-person audience from run ${spec.parent_run}`);
   } else {
     const crowd = await buildCrowd(spec, inp, (p, d, prog) => phase(st, p, d, prog));
     st.personas = crowd.personas; st.proposal = crowd.proposal; st.sampleReport = crowd.report;
@@ -189,7 +189,7 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   const results: WorldResult[] = [];
   st.fairness = [];
   for (const seed of spec.seeds) {
-    phase(st, 'running', `Seed ${seed} of ${spec.seeds.length}: forking twin worlds`);
+    phase(st, 'running', `Seed ${seed} of ${spec.seeds.length}: forking counterfactual worlds`);
     const rng = new Rng(`${spec.crowd_seed ?? spec.run_id}:seed:${seed}`);
     const graph = buildGraph(st.personas, rng.fork('graph'));
     const schedule = buildSchedule(st.personas, rng.fork('schedule'), spec.rounds, spec.startHour, spec.hourStep);
@@ -217,7 +217,7 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   }
   timing.sim_ms = Date.now() - t1;
   st.status = 'analyzing';
-  phase(st, 'analyzing', 'Computing verdict, segments and validity panel');
+  phase(st, 'analyzing', 'Computing the result, segments and validity panel');
   st.worlds = results.map(({ memories, ...rest }) => rest);
   st.live = [];
   st.summaries = results.map((r) => summarizeWorld(r.world_id, r.variant, r.seed, r.records, r.stance, r.intent, st.personas));
@@ -232,7 +232,7 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   persist(st);
   if (spec.mode === 'ab') {
     await exportForFederation(st);
-    phase(st, 'report', 'Report agent is querying the action log');
+    phase(st, 'report', 'Report agent is investigating the action log with SQL');
     const t2 = Date.now();
     try {
       agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'handoff', target_agent: 'ReportWriter', status: 'started', input_summary: 'verdict and action log (queried through DataAgent)' });

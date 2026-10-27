@@ -39,7 +39,7 @@ function zoomOpen(card, id, title) {
   if (reduced() || !card?.animate) return go();
   const r = card.getBoundingClientRect();
   const ov = h('div.lib-zoom', { style: { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` } },
-    h('div.lib-zoom-body', twinGlyph(id, 72), h('div.lib-zoom-title', title || 'Opening run'), h('div.lib-zoom-sub', 'Loading twin worlds')));
+    h('div.lib-zoom-body', twinGlyph(id, 72), h('div.lib-zoom-title', title || 'Opening run'), h('div.lib-zoom-sub', 'Loading counterfactual worlds')));
   document.body.append(ov);
   const full = { left: '0px', top: '0px', width: `${innerWidth}px`, height: `${innerHeight}px`, borderRadius: '0px' };
   const anim = ov.animate([{ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: '16px' }, full], { duration: 420, easing: EASE.inOut, fill: 'forwards' });
@@ -186,7 +186,7 @@ export default function view(el) {
   const statusSel = h('select', { 'aria-label': 'Filter by status', onchange: (e) => { state.status = e.target.value; render(); } },
     [['all', 'All statuses'], ['running', 'Running'], ['done', 'Done'], ['error', 'Error']].map(([v, l]) => h('option', { value: v }, l)));
   const sortSel = h('select', { 'aria-label': 'Sort runs', onchange: (e) => { state.sort = e.target.value; render(); } },
-    [['new', 'Newest first'], ['old', 'Oldest first'], ['crowd', 'Largest crowd'], ['status', 'Live first']].map(([v, l]) => h('option', { value: v }, l)));
+    [['new', 'Newest first'], ['old', 'Oldest first'], ['crowd', 'Largest audience'], ['status', 'Live first']].map(([v, l]) => h('option', { value: v }, l)));
   const modeBtns = ['grid', 'timeline'].map((m) => h('button.lib-seg-btn', { type: 'button', 'aria-pressed': String(m === state.mode), onclick: () => { state.mode = m; modeBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(['grid', 'timeline'][i] === m))); render(); } }, m === 'grid' ? 'Grid' : 'Timeline'));
 
   function card(r) {
@@ -198,7 +198,7 @@ export default function view(el) {
       h('h3.lib-card-title', h('a', { href: `#/run/${r.run_id}`, onclick: (e) => e.preventDefault() }, r.headline || 'Untitled run')),
       h('div.lib-card-biz', r.business),
       h('div.lib-chips', h('span.chip', `${r.crowd} people`), h('span.chip', `${r.rounds} rounds`), h('span.chip', `${r.seeds} seed${r.seeds > 1 ? 's' : ''}`),
-        (r.posts || []).length ? h('span.chip.lib-ab', { title: `Versions ${(r.posts || []).join(' and ')}` }, (r.posts || []).map((v, i) => [i ? h('em', 'vs') : null, h('b.' + String(v).toLowerCase(), v)])) : null),
+        (r.posts || []).length ? h('span.chip.lib-ab', { title: `Drafts ${(r.posts || []).join(' and ')}` }, (r.posts || []).map((v, i) => [i ? h('em', 'vs') : null, h('b.' + String(v).toLowerCase(), v)])) : null),
       (r.parent || follow) ? h('div.lib-chain',
         r.parent ? h('a.lib-chain-link', { href: `#/run/${r.parent}`, title: 'Open the run this one followed up', onclick: (e) => e.stopPropagation() }, `↳ follow-up of ${r.parent.slice(-4)}`) : null,
         follow ? h('span.lib-chain-link.out', `${follow} follow-up${follow > 1 ? 's' : ''}`) : null) : null,
@@ -219,7 +219,7 @@ export default function view(el) {
     count.textContent = `${list.length} of ${runs.length} runs`;
     cons?.highlight(list.length === runs.length ? null : new Set(list.map((r) => r.run_id)));
     if (!list.length) {
-      mount(results, h('div.empty', runs.length ? 'No runs match these filters.' : ['No runs yet. ', h('a', { href: '#/' }, 'Start a new test.')]));
+      mount(results, h('div.empty', runs.length ? 'No runs match these filters.' : ['No runs yet. ', h('a', { href: '#/' }, 'Start a new simulation.')]));
       return;
     }
     let cards;
@@ -236,15 +236,15 @@ export default function view(el) {
     stagger(cards, { y: 20, gap: 40, ms: 520, scale: 0.98 });
   }
 
-  const empty = () => mount(results, h('div.empty', ['No runs yet. ', h('a', { href: '#/' }, 'Start a new test.')]));
+  const empty = () => mount(results, h('div.empty', ['No runs yet. ', h('a', { href: '#/' }, 'Start a new simulation.')]));
   const constHost = h('div.lib-const-host'), constLabels = h('div.lib-const-labels', { 'aria-hidden': 'true' }), constTip = h('div.lib-const-tip', { hidden: true });
   const constCard = h('section.card.lib-const', { hidden: true },
     h('div.lib-const-head', h('h2', 'Run constellation'),
-      h('div.lib-const-key', h('span', h('i.a'), h('i.b'), 'twin worlds A / B'), h('span', h('i.ring.good'), 'done'), h('span', h('i.ring.live'), 'live'), h('span', h('i.ring.bad'), 'error'), h('span.muted', 'size = crowd'))),
+      h('div.lib-const-key', h('span', h('i.a'), h('i.b'), 'counterfactual worlds A / B'), h('span', h('i.ring.good'), 'done'), h('span', h('i.ring.live'), 'live'), h('span', h('i.ring.bad'), 'error'), h('span.muted', 'size = audience'))),
     h('div.lib-const-stage', constHost, constLabels, constTip));
   el.append(h('div.view-page.lib-page',
-    h('header.lib-hero', h('div.lib-hero-text', h('h1', 'Runs'), h('p.muted', 'Every Ripple on this machine. Open one to replay its twin worlds, verdict and report.')),
-      h('a.btn.primary', { href: '#/' }, 'New test')),
+    h('header.lib-hero', h('div.lib-hero-text', h('h1', 'Runs'), h('p.muted', 'Every simulation on this machine. Open one to replay its counterfactual worlds, result and report.')),
+      h('a.btn.primary', { href: '#/' }, 'New simulation')),
     constCard,
     h('div.lib-toolbar', search, h('div.lib-selects', statusSel, sortSel), h('div.lib-seg', { role: 'group', 'aria-label': 'Layout' }, modeBtns), count),
     results));

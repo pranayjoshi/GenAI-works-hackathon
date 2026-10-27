@@ -163,7 +163,7 @@ app.get('/api/runs/:id/creative/:file', async (req, reply) => {
   const m = String((req.params as any).file).match(/^([abc])\.svg$/i);
   const v = m?.[1].toLowerCase() as 'a' | 'b' | 'c' | undefined;
   const text = v ? variantText(st, v) : null;
-  if (!v || !text) return reply.code(404).send({ error: v === 'c' ? 'No Version C draft for this run yet' : 'Unknown variant (use a.svg, b.svg or c.svg)' });
+  if (!v || !text) return reply.code(404).send({ error: v === 'c' ? 'No suggested rewrite (C) for this run yet' : 'Unknown variant (use a.svg, b.svg or c.svg)' });
   const placement = (req.query as any)?.placement === 'story' ? 'story' : 'feed';
   reply.header('content-type', 'image/svg+xml; charset=utf-8').header('cache-control', 'public, max-age=300');
   return renderCreative({ business: st.spec.business, place: st.spec.place, handle: st.spec.handle, variant: v, text, placement });
@@ -201,7 +201,7 @@ app.post('/api/runs/:id/version-c/run', async (req) => {
   const parent = await getRun((req.params as any).id);
   const b = { ...(req.body as { text?: string; seeds?: number } ?? {}) };
   b.text = b.text ?? (parent.decision as any)?.variant?.text; // default: the decision's own Version C draft
-  if (!b.text) throw Object.assign(new Error('No Version C text: pass {"text": ...} or draft one first'), { statusCode: 400 });
+  if (!b.text) throw Object.assign(new Error('No suggested rewrite (C) text: pass {"text": ...} or draft one first'), { statusCode: 400 });
   const winner = parent.verdict?.winner ?? (parent.verdict && parent.verdict.pooled.a >= parent.verdict.pooled.b ? parent.verdict.variants[0] : parent.verdict?.variants[1]) ?? 'A';
   const wpost = parent.spec.posts.find((p) => p.variant === winner)!;
   const spec = specFromInput({ business: parent.spec.business, handle: parent.spec.handle, place: parent.spec.place, zip: parent.spec.zip, goal: parent.spec.goal, postA: wpost.text, postB: b.text, crowdSize: parent.spec.crowdSize, rounds: parent.spec.rounds, seeds: b.seeds ?? parent.spec.seeds.length, useCustomers: parent.spec.useCustomers });
