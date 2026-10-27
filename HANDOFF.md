@@ -78,6 +78,6 @@ for v in $(grep -o '^META_[A-Z_]*' .env); do export $v=; done; RUNS_DIR=$PWD/med
 
 ## 5. Track 2 rebrand notes (branch `rebrand/explain-why`)
 
-- **README illustrations are new:** `docs/images/hero.jpg` (new tagline), `loop.jpg` (the agent loop) and `evidence.jpg` (one reason traced to its quote, action, query and data). They are rendered from `docs/images/src/*.html` with `bash scripts/render-images.sh` (headless Chrome + ffmpeg). Every number and id in them comes from run 1458's `summary.json` and `actions.sqlite`; change the HTML and re-render if the headline run changes.
+- **README illustrations are new:** `docs/images/hero.jpg` (new tagline), `agents.jpg` (the agents, fanned out in parallel per stage) and `evidence.jpg` (one reason traced to its quote, action, query and data). They are rendered from `docs/images/src/*.html` with `bash scripts/render-images.sh` (headless Chrome + ffmpeg). Every number and id in them comes from run 1458's `summary.json` and `actions.sqlite`; change the HTML and re-render if the headline run changes.
 - **UI screenshots are older:** `docs/images/{sources,crowd,worlds,signals,report,ask}.jpg` still show the old stage names (Crowd, Twin worlds, Verdict, Ask why). Re-capture them from run 1458 if there is time; the README captions already use the new names.
 - **LinkedIn:** the tagline names "LinkedIn comments" as an example of content, but LinkedIn is not a platform option (no Pew data). The README says so under "Where this goes".

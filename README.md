@@ -36,12 +36,12 @@
 
 Anything public is posted blind. An ad, a tweet, a LinkedIn comment, a launch announcement or a statement goes out, and you don't know how different people will react until they do. When something lands badly, or lands in silence, you never learn why: the people who scrolled past don't tell you, and the reasons behind a reaction aren't in any dashboard.
 
-Ripple runs that reaction first, as an agent loop: **Build the audience → Simulate → Investigate → Explain → Recommend (gated).** It builds a synthetic audience from real data for the platform and place you are posting to (Instagram, Facebook, TikTok, YouTube, X or Reddit; any US ZIP from the Census, or any country from the World Bank), with a receipt for every trait. It simulates a day of that audience seeing your drafts (a post, an image, an ad or a short campaign) in counterfactual worlds that are identical except for the content, with memory, competing posts and shares that spread through a follower graph. It investigates the run's own event log with SQL, explains each reason with the query or action it came from, and recommends what to do next, holding anything that spends or publishes for the owner. You get who reacts, who stays silent, how each group feels, and why, with evidence.
+Ripple runs that reaction first, with many agents working in parallel across four stages: **Build the audience → Simulate → Investigate and explain → Recommend (gated).** It builds a synthetic audience from real data for the platform and place you are posting to (Instagram, Facebook, TikTok, YouTube, X or Reddit; any US ZIP from the Census, or any country from the World Bank), with a receipt for every trait. It simulates a day of that audience seeing your drafts (a post, an image, an ad or a short campaign) in counterfactual worlds that are identical except for the content, with memory, competing posts and shares that spread through a follower graph. It investigates the run's own event log with SQL, explains each reason with the query or action it came from, and recommends what to do next, holding anything that spends or publishes for the owner. You get who reacts, who stays silent, how each group feels, and why, with evidence.
 
 Give it two drafts and it also says which one leads in the simulation and why; the counterfactual worlds are what keep that comparison fair. The result reads like: "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version." A draft only "wins" when the 95% interval excludes zero and every seed agrees; no measurable difference is itself a result.
 
 <p align="center">
-  <img src="docs/images/loop.jpg" alt="The agent loop: 01 Build the audience, 02 Simulate, 03 Investigate, 04 Explain, 05 Recommend (gated). Below: why it is an agent, not a pipeline: uses tools, critiques itself, asks permission." width="100%">
+  <img src="docs/images/agents.jpg" alt="Many agents, working in parallel. 1 Build the audience: DataAgent, AudienceAgent, audience sampler, then VoiceWriter batches in parallel. 2 Simulate: counterfactual worlds A and B run at the same time, each sending batches of CrowdAgent calls (8 people each) together, then Guard and MemoryAgent. 3 Investigate and explain: ReportWriter with SQL tools and ReportCritic, and up to six Interviewers at once. 4 Recommend, gated: DecisionAgent, rewriter and honesty check, owner approval, LaunchAgent (paused)." width="100%">
 </p>
 
 Three things make it an agent rather than a pipeline:
@@ -201,7 +201,7 @@ flowchart LR
   end
   subgraph RIPPLE["Ripple agents"]
     direction TB
-    DA["Build the audience: SQL with receipts"] --> CB["Audience builder: sampler + copula"] --> TW["Simulate: counterfactual worlds A and B"] --> RD["Investigate and explain: report, critics, spend gate"]
+    DA["Build the audience: SQL with receipts"] --> CB["Audience builder: sampler + copula"] --> TW["Simulate: worlds A and B in parallel"] --> RD["Investigate and explain: report, critics, spend gate"]
   end
   subgraph METER["Meterless"]
     direction TB
@@ -231,7 +231,7 @@ flowchart LR
 
 ### What happens in a run
 
-The twelve steps below follow the agent loop: Build the audience (1 to 3), Simulate (4 to 6), Investigate (7 to 8), Explain (9), Recommend, gated (10 to 11), and a reality check on the whole method (12).
+The twelve steps below follow the agent workflow: Build the audience (1 to 3), Simulate (4 to 6), Investigate (7 to 8), Explain (9), Recommend, gated (10 to 11), and a reality check on the whole method (12).
 
 **Build the audience**
 
@@ -270,30 +270,50 @@ flowchart TB
   IN(["Input: who is posting, platform, place, Draft A and Draft B"]) --> BUILD
   subgraph BUILD["1 · Build the audience"]
     direction LR
-    AUD["AudienceAgent: names segments"] --> DATA["DataAgent: Zetaris SQL"] --> VOI["VoiceWriter"]
+    AUD["AudienceAgent: names segments"] --> DATA["DataAgent: Zetaris SQL"] --> VOI1["VoiceWriter batch"] & VOI2["VoiceWriter batch"] & VOI3["VoiceWriter batch"]
   end
   BUILD --> SIM
-  subgraph SIM["2 · Simulate, round by round"]
+  subgraph SIM["2 · Simulate: both worlds at the same time"]
     direction LR
-    CA["CrowdAgent"] --> G["Guard"] --> MA["MemoryAgent: H-MEM"]
+    subgraph WA["Counterfactual world A"]
+      direction TB
+      CA1["CrowdAgent · 8 people"] & CA2["CrowdAgent · 8 people"] & CA3["CrowdAgent · 8 people"] --> G["Guard"] --> MA["MemoryAgent: H-MEM"]
+    end
+    subgraph WB["Counterfactual world B"]
+      direction TB
+      CB1["CrowdAgent · 8 people"] & CB2["CrowdAgent · 8 people"] & CB3["CrowdAgent · 8 people"] --> GB["Guard"] --> MB["MemoryAgent: H-MEM"]
+    end
   end
   SIM --> DECIDE
-  subgraph DECIDE["3 · Investigate, explain, recommend"]
+  subgraph DECIDE["3 · Investigate and explain"]
     direction LR
-    V["Result in code"] --> RW["ReportWriter: SQL tools"] <-->|"request_revision"| RC["ReportCritic"] --> DEC["DecisionAgent: spend gate"] --> VC["Suggested rewrite + HonestyCheck"]
+    V["Result in code"] --> RW["ReportWriter: SQL tools"] <-->|"request_revision"| RC["ReportCritic"] --> IV1["Interviewer"] & IV2["Interviewer"] & IV3["Interviewer"]
   end
-  DECIDE --> OWN{"Owner approval (gated)"}
-  OWN -->|"approved"| LA["LaunchAgent: Meta, paused"]
-  OWN -->|"not yet"| STOP(["Nothing is spent"])
+  DECIDE --> GATE
+  subgraph GATE["4 · Recommend, gated"]
+    direction LR
+    DEC["DecisionAgent: spend gate"] --> VC["Suggested rewrite + HonestyCheck"] --> OWN{"Owner approval"}
+    OWN -->|"approved"| LA["LaunchAgent: Meta, paused"]
+    OWN -->|"not yet"| STOP(["Nothing is spent"])
+  end
 
   classDef crit fill:#FDEBDC,stroke:#B85A16,color:#151A28
   classDef gate fill:#151A28,stroke:#151A28,color:#EEF0F6
-  class RC,VC,G crit
+  classDef wa fill:#E4ECFD,stroke:#2F5FD0,color:#151A28
+  classDef wb fill:#FDEEE2,stroke:#C4621A,color:#151A28
+  class RC,VC,G,GB crit
   class OWN gate
+  class CA1,CA2,CA3 wa
+  class CB1,CB2,CB3 wb
   style BUILD fill:#F3F6FE,stroke:#2F5FD0,color:#151A28
   style SIM fill:#F6F4FE,stroke:#6B5BD2,color:#151A28
+  style WA fill:#F3F6FE,stroke:#2F5FD0,color:#151A28
+  style WB fill:#FFF7F0,stroke:#C4621A,color:#151A28
   style DECIDE fill:#FFF7F0,stroke:#B85A16,color:#151A28
+  style GATE fill:#FFFBEA,stroke:#B88A00,color:#151A28
 ```
+
+Within each stage the work fans out: VoiceWriter batches run together, the two counterfactual worlds run at the same time, every round's CrowdAgent batches inside a world are sent together (8 people per hosted call, up to 8 calls at once through Nightshift, `NIGHTSHIFT_CONCURRENCY`), and asking a segment why interviews up to six people at once. The stages hand off in order, and seeds run one after another.
 
 Agent roles (names as they appear in the trace):
 
@@ -473,7 +493,7 @@ npx vitest run tests/conformance.test.ts
 
 ## 🧭 Where this goes
 
-The café is the only demo, but nothing in the loop is specific to coffee. The same build-the-audience, simulate, investigate and explain steps apply wherever something is posted to the public and the reasons behind the reaction matter:
+The café is the only demo, but nothing in the workflow is specific to coffee. The same build-the-audience, simulate, investigate and explain steps apply wherever something is posted to the public and the reasons behind the reaction matter:
 
 - ads and promotions;
 - product launches;
