@@ -154,7 +154,7 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean; keepV
       : `Pick the version whose tap rate is higher by at least ${(mde * 100).toFixed(1)} points with a 95% interval that excludes zero; otherwise keep ${leader} and stop testing.`,
     stop_rule: `Stop when each version has reached ${planPer.toLocaleString('en-US')} people, or after 7 days.`,
     assumptions: [
-      `The real gap is no larger than the simulated one (simulated people, local Nemotron 3 Nano 4B; the backtest shows the crowd does not predict real winners).`,
+      `The real gap is no larger than the simulated one (these are simulated people, not real customers; the backtest shows the crowd does not predict real winners).`,
       `A test is worth paying for only if it needs at most ${pct(MAX_TEST_SHARE)} of local Instagram users.`,
       `Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age.`,
     ],
