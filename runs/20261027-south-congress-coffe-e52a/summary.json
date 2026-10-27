@@ -1220,6 +1220,42 @@
       "identical": true
     }
   ],
+  "decision": {
+    "call": "cancel_ab",
+    "headline": "Don't pay to A/B test these two posts: they are too close to tell apart with the people South Congress Coffee can reach. Test a bolder version instead.",
+    "reasons": [
+      "The simulated gap is 2.9 points (A 29.6% vs B 26.7%), inside a ±5.5-point interval: no winner.",
+      "A real test needs about 3,828 people per version to detect a gap that small (5% two-sided, 80% power): 7,656 in all.",
+      "There are about 27,006 Instagram users in Austin, TX 78704 (Census x Pew join), so that test would have to reach 28.3% of them.",
+      "A test using at most 20.0% of the local audience (2,700 per version) can only detect a gap of about 3.5 points, so the next version must move intent by at least that much to be worth testing."
+    ],
+    "actions": [
+      {
+        "id": "cancel_ab",
+        "title": "Don't pay for an A/B test of A vs B",
+        "policy": "auto",
+        "status": "done"
+      },
+      {
+        "id": "draft_c",
+        "title": "Draft a bolder version from what people objected to",
+        "policy": "auto",
+        "status": "done"
+      },
+      {
+        "id": "simulate_c",
+        "title": "Simulate version C against A on the same crowd",
+        "policy": "auto",
+        "status": "proposed"
+      },
+      {
+        "id": "launch_test",
+        "title": "Run the real test: A vs C",
+        "policy": "needs_approval",
+        "status": "proposed"
+      }
+    ]
+  },
   "usage": [
     {
       "tag": "20261027-south-congress-coffe-e52a",

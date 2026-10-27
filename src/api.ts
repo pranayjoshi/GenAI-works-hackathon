@@ -9,7 +9,8 @@ import { getQuery } from './data/federation.js';
 import { registerSources, ensureCensus, sourceSummary, geoIdForZip } from './data/sources.js';
 import { proposeSegments } from './audience/agent.js';
 import { CAFE_DEMO } from './demo.js';
-import { runs, startRun, loadRun, listRunsOnDisk, injectEvent, allRecords, specFromInput, type RunState, type RunInput } from './sim/run.js';
+import { runs, startRun, loadRun, listRunsOnDisk, injectEvent, allRecords, specFromInput, persist, runDir, type RunState, type RunInput } from './sim/run.js';
+import { buildDecision, decideAction, writeLaunchPlan } from './report/decision.js';
 import { interview, askSegment, focusGroup } from './report/interview.js';
 import { draftVersionC } from './report/rewriter.js';
 import { queryActions } from './report/tools.js';
@@ -30,7 +31,7 @@ function snapshot(st: RunState) {
     proposal: st.proposal, sampleReport: st.sampleReport,
     personas: st.personas.map(({ receipts, ...p }) => p),
     summaries: st.summaries, verdict: st.verdict, tipping: st.tipping, validity: st.validity, fairness: st.fairness,
-    report: st.report, usage: st.usage ?? traceStats(st.spec.run_id), timing: st.timing,
+    report: st.report, decision: st.decision, usage: st.usage ?? traceStats(st.spec.run_id), timing: st.timing,
     worlds: st.worlds.map(({ records, ...w }) => ({ ...w, decisions: records.length })),
   };
 }
@@ -135,6 +136,35 @@ app.post('/api/runs/:id/focus', async (req) => {
   return focusGroup(st, b, (t) => st.bus.emit({ type: 'focus', run_id: st.spec.run_id, turn: t }));
 });
 app.post('/api/runs/:id/version-c', async (req) => draftVersionC(await getRun((req.params as any).id)));
+// spend decision and launch plan (src/report/decision.ts)
+app.get('/api/runs/:id/decision', async (req) => {
+  const st = await getRun((req.params as any).id);
+  if (!st.decision) { st.decision = await buildDecision(st, { draft: false }); persist(st); writeLaunchPlan(runDir(st.spec.run_id), st.decision); }
+  return st.decision;
+});
+app.post('/api/runs/:id/decision', async (req) => {
+  const st = await getRun((req.params as any).id);
+  st.decision = await buildDecision(st, { draft: Boolean((req.body as any)?.draft ?? true) });
+  persist(st);
+  writeLaunchPlan(runDir(st.spec.run_id), st.decision);
+  return st.decision;
+});
+app.post('/api/runs/:id/decision/actions/:action', async (req) => {
+  const st = await getRun((req.params as any).id);
+  if (!st.decision) throw Object.assign(new Error('No decision yet'), { statusCode: 404 });
+  const choice = (req.body as any)?.choice === 'reject' ? 'reject' : 'approve';
+  const action = decideAction(st.decision, (req.params as any).action, choice);
+  persist(st);
+  const file = writeLaunchPlan(runDir(st.spec.run_id), st.decision);
+  return { action, launch_plan: `/api/runs/${st.spec.run_id}/launch-plan.json`, file: path.relative(process.cwd(), file), note: 'Nothing was posted or spent. The approved plan is exported for your ad tool.' };
+});
+app.get('/api/runs/:id/launch-plan.json', async (req, reply) => {
+  const st = await getRun((req.params as any).id);
+  if (!st.decision) throw Object.assign(new Error('No decision yet'), { statusCode: 404 });
+  const file = writeLaunchPlan(runDir(st.spec.run_id), st.decision);
+  reply.header('content-type', 'application/json').header('content-disposition', `attachment; filename="launch_plan_${st.spec.run_id}.json"`);
+  return fs.readFileSync(file, 'utf8');
+});
 app.post('/api/runs/:id/version-c/run', async (req) => {
   const parent = await getRun((req.params as any).id);
   const b = req.body as { text: string; seeds?: number };

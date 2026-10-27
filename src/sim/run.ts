@@ -16,6 +16,7 @@ import type { ActionRecord } from '../schemas/action.js';
 import { AgentMemory, type MemoryLine } from '../memory/hmem.js';
 import { traceStats } from '../llm.js';
 import { buildReport } from '../report/agent.js';
+import { buildDecision, writeLaunchPlan } from '../report/decision.js';
 import { Bus, Rng, sha } from '../util/core.js';
 import { buildGraph } from './graph.js';
 import { buildSchedule } from './schedule.js';
@@ -59,6 +60,7 @@ export interface RunState {
   validity?: ReturnType<typeof validity>;
   fairness?: { seed: number; fingerprint: string; base_shapes: Record<string, string>; identical: boolean }[];
   report?: unknown;
+  decision?: import('../report/decision.js').Decision;
   memories: Map<string, Map<string, MemoryLine[]>>; // world -> agent -> lines
   bus: Bus<SimEvent>;
   recent: SimEvent[];
@@ -225,6 +227,14 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
       st.report = { error: (e as Error).message };
     }
     timing.report_ms = Date.now() - t2;
+    // spend decision and launch plan: is a real test worth paying for, and what to test instead
+    phase(st, 'report', 'Deciding whether a real test is worth paying for');
+    const t3 = Date.now();
+    try {
+      st.decision = await buildDecision(st, { draft: true });
+      writeLaunchPlan(runDir(spec.run_id), st.decision);
+    } catch (e) { console.warn(`[run] decision skipped: ${(e as Error).message}`); }
+    timing.decision_ms = Date.now() - t3;
     st.usage = traceStats(spec.run_id);
   }
   st.status = 'done';
@@ -266,7 +276,7 @@ export function persist(st: RunState) {
   if (!(db.prepare('PRAGMA table_info(actions)').all() as { name: string }[]).some((c) => c.name === 'checks')) db.exec('ALTER TABLE actions ADD COLUMN checks TEXT');
   const meta = {
     spec: st.spec, status: st.status, phase: st.phase, error: st.error, created: st.created, proposal: st.proposal, sampleReport: st.sampleReport,
-    summaries: st.summaries, verdict: st.verdict, tipping: st.tipping, validity: st.validity, fairness: st.fairness, report: st.report, usage: st.usage, timing: st.timing,
+    summaries: st.summaries, verdict: st.verdict, tipping: st.tipping, validity: st.validity, fairness: st.fairness, report: st.report, decision: st.decision, usage: st.usage, timing: st.timing,
     worlds: st.worlds.map(({ records, ...w }) => w),
   };
   const tx = db.transaction(() => {
@@ -290,6 +300,7 @@ export function persist(st: RunState) {
       crowd: st.personas.length, rounds: st.spec.rounds, seeds: st.spec.seeds, events: st.spec.events,
       decisions: recs.length, reactions_to_post: recs.filter((r) => r.item_kind !== 'event').length, reactions_to_events: recs.filter((r) => r.item_kind === 'event').length,
       verdict: st.verdict, summaries: st.summaries, tipping: st.tipping, validity: st.validity, fairness: st.fairness,
+      decision: st.decision ? { call: st.decision.call, headline: st.decision.headline, reasons: st.decision.reasons, actions: st.decision.actions.map((a) => ({ id: a.id, title: a.title, policy: a.policy, status: a.status })) } : null,
       usage: st.usage, timing: st.timing, report: (st.report as any)?.report ? { summary: (st.report as any).report.summary, recommendation: (st.report as any).report.recommendation, claims: (st.report as any).report.claims } : null,
     }, null, 2));
   }
@@ -335,7 +346,7 @@ export async function loadRun(id: string): Promise<RunState | undefined> {
   const st: RunState = {
     spec: meta.spec, status: meta.status, phase: meta.phase, error: meta.error, created: meta.created, proposal: meta.proposal, sampleReport: meta.sampleReport,
     personas, worlds: (meta.worlds ?? []).map((w: any) => ({ ...w, records: actions.filter((a) => a.world_id === w.world_id) })),
-    summaries: meta.summaries ?? [], verdict: meta.verdict, tipping: meta.tipping, validity: meta.validity, fairness: meta.fairness, report: meta.report,
+    summaries: meta.summaries ?? [], verdict: meta.verdict, tipping: meta.tipping, validity: meta.validity, fairness: meta.fairness, report: meta.report, decision: meta.decision ?? undefined,
     usage: meta.usage, timing: meta.timing, memories, bus: new Bus(), recent: [], abort: new AbortController(), live: [],
   };
   if (st.status !== 'done' && st.status !== 'error') {
