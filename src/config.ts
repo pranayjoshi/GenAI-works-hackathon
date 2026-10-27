@@ -15,8 +15,12 @@ function nightshiftToken(): string {
   const token = envAny(['NIGHTSHIFT_TOKEN', 'METERLESS_RUNTIME_TOKEN']);
   if (token) return token;
   const candidates = [
+    env('METERLESS_TOKEN_FILE'),
     env('NIGHTSHIFT_STATE_DIR') && path.join(env('NIGHTSHIFT_STATE_DIR'), 'proxy-token'),
-    path.join(os.homedir(), 'Library/Application Support/ai.meterless.runtime/proxy-token'),
+    path.join(os.homedir(), 'Library/Application Support/ai.meterless.runtime/proxy-token'), // macOS
+    process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'ai.meterless.runtime', 'proxy-token'), // Windows
+    path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'ai.meterless.runtime', 'proxy-token'), // Linux
+    path.join(os.homedir(), '.config', 'ai.meterless.runtime', 'proxy-token'),
     path.join(os.homedir(), 'Library/Application Support/Nightshift/proxy-token'),
     path.join(os.homedir(), '.nightshift/proxy-token'),
   ].filter(Boolean) as string[];
