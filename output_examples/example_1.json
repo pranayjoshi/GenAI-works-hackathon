@@ -1,0 +1,395 @@
+{
+  "run_id": "20261027-south-congress-coffe-1ba6",
+  "input_echo": {
+    "business": {
+      "name": "South Congress Coffee",
+      "type": "cafe",
+      "address": "Austin, TX 78704",
+      "zip": "78704",
+      "handle": "@southcongresscoffee",
+      "goal": "Get people within 3 miles to come in this week"
+    },
+    "version_a": {
+      "text": "New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now at South Congress Coffee."
+    },
+    "version_b": {
+      "text": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress."
+    },
+    "crowd": 50,
+    "rounds": 6,
+    "seeds": 1,
+    "events": [],
+    "decision": {
+      "budget": 500
+    }
+  },
+  "audience": {
+    "size": 50,
+    "place": "Austin, TX 78704",
+    "core": {
+      "name": "25-34",
+      "age_bands": [
+        "25-34"
+      ],
+      "why": "This segment is most likely to try new menu items and seek out local, artisanal coffee experiences, especially when paired with a discount. They are in the prime demographic for spontaneous weekend outings and are influenced by social sharing and local buzz."
+    },
+    "spillover": {
+      "name": "18-24, 35-44",
+      "why": "These age groups are also likely to be in the area and may visit for the discount or to experience the new drink, even if they are not the primary target. They are more likely to be influenced by social media posts and local event announcements."
+    },
+    "interests": [
+      "local coffee",
+      "artisanal drinks",
+      "weekend outings",
+      "Instagram-worthy experiences"
+    ],
+    "segments": {
+      "role": {
+        "spillover": 25,
+        "core": 25
+      },
+      "age_band": {
+        "55-64": 4,
+        "25-34": 25,
+        "65+": 1,
+        "18-24": 6,
+        "45-54": 6,
+        "35-44": 8
+      },
+      "customers": 13
+    },
+    "census_geo": "86000US78704",
+    "instagram_users_est": 27006
+  },
+  "verdict": {
+    "headline": "B wins on intent to visit, 51.2% vs 26.8% (\u00b120.4 pts), 1 of 1 seed.",
+    "winner": "B",
+    "call": "winner",
+    "metric": "intent_rate",
+    "gap_pts": -24.4,
+    "ci_half_pts": 20.5,
+    "seeds_agree": 1,
+    "per_seed": [
+      {
+        "seed": 1,
+        "a": 0.2683,
+        "b": 0.5122,
+        "na": 41,
+        "nb": 41,
+        "leader": "B"
+      }
+    ],
+    "segments": [
+      {
+        "key": "customer:no",
+        "a": 0.2,
+        "b": 0.4667,
+        "na": 30,
+        "nb": 30,
+        "prefers": "B",
+        "clear": true
+      }
+    ]
+  },
+  "metrics": {
+    "A": {
+      "variant": "A",
+      "intent_rate": 0.268,
+      "rate_pct": 26.8,
+      "n_deciders": 41,
+      "margin_of_error_pts": 13.6,
+      "engagement_rate": 0.0732,
+      "mean_stance": 0.163,
+      "vocal_share": 0,
+      "silent_negative_share": 0,
+      "hide_rate": 0,
+      "tap_rate": 0.0488
+    },
+    "B": {
+      "variant": "B",
+      "intent_rate": 0.512,
+      "rate_pct": 51.2,
+      "n_deciders": 41,
+      "margin_of_error_pts": 15.3,
+      "engagement_rate": 0.122,
+      "mean_stance": 0.207,
+      "vocal_share": 0,
+      "silent_negative_share": 0,
+      "hide_rate": 0,
+      "tap_rate": 0.0488
+    }
+  },
+  "report": {
+    "summary": "B wins on intent to visit, 51.2% vs 26.8% (\u00b120.4 pts), 1 of 1 seed.",
+    "claims": [
+      {
+        "text": "core on A: intent 31.8% (22 people deciding).",
+        "query_ids": [
+          "q_1783f4af_8"
+        ]
+      },
+      {
+        "text": "core on B: intent 54.5% (22 people deciding).",
+        "query_ids": [
+          "q_1783f4af_8"
+        ]
+      },
+      {
+        "text": "spillover on A: intent 21.1% (19 people deciding).",
+        "query_ids": [
+          "q_1783f4af_8"
+        ]
+      },
+      {
+        "text": "spillover on B: intent 47.4% (19 people deciding).",
+        "query_ids": [
+          "q_1783f4af_8"
+        ]
+      }
+    ],
+    "themes": {
+      "objections": [],
+      "likes": [
+        {
+          "theme": "Drawn by the discount (3 of 14 sampled reasons)",
+          "variant": "A",
+          "action_ids": [
+            "s1:A:15",
+            "s1:A:26"
+          ]
+        },
+        {
+          "theme": "Drawn by price (7 of 14 sampled reasons)",
+          "variant": "B",
+          "action_ids": [
+            "s1:B:3",
+            "s1:B:23"
+          ]
+        }
+      ]
+    },
+    "tipping_note": "No one shared either version, so neither spread beyond the people it was served to.",
+    "recommendation": "Run version B, and test a version C aimed at the losing segments.",
+    "quotes": {
+      "s1:A:15": {
+        "agent_id": "p0004",
+        "world_id": "s1:A",
+        "hour": 2,
+        "action": "scroll_past",
+        "reason": "Good ingredients matter more to me than a discount.",
+        "text": "",
+        "unsaid": "",
+        "variant": "A",
+        "checks": []
+      },
+      "s1:A:26": {
+        "agent_id": "p0032",
+        "world_id": "s1:A",
+        "hour": 3,
+        "action": "scroll_past",
+        "reason": "Good ingredients matter more to me than a discount.",
+        "text": "",
+        "unsaid": "",
+        "variant": "A",
+        "checks": []
+      },
+      "s1:B:3": {
+        "agent_id": "p0044",
+        "world_id": "s1:B",
+        "hour": 0,
+        "action": "scroll_past",
+        "reason": "A cheaper price this week gets me through the door.",
+        "text": "",
+        "unsaid": "",
+        "variant": "B",
+        "checks": []
+      },
+      "s1:B:23": {
+        "agent_id": "p0023",
+        "world_id": "s1:B",
+        "hour": 3,
+        "action": "scroll_past",
+        "reason": "I will happily take the deal, my budget notices these, and i like trying what is new on the menu.",
+        "text": "",
+        "unsaid": "",
+        "variant": "B",
+        "checks": []
+      }
+    },
+    "fallback": true,
+    "error": null
+  },
+  "decision": {
+    "run_id": "20261027-south-congress-coffe-1ba6",
+    "created": "2026-10-27T18:35:37.304Z",
+    "call": "launch_winner",
+    "headline": "Launch version B: it won every seed by more than the interval.",
+    "reasons": [
+      "The simulated gap is 24.4 points (B 51.2% vs A 26.8%), inside a \u00b120.4-point interval: version B wins every seed and clears the interval.",
+      "A real test needs about 62 people per version to detect a gap that small (5% two-sided, 80% power): 124 in all.",
+      "There are about 27,006 Instagram users in Austin, TX 78704 (Census x Pew join), so that test would have to reach 0.5% of them.",
+      "A test using at most 20.0% of the local audience (2,700 per version) can only detect a gap of about 3.8 points, so the next version must move intent by at least that much to be worth testing."
+    ],
+    "verdict": {
+      "headline": "B wins on intent to visit, 51.2% vs 26.8% (\u00b120.4 pts), 1 of 1 seed.",
+      "a": 0.2683,
+      "b": 0.5122,
+      "gap_pts": 24.39,
+      "ci_half_pts": 20.45,
+      "winner": "B",
+      "leader": "B"
+    },
+    "audience": {
+      "local_instagram_users": 27006,
+      "place": "Austin, TX 78704",
+      "query_id": "q_ab2b844c_6",
+      "source": "ACS adults by age in the ZIP x Pew Instagram use by age"
+    },
+    "sample_size": {
+      "metric": "intent to visit (simulated)",
+      "p_a": 0.2683,
+      "p_b": 0.5122,
+      "per_version": 62,
+      "total": 124,
+      "share_of_audience": 0.004591572243205213,
+      "alpha": 0.05,
+      "power": 0.8
+    },
+    "affordable": {
+      "max_share": 0.2,
+      "per_version": 2700,
+      "detectable_gap_pts": 3.8042039358984043
+    },
+    "brief": {
+      "objections": [],
+      "likes": [
+        {
+          "variant": "A",
+          "theme": "Drawn by the discount (3 of 14 sampled reasons)",
+          "quotes": [
+            {
+              "action_id": "s1:A:15",
+              "reason": "Good ingredients matter more to me than a discount."
+            },
+            {
+              "action_id": "s1:A:26",
+              "reason": "Good ingredients matter more to me than a discount."
+            }
+          ]
+        },
+        {
+          "variant": "B",
+          "theme": "Drawn by price (7 of 14 sampled reasons)",
+          "quotes": [
+            {
+              "action_id": "s1:B:3",
+              "reason": "A cheaper price this week gets me through the door."
+            },
+            {
+              "action_id": "s1:B:23",
+              "reason": "I will happily take the deal, my budget notices these, and i like trying what is new on the menu."
+            }
+          ]
+        }
+      ],
+      "segments": [
+        "core on A: intent 31.8% (22 people deciding).",
+        "core on B: intent 54.5% (22 people deciding).",
+        "spillover on A: intent 21.1% (19 people deciding).",
+        "spillover on B: intent 47.4% (19 people deciding)."
+      ]
+    },
+    "variant": null,
+    "plan": {
+      "variants": [
+        {
+          "label": "Version B",
+          "text": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress."
+        }
+      ],
+      "targeting": {
+        "platform": "Instagram",
+        "place": "Austin, TX 78704",
+        "zip": "78704",
+        "age_bands": [
+          "25-34"
+        ],
+        "note": "Core segment 25-34 first; the crowd sampled 50.0% core."
+      },
+      "per_version": 2700,
+      "total": 2700,
+      "success_metric": "Taps through to the post and store visits attributed to the post (the real-world counterpart of the simulated intent to visit).",
+      "decision_rule": "Keep version B running if its tap rate is not below the simulated range; otherwise pause and re-test.",
+      "stop_rule": "Stop when each version has reached 2,700 people, or after 7 days.",
+      "assumptions": [
+        "The real gap is no larger than the simulated one (simulated people, local Nemotron 3 Nano 4B; the backtest shows the crowd does not predict real winners).",
+        "A test is worth paying for only if it needs at most 20.0% of local Instagram users.",
+        "Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age."
+      ]
+    },
+    "actions": [
+      {
+        "id": "publish",
+        "kind": "publish",
+        "title": "Create the version B ad in Meta Ads (paused)",
+        "detail": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress.",
+        "policy": "needs_approval",
+        "why_policy": "Publishing is public and hard to undo: you decide. It is created paused.",
+        "status": "proposed",
+        "evidence": [
+          "q_ab2b844c_6"
+        ]
+      }
+    ],
+    "budget_input": 500
+  },
+  "validity": {
+    "decisions": 82,
+    "repaired_share": 0,
+    "distinct_reason_ratio": 0.564,
+    "top_reason_opener": {
+      "text": "it sounds like",
+      "share": 0.141
+    },
+    "scroll_past_share": 0.902,
+    "stance_sd_by_world": [
+      {
+        "world": "s1:A",
+        "sd": 0.12
+      },
+      {
+        "world": "s1:B",
+        "sd": 0.148
+      }
+    ],
+    "silenced": 0,
+    "guard": {
+      "decisions_with_a_check": 4,
+      "by_check": {
+        "reason:duplicate_in_batch": 4
+      }
+    }
+  },
+  "trace": {
+    "log_file": "logs/20261027-south-congress-coffe-1ba6.jsonl",
+    "models_used": {
+      "replay(ollama-local:nemotron-3-nano:4b)": 1,
+      "none": 21,
+      "offline-model": 18
+    },
+    "queries": {
+      "count": 18,
+      "by_engine": {
+        "local-duckdb": 18
+      }
+    },
+    "timing_ms": {
+      "total": 816,
+      "crowd_ms": 408,
+      "sim_ms": 171,
+      "report_ms": 106,
+      "decision_ms": 15
+    }
+  },
+  "ui_url": "http://localhost:8000/#/run/20261027-south-congress-coffe-1ba6"
+}

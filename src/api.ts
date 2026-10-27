@@ -16,6 +16,7 @@ import { interview, askSegment, focusGroup } from './report/interview.js';
 import { draftVersionC } from './report/rewriter.js';
 import { queryActions } from './report/tools.js';
 import { query } from './data/federation.js';
+import { handleRun } from './runApi.js';
 
 const app = Fastify({ logger: false, bodyLimit: 5 * 1024 * 1024 });
 app.register(fastifyStatic, { root: path.join(config.root, 'web'), prefix: '/' });
@@ -36,6 +37,10 @@ function snapshot(st: RunState) {
     worlds: st.worlds.map(({ records, ...w }) => ({ ...w, decisions: records.length })),
   };
 }
+
+// judges' programmatic entry: structured input in, structured output out (src/runApi.ts)
+app.get('/health', async () => ({ ok: true, sampleMode: config.sampleMode, port: config.port }));
+app.post('/run', async (req) => handleRun(req.body));
 
 app.get('/api/status', async () => {
   const [providers, sources] = await Promise.all([providerStatus(), sourceSummary().catch((e) => ({ engine: 'error', tables: [], error: (e as Error).message }))]);
@@ -162,7 +167,8 @@ app.post('/api/runs/:id/decision/actions/:action', async (req) => {
 app.get('/api/runs/:id/launch-plan.json', async (req, reply) => {
   const st = await getRun((req.params as any).id);
   if (!st.decision) throw Object.assign(new Error('No decision yet'), { statusCode: 404 });
-  const file = writeLaunchPlan(runDir(st.spec.run_id), st.decision);
+  const existing = path.join(runDir(st.spec.run_id), 'launch_plan.json');
+  const file = fs.existsSync(existing) ? existing : writeLaunchPlan(runDir(st.spec.run_id), st.decision);
   reply.header('content-type', 'application/json').header('content-disposition', `attachment; filename="launch_plan_${st.spec.run_id}.json"`);
   return fs.readFileSync(file, 'utf8');
 });
@@ -200,13 +206,15 @@ app.get('/api/backtest', async () => {
 });
 
 app.setErrorHandler((err, _req, reply) => {
-  reply.status((err as any).statusCode ?? 500).send({ error: err.message });
+  const code = (err as any).statusCode ?? 500;
+  const hint = (err as any).hint ?? (code === 404 ? 'Check the id or path.' : code >= 500 ? 'The run failed on the server; see the server log, or retry with SAMPLE_MODE=true for an offline run.' : 'Check the request body.');
+  reply.status(code).send({ error: err.message, hint });
 });
 
 const start = async () => {
   await registerSources().catch((e) => console.warn('[sources]', e.message));
   for (const id of listRunsOnDisk().slice(0, 20)) await loadRun(id).catch(() => undefined);
-  await app.listen({ port: config.port, host: '127.0.0.1' });
+  await app.listen({ port: config.port, host: process.env.HOST || '127.0.0.1' });
   const st = await providerStatus();
   console.log(`Dry Run on http://localhost:${config.port}  (sample mode: ${config.sampleMode})`);
   for (const p of st.providers) console.log(`  ${p.provider.padEnd(10)} ${p.online ? 'online ' : p.configured ? 'offline' : 'not set'}  ${p.detail}`);

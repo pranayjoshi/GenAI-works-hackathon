@@ -1,0 +1,9 @@
+{
+  "business": { "name": "Wicker Park Bakehouse", "type": "bakery", "address": "Wicker Park, Chicago, IL 60622", "zip": "60622", "goal": "Fill the morning counter on weekdays" },
+  "version_a": { "text": "Fresh out of the oven: our slow-fermented sourdough, hand-shaped every morning from local grain. Wicker Park Bakehouse, open at 7." },
+  "version_b": { "text": "Free coffee with any pastry before 9am, all week. Wicker Park Bakehouse, your neighbourhood stop." },
+  "crowd": 60,
+  "rounds": 8,
+  "seeds": 1,
+  "events": [ { "round": 3, "text": "Dovetail Bakery, two blocks away, just opened and is giving away a free croissant to the first 100 customers today" } ]
+}

@@ -28,8 +28,24 @@ export async function fetchCensus(geoId: string): Promise<{ file: string; rows: 
     const rows = JSON.parse(fs.readFileSync(file, 'utf8')) as CensusRow[];
     return { file, rows: rows.length, release: rows[0]?.release ?? '', fetched: false };
   }
+  try {
+    return await fetchCensusLive(geoId, file);
+  } catch (e) {
+    // offline or unknown ZIP: use the national row (cached in the repo) relabelled for this geography, with a note in the geo name
+    const us = path.join(CACHE, `census_${US_GEO}.json`);
+    if (geoId === US_GEO || !fs.existsSync(us)) throw e;
+    const note = `United States (national fallback; ${geoId} unavailable: ${(e as Error).message.slice(0, 80)})`;
+    const rows = (JSON.parse(fs.readFileSync(us, 'utf8')) as CensusRow[]).map((r) => ({ ...r, geo_id: geoId, geo_name: note }));
+    const fb = path.join(CACHE, `census_fallback_${geoId}.json`);
+    fs.writeFileSync(fb, JSON.stringify(rows));
+    console.warn(`[census] ${note}`);
+    return { file: fb, rows: rows.length, release: rows[0]?.release ?? '', fetched: false };
+  }
+}
+
+async function fetchCensusLive(geoId: string, file: string): Promise<{ file: string; rows: number; release: string; fetched: boolean }> {
   const url = `${config.censusReporter}/data/show/latest?table_ids=${ACS_TABLES.join(',')}&geo_ids=${geoId}`;
-  const res = await fetch(url, { headers: { 'user-agent': 'DryRun/0.1 (hackathon research tool)', accept: 'application/json' }, signal: AbortSignal.timeout(30_000) });
+  const res = await fetch(url, { headers: { 'user-agent': 'DryRun/0.1 (hackathon research tool)', accept: 'application/json' }, signal: AbortSignal.timeout(8_000) });
   if (!res.ok) throw new Error(`Census Reporter HTTP ${res.status} for ${geoId}`);
   const j = (await res.json()) as any;
   const geo = j.data?.[geoId];
@@ -57,6 +73,7 @@ export async function fetchCensus(geoId: string): Promise<{ file: string; rows: 
 
 let registered = false;
 const censusGeos = new Set<string>();
+const geoFiles = new Map<string, string>();
 
 export async function registerSources(opts: { customers?: string | null } = {}) {
   if (!registered) {
@@ -77,12 +94,13 @@ export async function ensureCensus(geoIds: string[]) {
   for (const g of geoIds) {
     const r = await fetchCensus(g);
     meta[g] = { release: r.release, fetched: r.fetched };
+    geoFiles.set(g, r.file);
     if (!censusGeos.has(g)) { censusGeos.add(g); changed = true; }
   }
   if (changed) {
     // one table over every cached geography response
     const all: CensusRow[] = [];
-    for (const g of censusGeos) all.push(...(JSON.parse(fs.readFileSync(path.join(CACHE, `census_${g}.json`), 'utf8')) as CensusRow[]));
+    for (const g of censusGeos) all.push(...(JSON.parse(fs.readFileSync(geoFiles.get(g) ?? path.join(CACHE, `census_${g}.json`), 'utf8')) as CensusRow[]));
     const combined = path.join(CACHE, 'census_all.json');
     fs.writeFileSync(combined, JSON.stringify(all));
     if (engineName() === 'zetaris' && config.zetaris.fileRoot && all.length) {

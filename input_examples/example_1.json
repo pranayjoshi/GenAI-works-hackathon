@@ -1,0 +1,9 @@
+{
+  "business": { "name": "South Congress Coffee", "type": "cafe", "address": "Austin, TX 78704", "zip": "78704", "handle": "@southcongresscoffee", "goal": "Get people within 3 miles to come in this week" },
+  "version_a": { "text": "New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now at South Congress Coffee." },
+  "version_b": { "text": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress." },
+  "crowd": 50,
+  "rounds": 6,
+  "seeds": 1,
+  "decision": { "budget": 500 }
+}

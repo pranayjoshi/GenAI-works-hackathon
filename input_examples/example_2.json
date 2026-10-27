@@ -1,0 +1,8 @@
+{
+  "business": { "name": "Ironwood Strength Club", "type": "gym", "address": "Short North, Columbus, OH 43201", "zip": "43201", "goal": "Sign up new members this month" },
+  "version_a": { "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday." },
+  "version_b": { "text": "Small-group coaching, never more than 8 people a class. Certified coaches who learn your name and build your plan. Book a free intro session at Ironwood." },
+  "crowd": 50,
+  "rounds": 6,
+  "seeds": 1
+}

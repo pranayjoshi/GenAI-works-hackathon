@@ -5,6 +5,7 @@
 import { chat } from '../llm.js';
 import { CrowdBatch, CrowdBatchV2, type CrowdDecision } from '../schemas/action.js';
 import { config } from '../config.js';
+import { decideOffline, noteOffline, offlineAllowed, OFFLINE_SERVED_BY } from './offline.js';
 import type { Persona } from '../schemas/persona.js';
 import type { MemoryLine } from '../memory/hmem.js';
 import type { FeedItem, Post } from './types.js';
@@ -96,6 +97,12 @@ export async function decideBatch(turns: AgentTurn[], ctx: RenderCtx, tag: strin
     }
   } catch (e) {
     served_by = `error: ${(e as Error).message.slice(0, 120)}`;
+  }
+  // no model answered (sample-mode replay miss, nothing configured): persona-driven offline model, still seeded and reproducible
+  if (decisions.size === 0 && offlineAllowed()) {
+    for (const [k, d] of decideOffline(turns, ctx, tag)) decisions.set(k, d);
+    noteOffline(tag, decisions.size);
+    return { decisions, repaired: false, served_by: OFFLINE_SERVED_BY };
   }
   return { decisions, repaired, served_by };
 }

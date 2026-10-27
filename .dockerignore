@@ -1,0 +1,17 @@
+node_modules
+.git
+.env
+.env.*
+!.env.example
+runs/*
+!runs/.gitkeep
+logs/*
+data/raw
+data/cache/census_all.*
+data/cache/census_fallback_*
+data/cache/zetaris-*
+samples/backtest
+docs
+*.log
+.DS_Store
+output_examples
