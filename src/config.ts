@@ -13,6 +13,7 @@ function nightshiftToken(): string {
   if (env('NIGHTSHIFT_TOKEN')) return env('NIGHTSHIFT_TOKEN');
   const candidates = [
     env('NIGHTSHIFT_STATE_DIR') && path.join(env('NIGHTSHIFT_STATE_DIR'), 'proxy-token'),
+    path.join(os.homedir(), 'Library/Application Support/ai.meterless.runtime/proxy-token'),
     path.join(os.homedir(), 'Library/Application Support/Nightshift/proxy-token'),
     path.join(os.homedir(), '.nightshift/proxy-token'),
   ].filter(Boolean) as string[];
@@ -76,7 +77,7 @@ export const config = {
     user: env('ZETARIS_USER'),
     password: env('ZETARIS_PASSWORD'),
     apiKey: env('ZETARIS_API_KEY'),
-    orgId: env('ZETARIS_ORG_ID'),
+    orgId: env('ZETARIS_ORG_ID', '1'), // the local bundle's default org
     openPath: env('ZETARIS_OPEN_PATH', '/api/v1.0/query/sql/start'),
     pagePath: env('ZETARIS_PAGE_PATH', '/api/v1.0/query/sql/page'),
     closePath: env('ZETARIS_CLOSE_PATH', '/api/v1.0/query/sql/close'),

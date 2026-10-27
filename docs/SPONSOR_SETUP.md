@@ -5,7 +5,7 @@ Dry Run runs fully offline on local Nemotron 3 Nano 4B and an in-process DuckDB.
 ## 1. NVIDIA hosted Nemotron (the three-model roles)
 
 1. Get a key at build.nvidia.com (it starts with `nvapi-`).
-2. Put it in `.env` as `NVIDIA_API_KEY=...` (copy `.env.example` first).
+2. Put it in `.env` as `NVIDIA_API_KEY=...` (`.env` is gitignored; copy `.env.example` if it is missing). With Nightshift running, the same key also goes in Nightshift's Providers tab.
 3. Check it:
 
 ```bash
@@ -22,19 +22,33 @@ The roles then map to:
 
 Every call logs `served_by` in `runs/trace.jsonl` and in the Nemotron panel, so the role split is visible.
 
-## 2. Nightshift (first provider in the chain)
+## 2. Nightshift (first provider in the chain; the hackathon rules require it as the primary provider)
 
-1. Install the Nightshift Mac M1+ edition and start it. It listens on `http://127.0.0.1:8088/v1`.
-2. Add the NVIDIA key in its Providers tab.
-3. Nothing to set in Dry Run. The runtime token is read from Nightshift's `proxy-token` file, or from `NIGHTSHIFT_TOKEN` / `NIGHTSHIFT_STATE_DIR` if set.
-4. `npm run probe` should show `nightshift ONLINE` and `served_by=nightshift:...`.
+1. Download the Mac M1+ edition from meterless.ai/mac.html (`Nightshift-Setup-mac-m1.dmg`, 17.8 MB, built 25 Oct). It is not notarized yet, so macOS blocks the first open: double-click Nightshift Setup, click Done, then System Settings > Privacy & Security > "Open Anyway" and confirm with your password. Setup copies Nightshift into Applications.
+2. Start Nightshift. It serves `http://127.0.0.1:8088/v1`.
+3. Paste the `nvapi-` key into Setup > Providers > Cloud provider keys > NVIDIA, then restart Nightshift once.
+4. Nothing to set in Dry Run. The runtime token is read from Nightshift's `proxy-token` file (`~/Library/Application Support/ai.meterless.runtime/`, then the older locations), or from `NIGHTSHIFT_TOKEN` / `NIGHTSHIFT_STATE_DIR` if set. Calls carry `meterless-app: dryrun`.
+5. `npm run probe` should show `nightshift ONLINE` and `served_by=nightshift:...` for each role.
+
+Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVIDIA models may be missing from Nightshift's lane picker. Dry Run asks for the model id directly, so this may not matter; if Nightshift refuses the NVIDIA ids, the calls fall through to the direct NVIDIA path (step 1) and `served_by` says so.
 
 ## 3. Zetaris (federated SQL)
 
-1. Request access to the Zetaris Freemium Docker images (kbase.zetaris.com, "docker installation on docker desktop"), or use cloud credentials.
-2. Set `ZETARIS_BASE_URL` (the API host), `ZETARIS_ORG_ID`, and either `ZETARIS_API_KEY` (preferred, the spec's query endpoints take an API token) or `ZETARIS_USER` and `ZETARIS_PASSWORD`.
-3. Set `ZETARIS_FILE_ROOT` to the path where Zetaris sees this project's folder, for example a Docker volume mounted at `/data/dryrun`. Dry Run then registers the Census, Pew, priors, customer and run tables as Lightning file-store tables at that path. A hosted instance cannot read files on your laptop, so without this setting the tables stay on local DuckDB.
-4. `npm run probe` reports the engine. Every query in `runs/queries.jsonl` records whether `zetaris` or `local-duckdb` answered it, and the UI shows the same label.
+1. Register at cloud.enterprise.zetaris.com and download the "Run locally" platform bundle. It includes the Docker registry sign-in (`docker login`); the public Freemium repo's images (`zetaris/lightning-*`) are private on Docker Hub until Zetaris approves access, which can take up to 24 hours.
+2. Start Docker Desktop and give it at least 10 GB of memory (Settings > Resources); the Lightning server asks for 4 GB driver plus 4 GB executor.
+3. Mount this project into the bundle, then start it:
+
+```bash
+scripts/zetaris-mount.sh ~/zetaris/zetaris-platform
+```
+
+```bash
+cd ~/zetaris/zetaris-platform && docker compose up -d
+```
+
+   The script writes a `docker-compose.override.yml` that mounts the project read-only at `/data/dryrun` in the Lightning server and API containers.
+4. Sign in to the Zetaris UI, create a token under Management > API Tokens, and put it in `.env` as `ZETARIS_API_KEY=...` (or set `ZETARIS_USER` / `ZETARIS_PASSWORD`). `.env` already has `ZETARIS_BASE_URL=http://localhost:8888` (8888, not 8889), `ZETARIS_ORG_ID=1` and `ZETARIS_FILE_ROOT=/data/dryrun`.
+5. `npm run probe` reports the engine. Every query in `runs/queries.jsonl` records whether `zetaris` or `local-duckdb` answered it, and the UI shows the same label.
 
 The client follows the published OpenAPI spec (`/api/v1.0/auth/login`, `/api/v1.0/query/sql/start`, `/query/sql/page`, `/query/sql/close/{queryToken}`) and is checked against a fake server built from that spec in `tests/zetaris-contract.test.ts`. It has not yet run against a live Zetaris instance.
 
