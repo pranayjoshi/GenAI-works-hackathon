@@ -77,7 +77,7 @@ export async function crowdVsCensus(st: RunState): Promise<ToolResult> {
     acs AS (
       SELECT CASE WHEN age_lo < 25 THEN '18-24' WHEN age_lo < 35 THEN '25-34' WHEN age_lo < 45 THEN '35-44' WHEN age_lo < 55 THEN '45-54' WHEN age_lo < 65 THEN '55-64' ELSE '65+' END AS age_band,
              SUM(estimate) AS residents
-      FROM (SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '(\\d+)', 1) AS INTEGER) END AS age_lo, estimate
+      FROM (SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INTEGER) END AS age_lo, estimate
             FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' AND indent = 2)
       WHERE age_lo >= 18 GROUP BY 1)
     SELECT c.age_band, c.people AS crowd_people, a.residents AS acs_residents,

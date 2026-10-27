@@ -80,7 +80,7 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
   // Cross-source join: Census population by Pew age band x Pew Instagram rate = Instagram users in this geography.
   const qJoin = await q('Audience size: Census x Pew join', `
     WITH ages AS (
-      SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '(\\d+)', 1) AS INTEGER) END AS age_lo, estimate
+      SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INTEGER) END AS age_lo, estimate
       FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' AND indent = 2
     ), banded AS (
       SELECT CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults
