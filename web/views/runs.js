@@ -243,7 +243,7 @@ export default function view(el) {
       h('div.lib-const-key', h('span', h('i.a'), h('i.b'), 'twin worlds A / B'), h('span', h('i.ring.good'), 'done'), h('span', h('i.ring.live'), 'live'), h('span', h('i.ring.bad'), 'error'), h('span.muted', 'size = crowd'))),
     h('div.lib-const-stage', constHost, constLabels, constTip));
   el.append(h('div.view-page.lib-page',
-    h('header.lib-hero', h('div.lib-hero-text', h('h1', 'Runs'), h('p.muted', 'Every Dry Run on this machine. Open one to replay its twin worlds, verdict and report.')),
+    h('header.lib-hero', h('div.lib-hero-text', h('h1', 'Runs'), h('p.muted', 'Every Ripple on this machine. Open one to replay its twin worlds, verdict and report.')),
       h('a.btn.primary', { href: '#/' }, 'New test')),
     constCard,
     h('div.lib-toolbar', search, h('div.lib-selects', statusSel, sortSel), h('div.lib-seg', { role: 'group', 'aria-label': 'Layout' }, modeBtns), count),

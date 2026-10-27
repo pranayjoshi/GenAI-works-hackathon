@@ -1,4 +1,4 @@
-/* Dry Run theme: tokens, shell, primitives. Component styles live in web/css/<component>.css.
+/* Ripple theme: tokens, shell, primitives. Component styles live in web/css/<component>.css.
  * Dark-first ("night lab"), light via prefers-color-scheme or [data-theme]. No build step. */
 :root {
   --bg: #07080d; --bg-2: #0b0d14; --panel: rgba(18, 21, 32, .72); --panel-solid: #12151f; --panel-2: #181c29; --panel-3: #20253a;
@@ -73,7 +73,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 .brand { display: flex; align-items: center; gap: 11px; color: var(--text); }
 .brand .logo { display: grid; place-items: center; width: 34px; height: 34px; }
 .brand .logo svg { overflow: visible; }
-.brand .logo .half-a { fill: var(--a); } .brand .logo .half-b { fill: var(--b); }
+.brand .logo .half-a { stroke: var(--a); stroke-width: 3; } .brand .logo .half-b { stroke: var(--b); stroke-width: 3; }
 .brand:hover .logo .half-a { transform: translateX(-2px); } .brand:hover .logo .half-b { transform: translateX(2px); }
 .brand .logo path { transition: transform var(--t-ui) var(--ease-out); }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }

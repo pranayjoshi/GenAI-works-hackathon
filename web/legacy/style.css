@@ -1,4 +1,4 @@
-/* Dry Run UI. Light and dark via prefers-color-scheme. No build step. */
+/* Ripple UI. Light and dark via prefers-color-scheme. No build step. */
 :root {
   --bg: #fafafa; --panel: #ffffff; --panel-2: #f4f4f6; --line: #e6e6ea; --line-2: #d6d6dc;
   --text: #16161a; --muted: #6b6b76; --faint: #9a9aa5;

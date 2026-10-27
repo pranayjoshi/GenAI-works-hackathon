@@ -1,4 +1,4 @@
-/* Dry Run front end. Vanilla JS, no build step.
+/* Ripple front end. Vanilla JS, no build step.
  * Sections: 1 helpers | 2 api + status | 3 modal + drawer (agents, interviews) | 4 router
  *           5 setup | 6 runs list | 7 backtest | 8 run view (live) | 9 verdict | 10 report | 11 tools
  */
@@ -339,7 +339,7 @@ function setupView(_m, view) {
   };
 
   const audienceBox = h('div');
-  const runBtn = h('button.btn.primary.lg', 'Run Dry Run');
+  const runBtn = h('button.btn.primary.lg', 'Run Ripple');
   const proposeBtn = h('button.btn', 'Propose audience');
 
   function renderAudience() {
@@ -400,7 +400,7 @@ function setupView(_m, view) {
     if (S.audience && S.coreShareTouched) body.coreShare = S.coreShare;
     runBtn.disabled = true; mount(runBtn, spin(), ' Starting...');
     try { const r = await api('/api/runs', { method: 'POST', body }); location.hash = `#/run/${r.run_id}`; }
-    catch (e) { fail(e); runBtn.disabled = false; mount(runBtn, 'Run Dry Run'); }
+    catch (e) { fail(e); runBtn.disabled = false; mount(runBtn, 'Run Ripple'); }
   };
 
   view.append(
@@ -429,7 +429,7 @@ function setupView(_m, view) {
 
 /* ============================================================ 6. runs list */
 async function runsView(_m, view) {
-  view.append(h('div.hero', h('h1', 'Runs'), h('p', 'Every Dry Run on this machine, newest first.')));
+  view.append(h('div.hero', h('h1', 'Runs'), h('p', 'Every Ripple on this machine, newest first.')));
   const box = h('div', spin()); view.append(box);
   try {
     const list = await api('/api/runs');
@@ -467,7 +467,7 @@ async function backtestView(_m, view) {
     const r = runs[idx];
     const rate = (o) => (o.rate > 1 ? o.rate / 100 : o.rate ?? (o.n ? o.correct / o.n : 0));
     const rows = [
-      ['Dry Run crowd', r.scores.crowd, true], ['Single prompt (reasoning model)', r.scores.single_reason], ['Single prompt (crowd model)', r.scores.single_crowd],
+      ['Ripple crowd', r.scores.crowd, true], ['Single prompt (reasoning model)', r.scores.single_reason], ['Single prompt (crowd model)', r.scores.single_crowd],
     ].filter((x) => x[1]).map(([name, o, hero]) => {
       const rt = rate(o); const ci = o.ci && o.ci.length === 2 ? o.ci.map((v) => (v > 1 ? v / 100 : v)) : wilson(o.correct ?? rt * o.n, o.n);
       return { name, rt, ci, n: o.n, correct: o.correct, hero };

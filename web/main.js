@@ -1,4 +1,4 @@
-/* Dry Run front end entry. Vanilla ES modules, no build step.
+/* Ripple front end entry. Vanilla ES modules, no build step.
  * Routes lazy-load a view module whose default export is mount(viewEl, params) -> cleanup | void.
  * Route changes run inside the View Transitions API when the browser has it. */
 import { $, $$, clear } from './core/dom.js';

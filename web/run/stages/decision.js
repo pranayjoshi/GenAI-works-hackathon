@@ -171,7 +171,7 @@ export default {
           h('div.dc-kv', h('dt', 'Campaign'), h('dd', h('code', r.campaign_id))),
           ...(r.ad_sets || []).map((s) => h('div.dc-kv', h('dt', s.label), h('dd', h('code', `ad set ${s.ad_set_id || '-'}`), ' ', h('code', `ad ${s.ad_id || '-'}`))))) : null,
         r.ads_manager_url ? h('a.btn.sm', { href: r.ads_manager_url, target: '_blank', rel: 'noopener' }, 'Open in Ads Manager') : null,
-        h('details.dc-payloads', h('summary', `${(r.payloads || []).length} Graph API requests${live ? '' : ' (what Dry Run would send)'}`),
+        h('details.dc-payloads', h('summary', `${(r.payloads || []).length} Graph API requests${live ? '' : ' (what Ripple would send)'}`),
           h('pre', (r.payloads || []).map((p) => `POST /${p.path}\n${JSON.stringify(p.body, null, 2)}`).join('\n\n'))));
     }
     /* the agent's own check of Version C on the same crowd (set when the C run finishes) */

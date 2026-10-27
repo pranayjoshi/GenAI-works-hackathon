@@ -21,7 +21,7 @@ function outcome(o, t) {
   const c = typeof o.correct === 'number' ? o.correct : o.pick == null ? null : o.pick === 'tie' ? 0.5 : o.pick === t.real_winner ? 1 : 0;
   return c === 1 ? 'right' : c === 0 ? 'wrong' : c === 0.5 ? 'tie' : 'none';
 }
-const METHODS = [['crowd', 'Dry Run crowd'], ['single_reason', 'Single prompt (reasoning model)'], ['single_crowd', 'Single prompt (crowd model)']];
+const METHODS = [['crowd', 'Ripple crowd'], ['single_reason', 'Single prompt (reasoning model)'], ['single_crowd', 'Single prompt (crowd model)']];
 const TONE = { right: 'good', wrong: 'bad', tie: 'warn', none: '' };
 const runTitle = (r, i) => r.started || r.config?.created || r.created || `run ${i + 1}`;
 

@@ -1,8 +1,8 @@
 {
-  "name": "dry-run",
+  "name": "ripple",
   "version": "0.1.0",
   "private": true,
-  "description": "Dry Run: A/B test an ad on twin crowds of AI people sampled from real audience data.",
+  "description": "Ripple: A/B test an ad on twin crowds of AI people sampled from real audience data.",
   "type": "module",
   "license": "Apache-2.0",
   "engines": {

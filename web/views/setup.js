@@ -517,7 +517,7 @@ export default function mountSetup(view) {
   /* ---------- step 5: launch ---------- */
   const summary = h('div.su-summary');
   const fold = h('div.su-fold');
-  const runBtn = h('button.btn.primary.su-run', { onclick: launch }, 'Run Dry Run');
+  const runBtn = h('button.btn.primary.su-run', { onclick: launch }, 'Run Ripple');
   cleanups.push(magnetic(runBtn, 0.18));
   const foldLabel = h('div.su-fold-cap', 'Folding the two drafts into twin worlds...');
   const p4 = panel(4, 'One last look. Launching samples the crowd and starts both worlds.', null,
@@ -552,7 +552,7 @@ export default function mountSetup(view) {
       if (!reduced()) await sleepMs(Math.max(0, 1300 - (performance.now() - t0)));
       location.hash = `#/run/${r.run_id}`;
     } catch (e) {
-      fail(e); launching = false; runBtn.disabled = false; mount(runBtn, 'Run Dry Run');
+      fail(e); launching = false; runBtn.disabled = false; mount(runBtn, 'Run Ripple');
       fold.classList.remove('folding'); shell.classList.remove('launching');
     }
   }
