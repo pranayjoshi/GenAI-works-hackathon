@@ -12,6 +12,8 @@ Each section says what the sponsor tech does, why the feature needs it, and wher
 
 **Why load-bearing.** The crowd is sampled from these rows, and the spend decision uses the join. Without Zetaris the same SQL runs on DuckDB and the answers match (row counts compared on the five source tables), so the product still works, but the integration is real and shown in the trace.
 
+**Unified Semantic Layer.** USL `lightning.metastore.ripple.audience` was compiled and activated on the bundle with `COMPILE USL` / `ACTIVATE USL TABLE`. It has five entities built from the five sources, and data-quality rules registered and run with `REGISTER DQ` / `RUN DQ`. The USL and DQ statements go over JDBC (port 10000), because the REST API runs only SELECT. A USL query also runs over the app's REST client. Write-up, DDL and receipts: [docs/ZETARIS_USL.md](ZETARIS_USL.md). Reproduce: `scripts/zetaris-usl.sh` (then `npx tsx scripts/usl-handcoded-compare.ts` for the hand-coded comparison).
+
 ## Meterless Engine
 
 Three vendored reference engines (`engines/`, upstream github.com/Meterless/Meterless, unchanged) are imported by the code:

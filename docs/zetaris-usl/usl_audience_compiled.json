@@ -1,0 +1,388 @@
+{
+ "namespace": [
+  "metastore",
+  "ripple"
+ ],
+ "name": "audience",
+ "tables": [
+  {
+   "name": "population_by_age",
+   "columnSpecs": [
+    {
+     "name": "geo_id",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "geo_name",
+     "dataType": "\"string\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "release",
+     "dataType": "\"string\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "sex",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "age_lo",
+     "dataType": "\"integer\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "age_band",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "people",
+     "dataType": "\"long\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    }
+   ],
+   "unique": [],
+   "foreignKeys": [],
+   "checks": [],
+   "ifNotExit": true,
+   "namespace": [
+    "lightning",
+    "metastore",
+    "ripple",
+    "audience"
+   ],
+   "dqAnnotations": [],
+   "acAnnotations": []
+  },
+  {
+   "name": "platform_reach",
+   "columnSpecs": [
+    {
+     "name": "geo_id",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "geo_name",
+     "dataType": "\"string\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "platform",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "age_band",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "adults",
+     "dataType": "\"long\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "pct_ever_use",
+     "dataType": "\"double\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "reachable_users",
+     "dataType": "\"long\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    }
+   ],
+   "unique": [],
+   "foreignKeys": [],
+   "checks": [
+    {
+     "expression": "pct_ever_use>=0",
+     "name": "pct_not_negative"
+    },
+    {
+     "expression": "pct_ever_use<=100",
+     "name": "pct_at_most_100"
+    }
+   ],
+   "ifNotExit": true,
+   "namespace": [
+    "lightning",
+    "metastore",
+    "ripple",
+    "audience"
+   ],
+   "dqAnnotations": [],
+   "acAnnotations": []
+  },
+  {
+   "name": "behaviour_prior",
+   "columnSpecs": [
+    {
+     "name": "param",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "dimension",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "band",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "dist",
+     "dataType": "\"string\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "a",
+     "dataType": "\"double\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "b",
+     "dataType": "\"double\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "prior_mean",
+     "dataType": "\"double\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "label",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    }
+   ],
+   "unique": [],
+   "foreignKeys": [],
+   "checks": [],
+   "ifNotExit": true,
+   "namespace": [
+    "lightning",
+    "metastore",
+    "ripple",
+    "audience"
+   ],
+   "dqAnnotations": [],
+   "acAnnotations": []
+  },
+  {
+   "name": "customer",
+   "columnSpecs": [
+    {
+     "name": "customer_id",
+     "dataType": "\"string\"",
+     "primaryKey": {
+      "columns": []
+     },
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "age",
+     "dataType": "\"integer\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "age_band",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "zip",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "visits_per_month",
+     "dataType": "\"integer\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "avg_ticket",
+     "dataType": "\"double\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "monthly_spend",
+     "dataType": "\"double\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "tenure_months",
+     "dataType": "\"integer\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "label",
+     "dataType": "\"string\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    }
+   ],
+   "unique": [],
+   "foreignKeys": [],
+   "checks": [],
+   "ifNotExit": true,
+   "namespace": [
+    "lightning",
+    "metastore",
+    "ripple",
+    "audience"
+   ],
+   "dqAnnotations": [],
+   "acAnnotations": []
+  },
+  {
+   "name": "headline_package",
+   "columnSpecs": [
+    {
+     "name": "test_id",
+     "dataType": "\"string\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "headline",
+     "dataType": "\"string\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "impressions",
+     "dataType": "\"long\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "clicks",
+     "dataType": "\"long\"",
+     "notNull": {
+      "columns": []
+     },
+     "dqAnnotations": [],
+     "acAnnotations": []
+    },
+    {
+     "name": "ctr",
+     "dataType": "\"double\"",
+     "dqAnnotations": [],
+     "acAnnotations": []
+    }
+   ],
+   "unique": [],
+   "foreignKeys": [],
+   "checks": [],
+   "ifNotExit": true,
+   "namespace": [
+    "lightning",
+    "metastore",
+    "ripple",
+    "audience"
+   ],
+   "dqAnnotations": [],
+   "acAnnotations": []
+  }
+ ]
+}

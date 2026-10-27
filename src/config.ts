@@ -8,9 +8,12 @@ export type ProviderName = 'nightshift' | 'nvidia' | 'ollama';
 
 const env = (k: string, d = '') => process.env[k] ?? d;
 const num = (k: string, d: number) => (process.env[k] ? Number(process.env[k]) : d);
+/** First non-empty of several names, so the hackathon guide's METERLESS_* and ZETARIS_REST_URL names work too. */
+const envAny = (keys: string[], d = '') => keys.map((k) => process.env[k]).find(Boolean) ?? d;
 
 function nightshiftToken(): string {
-  if (env('NIGHTSHIFT_TOKEN')) return env('NIGHTSHIFT_TOKEN');
+  const token = envAny(['NIGHTSHIFT_TOKEN', 'METERLESS_RUNTIME_TOKEN']);
+  if (token) return token;
   const candidates = [
     env('NIGHTSHIFT_STATE_DIR') && path.join(env('NIGHTSHIFT_STATE_DIR'), 'proxy-token'),
     path.join(os.homedir(), 'Library/Application Support/ai.meterless.runtime/proxy-token'),
@@ -53,7 +56,7 @@ export const config = {
   crowdPrompt: env('CROWD_PROMPT', 'v1') as 'v1' | 'v2',   // pacing per crowd call in SAMPLE_MODE so replays look live
   providers: (env('PROVIDERS', 'nightshift,nvidia,ollama').split(',').map((s) => s.trim()).filter(Boolean)) as ProviderName[],
   nightshift: {
-    baseUrl: env('NIGHTSHIFT_BASE_URL', 'http://127.0.0.1:8088/v1'),
+    baseUrl: envAny(['NIGHTSHIFT_BASE_URL', 'METERLESS_BASE_URL'], 'http://127.0.0.1:8088/v1'),
     token: nightshiftToken(),
     app: env('NIGHTSHIFT_APP', 'dryrun'),
     models: HOSTED,
@@ -84,7 +87,8 @@ export const config = {
     dailyBudgetCents: num('META_DAILY_BUDGET_CENTS', 500),
   },
   zetaris: {
-    baseUrl: env('ZETARIS_BASE_URL'), // e.g. https://api.saas.enterprise.zetaris.com or a local Docker host
+    // ZETARIS_REST_URL (guide style, ends in /api/v1.0) is accepted and trimmed to the host
+    baseUrl: env('ZETARIS_BASE_URL') || env('ZETARIS_REST_URL').replace(/\/api\/v1\.0\/?$/, ''), // e.g. https://api.saas.enterprise.zetaris.com or a local Docker host
     user: env('ZETARIS_USER'),
     password: env('ZETARIS_PASSWORD'),
     apiKey: env('ZETARIS_API_KEY'),

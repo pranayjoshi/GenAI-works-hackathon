@@ -1,0 +1,6 @@
+{"id":"src_census_acs","question":"","sql":"SELECT COUNT(*) AS n FROM dryrun.census_acs","ok":true,"ms":254,"columns":["n"],"row_count":1,"rows":[["286"]]}
+{"id":"src_census_acs_zips","question":"","sql":"SELECT COUNT(*) AS n FROM dryrun.census_acs_zips","ok":true,"ms":159,"columns":["n"],"row_count":1,"rows":[["572"]]}
+{"id":"src_pew","question":"","sql":"SELECT COUNT(*) AS n FROM dryrun.pew_platform_use","ok":true,"ms":169,"columns":["n"],"row_count":1,"rows":[["36"]]}
+{"id":"src_priors","question":"","sql":"SELECT COUNT(*) AS n FROM dryrun.priors_behaviour","ok":true,"ms":144,"columns":["n"],"row_count":1,"rows":[["28"]]}
+{"id":"src_customers","question":"","sql":"SELECT COUNT(*) AS n FROM dryrun.biz_customers","ok":true,"ms":144,"columns":["n"],"row_count":1,"rows":[["640"]]}
+{"id":"src_upworthy","question":"","sql":"SELECT COUNT(*) AS n FROM dryrun.upworthy_tests","ok":true,"ms":4535,"columns":["n"],"row_count":1,"rows":[["22666"]]}

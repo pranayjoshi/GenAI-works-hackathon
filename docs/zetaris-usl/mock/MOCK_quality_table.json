@@ -1,0 +1,78 @@
+{
+ "MOCK": "Proposed feature, not a Zetaris output format. Counts are copied from real Zetaris results in docs/zetaris-usl/receipts.json; table name, columns, severity and status are the proposal.",
+ "table": "lightning.metastore.ripple.audience_v2.__quality",
+ "generated_from": "docs/zetaris-usl/receipts.json",
+ "receipts_generated_at": "2026-10-27T20:55:04.975Z",
+ "rows": [
+  {
+   "rule": "reach_pct_in_range",
+   "table_name": "platform_reach",
+   "kind": "Custom Data Quality",
+   "severity": "ERROR",
+   "total_record": 96,
+   "invalid_record": 0,
+   "status": "pass",
+   "source": "real: receipts dq_run_reach"
+  },
+  {
+   "rule": "customer_is_adult_with_ticket",
+   "table_name": "customer",
+   "kind": "Custom Data Quality",
+   "severity": "ERROR",
+   "total_record": 640,
+   "invalid_record": 0,
+   "status": "pass",
+   "source": "real: receipts dq_run_customer"
+  },
+  {
+   "rule": "headline_clicks_within_impressions",
+   "table_name": "headline_package",
+   "kind": "Custom Data Quality",
+   "severity": "ERROR",
+   "total_record": 22666,
+   "invalid_record": 0,
+   "status": "pass",
+   "source": "real: receipts dq_run_headline"
+  },
+  {
+   "rule": "backtest_min_impressions",
+   "table_name": "headline_package",
+   "kind": "Custom Data Quality",
+   "severity": "WARN",
+   "total_record": 22666,
+   "invalid_record": 41,
+   "status": "warn",
+   "source": "real: receipts dq_run_backtest"
+  },
+  {
+   "rule": "customer_id",
+   "table_name": "customer",
+   "kind": "Primary Key Constraint",
+   "severity": "ERROR",
+   "total_record": 640,
+   "invalid_record": 0,
+   "status": "pass",
+   "source": "real: receipts dq_run_primary_key"
+  },
+  {
+   "rule": "pct_not_negative",
+   "table_name": "platform_reach",
+   "kind": "CHECK constraint (from DDL)",
+   "severity": "ERROR",
+   "total_record": 96,
+   "invalid_record": 0,
+   "status": "pass",
+   "source": "real counts via SELECT workaround: receipts dq_check_constraints_as_select"
+  },
+  {
+   "rule": "pct_at_most_100",
+   "table_name": "platform_reach",
+   "kind": "CHECK constraint (from DDL)",
+   "severity": "ERROR",
+   "total_record": 96,
+   "invalid_record": 0,
+   "status": "pass",
+   "source": "real counts via SELECT workaround: receipts dq_check_constraints_as_select"
+  }
+ ]
+}

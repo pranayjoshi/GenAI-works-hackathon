@@ -1,5 +1,11 @@
 node_modules/
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials/
 .DS_Store
 runs/*
 !runs/.gitkeep

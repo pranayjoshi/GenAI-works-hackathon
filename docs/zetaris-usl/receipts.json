@@ -1,0 +1,2000 @@
+{
+ "generated_at": "2026-10-27T20:55:04.975Z",
+ "engine": "Zetaris Lightning 2.4.3 (local hackathon bundle). JDBC jdbc:zetaris:lightning@localhost:10000 through scripts/zetaris-usl/LightningRunner.java; 06_rest_api through the REST API with the app client",
+ "note": "Every row here was returned by Zetaris. Row lists are capped at 50 per statement (row_count is the full count). Errors are the real messages. 00_onboard is the receipt of the first run (later runs find the table and skip it).",
+ "totals": {
+  "statements": 58,
+  "ok": 54,
+  "failed": [
+   "activate_contract_demo_rejected",
+   "dq_run_check_constraint",
+   "dq_list_via_rest_api",
+   "dq_run_via_rest_api"
+  ],
+  "total_ms": 90908
+ },
+ "steps": [
+  {
+   "file": "docs/zetaris-usl/receipts/00_onboard_census_zips.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/00_onboard_census_zips.sql",
+   "statements": [
+    {
+     "id": "onboard_census_acs_zips",
+     "question": "",
+     "sql": "CREATE LIGHTNING FILESTORE TABLE census_acs_zips FROM dryrun FORMAT csv OPTIONS (path \"/home/zetaris/customer-data/shared/dryrun/data/cache/census_usl.csv\", header \"true\", inferSchema \"true\")",
+     "ok": true,
+     "ms": 7690,
+     "columns": [
+      "Result"
+     ],
+     "row_count": 0,
+     "rows": []
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/00_sources.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/00_sources.sql",
+   "statements": [
+    {
+     "id": "src_census_acs",
+     "question": "",
+     "sql": "SELECT COUNT(*) AS n FROM dryrun.census_acs",
+     "ok": true,
+     "ms": 254,
+     "columns": [
+      "n"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "286"
+      ]
+     ]
+    },
+    {
+     "id": "src_census_acs_zips",
+     "question": "",
+     "sql": "SELECT COUNT(*) AS n FROM dryrun.census_acs_zips",
+     "ok": true,
+     "ms": 159,
+     "columns": [
+      "n"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "572"
+      ]
+     ]
+    },
+    {
+     "id": "src_pew",
+     "question": "",
+     "sql": "SELECT COUNT(*) AS n FROM dryrun.pew_platform_use",
+     "ok": true,
+     "ms": 169,
+     "columns": [
+      "n"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "36"
+      ]
+     ]
+    },
+    {
+     "id": "src_priors",
+     "question": "",
+     "sql": "SELECT COUNT(*) AS n FROM dryrun.priors_behaviour",
+     "ok": true,
+     "ms": 144,
+     "columns": [
+      "n"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "28"
+      ]
+     ]
+    },
+    {
+     "id": "src_customers",
+     "question": "",
+     "sql": "SELECT COUNT(*) AS n FROM dryrun.biz_customers",
+     "ok": true,
+     "ms": 144,
+     "columns": [
+      "n"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "640"
+      ]
+     ]
+    },
+    {
+     "id": "src_upworthy",
+     "question": "",
+     "sql": "SELECT COUNT(*) AS n FROM dryrun.upworthy_tests",
+     "ok": true,
+     "ms": 4535,
+     "columns": [
+      "n"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "22666"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/01_explore.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/01_explore.sql",
+   "statements": [
+    {
+     "id": "census_q1_geographies",
+     "question": "Which geographies and releases are loaded, and how many cells each?",
+     "sql": "SELECT geo_id, geo_name, release, COUNT(*) AS cells FROM dryrun.census_acs_zips GROUP BY geo_id, geo_name, release ORDER BY geo_id",
+     "ok": true,
+     "ms": 1927,
+     "columns": [
+      "geo_id",
+      "geo_name",
+      "release",
+      "cells"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "01000US",
+       "United States",
+       "ACS 2024 1-year",
+       "143"
+      ],
+      [
+       "86000US43201",
+       "43201",
+       "ACS 2024 5-year",
+       "143"
+      ],
+      [
+       "86000US60622",
+       "60622",
+       "ACS 2024 5-year",
+       "143"
+      ],
+      [
+       "86000US78704",
+       "78704",
+       "ACS 2024 5-year",
+       "143"
+      ]
+     ]
+    },
+    {
+     "id": "census_q2_population",
+     "question": "Total population per geography (B01001001 = Total).",
+     "sql": "SELECT geo_id, geo_name, estimate AS population, moe FROM dryrun.census_acs_zips WHERE column_id = 'B01001001' ORDER BY population DESC",
+     "ok": true,
+     "ms": 671,
+     "columns": [
+      "geo_id",
+      "geo_name",
+      "population",
+      "moe"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "01000US",
+       "United States",
+       "340110980",
+       null
+      ],
+      [
+       "86000US60622",
+       "60622",
+       "54609",
+       "2137"
+      ],
+      [
+       "86000US78704",
+       "78704",
+       "50688",
+       "2711"
+      ],
+      [
+       "86000US43201",
+       "43201",
+       "34322",
+       "1588"
+      ]
+     ]
+    },
+    {
+     "id": "census_q3_degree_share_78704",
+     "question": "Share of adults 25+ in ZIP 78704 with a bachelor's degree or higher (B15003 022-025 over 001).",
+     "sql": "SELECT ROUND(SUM(CASE WHEN column_id IN ('B15003022','B15003023','B15003024','B15003025') THEN estimate ELSE 0 END) * 1.0 / MAX(CASE WHEN column_id = 'B15003001' THEN estimate END), 3) AS bachelors_plus_share FROM dryrun.census_acs_zips WHERE geo_id = '86000US78704' AND table_id = 'B15003'",
+     "ok": true,
+     "ms": 470,
+     "columns": [
+      "bachelors_plus_share"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "0.705"
+      ]
+     ]
+    },
+    {
+     "id": "pew_q1_coverage",
+     "question": "Which platforms and dimensions does the fact sheet extract cover?",
+     "sql": "SELECT platform, dimension, COUNT(*) AS bands FROM dryrun.pew_platform_use GROUP BY platform, dimension ORDER BY platform, dimension",
+     "ok": true,
+     "ms": 2361,
+     "columns": [
+      "platform",
+      "dimension",
+      "bands"
+     ],
+     "row_count": 12,
+     "rows": [
+      [
+       "facebook",
+       "age",
+       "4"
+      ],
+      [
+       "facebook",
+       "gender",
+       "2"
+      ],
+      [
+       "instagram",
+       "age",
+       "4"
+      ],
+      [
+       "instagram",
+       "gender",
+       "2"
+      ],
+      [
+       "reddit",
+       "age",
+       "4"
+      ],
+      [
+       "reddit",
+       "gender",
+       "2"
+      ],
+      [
+       "tiktok",
+       "age",
+       "4"
+      ],
+      [
+       "tiktok",
+       "gender",
+       "2"
+      ],
+      [
+       "x",
+       "age",
+       "4"
+      ],
+      [
+       "x",
+       "gender",
+       "2"
+      ],
+      [
+       "youtube",
+       "age",
+       "4"
+      ],
+      [
+       "youtube",
+       "gender",
+       "2"
+      ]
+     ]
+    },
+    {
+     "id": "pew_q2_instagram_by_age",
+     "question": "Instagram use by age band (percent of US adults who ever use it).",
+     "sql": "SELECT band, pct_us_adults_ever_use FROM dryrun.pew_platform_use WHERE platform = 'instagram' AND dimension = 'age' ORDER BY band",
+     "ok": true,
+     "ms": 854,
+     "columns": [
+      "band",
+      "pct_us_adults_ever_use"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "18-29",
+       "79"
+      ],
+      [
+       "30-49",
+       "64"
+      ],
+      [
+       "50-64",
+       "41"
+      ],
+      [
+       "65+",
+       "21"
+      ]
+     ]
+    },
+    {
+     "id": "pew_q3_top_platform_18_29",
+     "question": "Which platform reaches the most 18-29 year olds?",
+     "sql": "SELECT platform, pct_us_adults_ever_use FROM dryrun.pew_platform_use WHERE dimension = 'age' AND band = '18-29' ORDER BY pct_us_adults_ever_use DESC",
+     "ok": true,
+     "ms": 269,
+     "columns": [
+      "platform",
+      "pct_us_adults_ever_use"
+     ],
+     "row_count": 6,
+     "rows": [
+      [
+       "youtube",
+       "95"
+      ],
+      [
+       "instagram",
+       "79"
+      ],
+      [
+       "facebook",
+       "69"
+      ],
+      [
+       "tiktok",
+       "65"
+      ],
+      [
+       "reddit",
+       "40"
+      ],
+      [
+       "x",
+       "31"
+      ]
+     ]
+    },
+    {
+     "id": "priors_q1_labels",
+     "question": "How many priors are MODELED PRIOR vs ASSUMED?",
+     "sql": "SELECT label, COUNT(*) AS n FROM dryrun.priors_behaviour GROUP BY label ORDER BY n DESC",
+     "ok": true,
+     "ms": 494,
+     "columns": [
+      "label",
+      "n"
+     ],
+     "row_count": 2,
+     "rows": [
+      [
+       "MODELED PRIOR",
+       "19"
+      ],
+      [
+       "ASSUMED",
+       "9"
+      ]
+     ]
+    },
+    {
+     "id": "priors_q2_params",
+     "question": "Which parameters exist, over which dimension, with which distribution?",
+     "sql": "SELECT param, dimension, dist, COUNT(*) AS bands FROM dryrun.priors_behaviour GROUP BY param, dimension, dist ORDER BY param",
+     "ok": true,
+     "ms": 294,
+     "columns": [
+      "param",
+      "dimension",
+      "dist",
+      "bands"
+     ],
+     "row_count": 7,
+     "rows": [
+      [
+       "customer_share",
+       "role",
+       "rate",
+       "2"
+      ],
+      [
+       "daily_minutes",
+       "age",
+       "lognormal",
+       "6"
+      ],
+      [
+       "influence",
+       "all",
+       "lognormal",
+       "1"
+      ],
+      [
+       "price_sensitivity",
+       "income",
+       "beta",
+       "6"
+      ],
+      [
+       "skepticism",
+       "age",
+       "beta",
+       "6"
+      ],
+      [
+       "speak_p",
+       "age",
+       "beta",
+       "6"
+      ],
+      [
+       "susceptibility",
+       "all",
+       "beta",
+       "1"
+      ]
+     ]
+    },
+    {
+     "id": "priors_q3_price_sensitivity_mean",
+     "question": "Mean price sensitivity by income band (Beta mean a / (a + b)).",
+     "sql": "SELECT band, a, b, ROUND(a / (a + b), 3) AS beta_mean FROM dryrun.priors_behaviour WHERE param = 'price_sensitivity' ORDER BY beta_mean DESC",
+     "ok": true,
+     "ms": 345,
+     "columns": [
+      "band",
+      "a",
+      "b",
+      "beta_mean"
+     ],
+     "row_count": 6,
+     "rows": [
+      [
+       "<$25k",
+       "6.0",
+       "2.0",
+       "0.75"
+      ],
+      [
+       "$25-50k",
+       "5.0",
+       "3.0",
+       "0.625"
+      ],
+      [
+       "$50-75k",
+       "4.0",
+       "4.0",
+       "0.5"
+      ],
+      [
+       "$75-100k",
+       "3.0",
+       "4.0",
+       "0.429"
+      ],
+      [
+       "$100-150k",
+       "2.5",
+       "5.0",
+       "0.333"
+      ],
+      [
+       "$150k+",
+       "2.0",
+       "6.0",
+       "0.25"
+      ]
+     ]
+    },
+    {
+     "id": "customers_q1_profile",
+     "question": "How many customers, and their average age, visits and ticket?",
+     "sql": "SELECT COUNT(*) AS customers, ROUND(AVG(age), 1) AS avg_age, ROUND(AVG(visits_per_month), 2) AS avg_visits, ROUND(AVG(avg_ticket), 2) AS avg_ticket FROM dryrun.biz_customers",
+     "ok": true,
+     "ms": 297,
+     "columns": [
+      "customers",
+      "avg_age",
+      "avg_visits",
+      "avg_ticket"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "640",
+       "34.4",
+       "5.63",
+       "5.36"
+      ]
+     ]
+    },
+    {
+     "id": "customers_q2_by_zip",
+     "question": "Where do customers live (top ZIPs)?",
+     "sql": "SELECT zip, COUNT(*) AS customers FROM dryrun.biz_customers GROUP BY zip ORDER BY customers DESC LIMIT 5",
+     "ok": true,
+     "ms": 348,
+     "columns": [
+      "zip",
+      "customers"
+     ],
+     "row_count": 5,
+     "rows": [
+      [
+       "78704",
+       "406"
+      ],
+      [
+       "78703",
+       "54"
+      ],
+      [
+       "78745",
+       "49"
+      ],
+      [
+       "78701",
+       "45"
+      ],
+      [
+       "78741",
+       "43"
+      ]
+     ]
+    },
+    {
+     "id": "customers_q3_monthly_value_by_age",
+     "question": "Monthly spend per customer by age band.",
+     "sql": "SELECT CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band, COUNT(*) AS customers, ROUND(AVG(visits_per_month * avg_ticket), 2) AS avg_monthly_spend FROM dryrun.biz_customers GROUP BY 1 ORDER BY 1",
+     "ok": true,
+     "ms": 474,
+     "columns": [
+      "age_band",
+      "customers",
+      "avg_monthly_spend"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "18-29",
+       "221",
+       "33.71"
+      ],
+      [
+       "30-49",
+       "367",
+       "29.6"
+      ],
+      [
+       "50-64",
+       "39",
+       "27.29"
+      ],
+      [
+       "65+",
+       "13",
+       "24.79"
+      ]
+     ]
+    },
+    {
+     "id": "upworthy_q1_size",
+     "question": "How many packages and distinct tests, over which dates?",
+     "sql": "SELECT COUNT(*) AS packages, COUNT(DISTINCT clickability_test_id) AS tests, MIN(created_at) AS first_created, MAX(created_at) AS last_created FROM dryrun.upworthy_tests",
+     "ok": true,
+     "ms": 5043,
+     "columns": [
+      "packages",
+      "tests",
+      "first_created",
+      "last_created"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "22666",
+       "4873",
+       "2013-01-26 20:10:36.0",
+       "2015-04-29 22:46:43.618"
+      ]
+     ]
+    },
+    {
+     "id": "upworthy_q2_packages_per_test",
+     "question": "How many packages does a test usually compare?",
+     "sql": "SELECT packages_in_test, COUNT(*) AS tests FROM (SELECT clickability_test_id, COUNT(*) AS packages_in_test FROM dryrun.upworthy_tests GROUP BY clickability_test_id) t GROUP BY packages_in_test ORDER BY packages_in_test LIMIT 12",
+     "ok": true,
+     "ms": 2937,
+     "columns": [
+      "packages_in_test",
+      "tests"
+     ],
+     "row_count": 12,
+     "rows": [
+      [
+       "2",
+       "127"
+      ],
+      [
+       "3",
+       "182"
+      ],
+      [
+       "4",
+       "2516"
+      ],
+      [
+       "5",
+       "928"
+      ],
+      [
+       "6",
+       "865"
+      ],
+      [
+       "7",
+       "134"
+      ],
+      [
+       "8",
+       "86"
+      ],
+      [
+       "9",
+       "18"
+      ],
+      [
+       "10",
+       "7"
+      ],
+      [
+       "11",
+       "8"
+      ],
+      [
+       "12",
+       "1"
+      ],
+      [
+       "14",
+       "1"
+      ]
+     ]
+    },
+    {
+     "id": "upworthy_q3_ctr",
+     "question": "Overall click-through rate, and the spread of package CTRs with 1000+ impressions.",
+     "sql": "SELECT COUNT(*) AS packages_1000plus, ROUND(SUM(clicks) * 1.0 / SUM(impressions), 4) AS pooled_ctr, ROUND(MIN(clicks * 1.0 / impressions), 4) AS min_ctr, ROUND(MAX(clicks * 1.0 / impressions), 4) AS max_ctr FROM dryrun.upworthy_tests WHERE impressions >= 1000",
+     "ok": true,
+     "ms": 2400,
+     "columns": [
+      "packages_1000plus",
+      "pooled_ctr",
+      "min_ctr",
+      "max_ctr"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "22625",
+       "0.0152",
+       "0.0000",
+       "0.1361"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/02_usl_ddl.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/02_usl_ddl.sql",
+   "statements": [
+    {
+     "id": "ns_metastore",
+     "question": "",
+     "sql": "CREATE NAMESPACE IF NOT EXISTS lightning.metastore",
+     "ok": true,
+     "ms": 201,
+     "columns": [
+      "Result"
+     ],
+     "row_count": 0,
+     "rows": []
+    },
+    {
+     "id": "ns_ripple",
+     "question": "",
+     "sql": "CREATE NAMESPACE IF NOT EXISTS lightning.metastore.ripple",
+     "ok": true,
+     "ms": 44,
+     "columns": [
+      "Result"
+     ],
+     "row_count": 0,
+     "rows": []
+    },
+    {
+     "id": "compile_usl_audience",
+     "question": "USL \"audience\": the business entities Ripple's audience builder needs, independent of which file they come from.",
+     "sql": "COMPILE USL IF NOT EXISTS audience DEPLOY NAMESPACE lightning.metastore.ripple DDL\nCREATE TABLE IF NOT EXISTS population_by_age (\n  geo_id STRING NOT NULL,\n  geo_name STRING,\n  release STRING,\n  sex STRING NOT NULL,\n  age_lo INT NOT NULL,\n  age_band STRING NOT NULL,\n  people BIGINT NOT NULL\n);\nCREATE TABLE IF NOT EXISTS platform_reach (\n  geo_id STRING NOT NULL,\n  geo_name STRING,\n  platform STRING NOT NULL,\n  age_band STRING NOT NULL,\n  adults BIGINT NOT NULL,\n  pct_ever_use DOUBLE NOT NULL,\n  reachable_users BIGINT NOT NULL,\n  CONSTRAINT pct_not_negative CHECK (pct_ever_use >= 0),\n  CONSTRAINT pct_at_most_100 CHECK (pct_ever_use <= 100)\n);\nCREATE TABLE IF NOT EXISTS behaviour_prior (\n  param STRING NOT NULL,\n  dimension STRING NOT NULL,\n  band STRING NOT NULL,\n  dist STRING,\n  a DOUBLE,\n  b DOUBLE,\n  prior_mean DOUBLE,\n  label STRING NOT NULL\n);\nCREATE TABLE IF NOT EXISTS customer (\n  customer_id STRING NOT NULL PRIMARY KEY,\n  age INT NOT NULL,\n  age_band STRING NOT NULL,\n  zip STRING NOT NULL,\n  visits_per_month INT,\n  avg_ticket DOUBLE,\n  monthly_spend DOUBLE,\n  tenure_months INT,\n  label STRING\n);\nCREATE TABLE IF NOT EXISTS headline_package (\n  test_id STRING NOT NULL,\n  headline STRING,\n  impressions BIGINT NOT NULL,\n  clicks BIGINT NOT NULL,\n  ctr DOUBLE\n)",
+     "ok": true,
+     "ms": 201,
+     "columns": [
+      "json"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"namespace\":[\"metastore\",\"ripple\"],\"name\":\"audience\",\"tables\":[{\"name\":\"population_by_age\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"release\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"sex\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_lo\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"people\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"platform_reach\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"platform\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"adults\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"pct_ever_use\",\"dataType\":\"\\\"double\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"reachable_users\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[{\"expression\":\"pct_ever_use>=0\",\"name\":\"pct_not_negative\"},{\"expression\":\"pct_ever_use<=100\",\"name\":\"pct_at_most_100\"}],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"behaviour_prior\",\"columnSpecs\":[{\"name\":\"param\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dimension\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dist\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"a\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"b\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"prior_mean\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"customer\",\"columnSpecs\":[{\"name\":\"customer_id\",\"dataType\":\"\\\"string\\\"\",\"primaryKey\":{\"columns\":[]},\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"zip\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"visits_per_month\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"avg_ticket\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"monthly_spend\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"tenure_months\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"headline_package\",\"columnSpecs\":[{\"name\":\"test_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"headline\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"impressions\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"clicks\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"ctr\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[]}]}"
+      ]
+     ]
+    },
+    {
+     "id": "show_usl",
+     "question": "",
+     "sql": "SHOW NAMESPACES OR TABLES IN lightning.metastore.ripple.audience",
+     "ok": true,
+     "ms": 105,
+     "columns": [
+      "name",
+      "type",
+      "usl_id",
+      "count",
+      "activated"
+     ],
+     "row_count": 5,
+     "rows": [
+      [
+       "behaviour_prior",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "customer",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "headline_package",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "platform_reach",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "population_by_age",
+       "table",
+       null,
+       "0",
+       "true"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/03_activate.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/03_activate.sql",
+   "statements": [
+    {
+     "id": "activate_population_by_age",
+     "question": "Census B01001 sex-by-age cells, one row per geography x sex x age cell, with a Pew-compatible age band.",
+     "sql": "ACTIVATE USL TABLE lightning.metastore.ripple.audience.population_by_age AS\nSELECT COALESCE(geo_id, '') AS geo_id, geo_name, release,\n  CASE WHEN CAST(substr(column_id, 7, 3) AS INT) <= 25 THEN 'male' ELSE 'female' END AS sex,\n  COALESCE(CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END, 0) AS age_lo,\n  CASE WHEN column_name LIKE 'Under%' THEN 'under 18'\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 18 THEN 'under 18'\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 30 THEN '18-29'\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 50 THEN '30-49'\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 65 THEN '50-64' ELSE '65+' END AS age_band,\n  COALESCE(CAST(estimate AS BIGINT), CAST(0 AS BIGINT)) AS people\nFROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2",
+     "ok": true,
+     "ms": 454,
+     "columns": [
+      "registered"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"name\":\"population_by_age\",\"query\":\"SELECT COALESCE(geo_id, '') AS geo_id, geo_name, release,\\n  CASE WHEN CAST(substr(column_id, 7, 3) AS INT) <= 25 THEN 'male' ELSE 'female' END AS sex,\\n  COALESCE(CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END, 0) AS age_lo,\\n  CASE WHEN column_name LIKE 'Under%' THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 18 THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 30 THEN '18-29'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 50 THEN '30-49'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(estimate AS BIGINT), CAST(0 AS BIGINT)) AS people\\nFROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\"}"
+      ]
+     ]
+    },
+    {
+     "id": "activate_platform_reach",
+     "question": "The Census x Pew join the app uses for audience size, for every platform: adults per age band x Pew ever-use rate.",
+     "sql": "ACTIVATE USL TABLE lightning.metastore.ripple.audience.platform_reach AS\nWITH ages AS (\n  SELECT geo_id, geo_name, CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END AS age_lo, CAST(estimate AS BIGINT) AS estimate\n  FROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\n), banded AS (\n  SELECT geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults\n  FROM ages GROUP BY geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END\n)\nSELECT COALESCE(b.geo_id, '') AS geo_id, b.geo_name, COALESCE(p.platform, '') AS platform, COALESCE(b.band, '') AS age_band,\n  COALESCE(b.adults, CAST(0 AS BIGINT)) AS adults,\n  COALESCE(CAST(p.pct_us_adults_ever_use AS DOUBLE), CAST(0 AS DOUBLE)) AS pct_ever_use,\n  COALESCE(CAST(ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS BIGINT), CAST(0 AS BIGINT)) AS reachable_users\nFROM banded b JOIN dryrun.pew_platform_use p ON p.dimension = 'age' AND p.band = b.band\nWHERE b.band IS NOT NULL",
+     "ok": true,
+     "ms": 250,
+     "columns": [
+      "registered"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"name\":\"platform_reach\",\"query\":\"WITH ages AS (\\n  SELECT geo_id, geo_name, CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END AS age_lo, CAST(estimate AS BIGINT) AS estimate\\n  FROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\\n), banded AS (\\n  SELECT geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults\\n  FROM ages GROUP BY geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END\\n)\\nSELECT COALESCE(b.geo_id, '') AS geo_id, b.geo_name, COALESCE(p.platform, '') AS platform, COALESCE(b.band, '') AS age_band,\\n  COALESCE(b.adults, CAST(0 AS BIGINT)) AS adults,\\n  COALESCE(CAST(p.pct_us_adults_ever_use AS DOUBLE), CAST(0 AS DOUBLE)) AS pct_ever_use,\\n  COALESCE(CAST(ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS BIGINT), CAST(0 AS BIGINT)) AS reachable_users\\nFROM banded b JOIN dryrun.pew_platform_use p ON p.dimension = 'age' AND p.band = b.band\\nWHERE b.band IS NOT NULL\"}"
+      ]
+     ]
+    },
+    {
+     "id": "activate_behaviour_prior",
+     "question": "Behaviour priors with their mean (Beta: a / (a + b)); the label says MODELED PRIOR or ASSUMED.",
+     "sql": "ACTIVATE USL TABLE lightning.metastore.ripple.audience.behaviour_prior AS\nSELECT COALESCE(param, '') AS param, COALESCE(dimension, '') AS dimension, COALESCE(band, '') AS band, dist,\n  CAST(a AS DOUBLE) AS a, CAST(b AS DOUBLE) AS b,\n  CASE WHEN dist = 'beta' THEN CAST(a AS DOUBLE) / (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) ELSE CAST(NULL AS DOUBLE) END AS prior_mean,\n  COALESCE(label, '') AS label\nFROM dryrun.priors_behaviour",
+     "ok": true,
+     "ms": 126,
+     "columns": [
+      "registered"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"name\":\"behaviour_prior\",\"query\":\"SELECT COALESCE(param, '') AS param, COALESCE(dimension, '') AS dimension, COALESCE(band, '') AS band, dist,\\n  CAST(a AS DOUBLE) AS a, CAST(b AS DOUBLE) AS b,\\n  CASE WHEN dist = 'beta' THEN CAST(a AS DOUBLE) / (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) ELSE CAST(NULL AS DOUBLE) END AS prior_mean,\\n  COALESCE(label, '') AS label\\nFROM dryrun.priors_behaviour\"}"
+      ]
+     ]
+    },
+    {
+     "id": "activate_customer",
+     "question": "The business's customer list with a Pew-compatible age band and monthly spend.",
+     "sql": "ACTIVATE USL TABLE lightning.metastore.ripple.audience.customer AS\nSELECT COALESCE(customer_id, '') AS customer_id, COALESCE(CAST(age AS INT), 0) AS age,\n  CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band,\n  COALESCE(CAST(zip AS STRING), '') AS zip, CAST(visits_per_month AS INT) AS visits_per_month, CAST(avg_ticket AS DOUBLE) AS avg_ticket,\n  CAST(visits_per_month * avg_ticket AS DOUBLE) AS monthly_spend, CAST(tenure_months AS INT) AS tenure_months, label\nFROM dryrun.biz_customers",
+     "ok": true,
+     "ms": 127,
+     "columns": [
+      "registered"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"name\":\"customer\",\"query\":\"SELECT COALESCE(customer_id, '') AS customer_id, COALESCE(CAST(age AS INT), 0) AS age,\\n  CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(zip AS STRING), '') AS zip, CAST(visits_per_month AS INT) AS visits_per_month, CAST(avg_ticket AS DOUBLE) AS avg_ticket,\\n  CAST(visits_per_month * avg_ticket AS DOUBLE) AS monthly_spend, CAST(tenure_months AS INT) AS tenure_months, label\\nFROM dryrun.biz_customers\"}"
+      ]
+     ]
+    },
+    {
+     "id": "activate_headline_package",
+     "question": "Upworthy headline packages with CTR, for the backtest.",
+     "sql": "ACTIVATE USL TABLE lightning.metastore.ripple.audience.headline_package AS\nSELECT COALESCE(clickability_test_id, '') AS test_id, headline,\n  COALESCE(CAST(impressions AS BIGINT), CAST(0 AS BIGINT)) AS impressions, COALESCE(CAST(clicks AS BIGINT), CAST(0 AS BIGINT)) AS clicks,\n  CASE WHEN CAST(impressions AS BIGINT) > 0 THEN CAST(clicks AS DOUBLE) / CAST(impressions AS DOUBLE) ELSE CAST(NULL AS DOUBLE) END AS ctr\nFROM dryrun.upworthy_tests",
+     "ok": true,
+     "ms": 135,
+     "columns": [
+      "registered"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"name\":\"headline_package\",\"query\":\"SELECT COALESCE(clickability_test_id, '') AS test_id, headline,\\n  COALESCE(CAST(impressions AS BIGINT), CAST(0 AS BIGINT)) AS impressions, COALESCE(CAST(clicks AS BIGINT), CAST(0 AS BIGINT)) AS clicks,\\n  CASE WHEN CAST(impressions AS BIGINT) > 0 THEN CAST(clicks AS DOUBLE) / CAST(impressions AS DOUBLE) ELSE CAST(NULL AS DOUBLE) END AS ctr\\nFROM dryrun.upworthy_tests\"}"
+      ]
+     ]
+    },
+    {
+     "id": "compile_contract_demo",
+     "question": "A second, tiny USL used only to show the schema contract: it declares adults as NOT NULL.",
+     "sql": "COMPILE USL IF NOT EXISTS contract_demo DEPLOY NAMESPACE lightning.metastore.ripple DDL\nCREATE TABLE IF NOT EXISTS reach_strict (geo_id STRING NOT NULL, adults BIGINT NOT NULL)",
+     "ok": true,
+     "ms": 61,
+     "columns": [
+      "json"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"namespace\":[\"metastore\",\"ripple\"],\"name\":\"contract_demo\",\"tables\":[{\"name\":\"reach_strict\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"adults\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"contract_demo\"],\"dqAnnotations\":[],\"acAnnotations\":[]}]}"
+      ]
+     ]
+    },
+    {
+     "id": "activate_contract_demo_rejected",
+     "question": "Expected to FAIL: the query's adults column is nullable, the USL says NOT NULL, so Zetaris refuses to activate it.",
+     "sql": "ACTIVATE USL TABLE lightning.metastore.ripple.contract_demo.reach_strict AS\nSELECT COALESCE(geo_id, '') AS geo_id, CAST(estimate AS BIGINT) AS adults FROM dryrun.census_acs_zips WHERE column_id = 'B01001001'",
+     "ok": false,
+     "ms": 128,
+     "error": "SQLException: org.apache.hive.service.cli.HiveSQLException: com.zetaris.lightning.error.LightningException: <<<Schema mismatch for table 'lightning.metastore.ripple.contract_demo.reach_strict'.\n\nMismatched columns:\n  - Column 'adults': nullable -> NOT NULL\n\nFix: Update your activation query to match the USL declared types.\nSuggested fixes:\n  - COALESCE(adults, 0)\n\nSuggested complete SELECT statement:\nSELECT\n  geo_id,\n  COALESCE(adults, 0) AS adults\nFROM dryrun.census_acs_zips WHERE column_id = 'B01001001'>>>"
+    },
+    {
+     "id": "show_usl_activated",
+     "question": "",
+     "sql": "SHOW NAMESPACES OR TABLES IN lightning.metastore.ripple.audience",
+     "ok": true,
+     "ms": 61,
+     "columns": [
+      "name",
+      "type",
+      "usl_id",
+      "count",
+      "activated"
+     ],
+     "row_count": 5,
+     "rows": [
+      [
+       "behaviour_prior",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "customer",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "headline_package",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "platform_reach",
+       "table",
+       null,
+       "0",
+       "true"
+      ],
+      [
+       "population_by_age",
+       "table",
+       null,
+       "0",
+       "true"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/04_usl_queries.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/04_usl_queries.sql",
+   "statements": [
+    {
+     "id": "usl_q1_instagram_reach_78704",
+     "question": "How many Instagram users can the cafe reach in ZIP 78704, by age band? (the app's audience-size question)",
+     "sql": "SELECT age_band, adults, pct_ever_use, reachable_users FROM lightning.metastore.ripple.audience.platform_reach WHERE geo_id = '86000US78704' AND platform = 'instagram' ORDER BY age_band",
+     "ok": true,
+     "ms": 2787,
+     "columns": [
+      "age_band",
+      "adults",
+      "pct_ever_use",
+      "reachable_users"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "18-29",
+       "13292",
+       "79.0",
+       "10501"
+      ],
+      [
+       "30-49",
+       "19854",
+       "64.0",
+       "12707"
+      ],
+      [
+       "50-64",
+       "7219",
+       "41.0",
+       "2960"
+      ],
+      [
+       "65+",
+       "3992",
+       "21.0",
+       "838"
+      ]
+     ]
+    },
+    {
+     "id": "usl_q2_customers_vs_reach",
+     "question": "Do the cafe's customers look like the people it can reach on Instagram in 78704? (customer share vs reach share by age band)",
+     "sql": "WITH c AS (SELECT age_band, COUNT(*) AS customers FROM lightning.metastore.ripple.audience.customer GROUP BY age_band),\nr AS (SELECT age_band, reachable_users FROM lightning.metastore.ripple.audience.platform_reach WHERE geo_id = '86000US78704' AND platform = 'instagram')\nSELECT r.age_band, c.customers, ROUND(c.customers * 1.0 / SUM(c.customers) OVER (), 3) AS customer_share, r.reachable_users, ROUND(r.reachable_users * 1.0 / SUM(r.reachable_users) OVER (), 3) AS reach_share\nFROM r LEFT JOIN c ON c.age_band = r.age_band ORDER BY r.age_band",
+     "ok": true,
+     "ms": 4499,
+     "columns": [
+      "age_band",
+      "customers",
+      "customer_share",
+      "reachable_users",
+      "reach_share"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "18-29",
+       "221",
+       "0.345",
+       "10501",
+       "0.389"
+      ],
+      [
+       "30-49",
+       "367",
+       "0.573",
+       "12707",
+       "0.471"
+      ],
+      [
+       "50-64",
+       "39",
+       "0.061",
+       "2960",
+       "0.110"
+      ],
+      [
+       "65+",
+       "13",
+       "0.020",
+       "838",
+       "0.031"
+      ]
+     ]
+    },
+    {
+     "id": "usl_q3_platforms_by_geo",
+     "question": "Across the loaded geographies, how many adults could each platform reach?",
+     "sql": "SELECT geo_name, platform, SUM(adults) AS adults_18plus, SUM(reachable_users) AS reachable_users, ROUND(SUM(reachable_users) * 1.0 / SUM(adults), 3) AS reach_rate\nFROM lightning.metastore.ripple.audience.platform_reach GROUP BY geo_name, platform ORDER BY geo_name, reachable_users DESC",
+     "ok": true,
+     "ms": 1466,
+     "columns": [
+      "geo_name",
+      "platform",
+      "adults_18plus",
+      "reachable_users",
+      "reach_rate"
+     ],
+     "row_count": 24,
+     "rows": [
+      [
+       "43201",
+       "youtube",
+       "32285",
+       "29841",
+       "0.924"
+      ],
+      [
+       "43201",
+       "instagram",
+       "32285",
+       "23020",
+       "0.713"
+      ],
+      [
+       "43201",
+       "facebook",
+       "32285",
+       "22749",
+       "0.705"
+      ],
+      [
+       "43201",
+       "tiktok",
+       "32285",
+       "18341",
+       "0.568"
+      ],
+      [
+       "43201",
+       "reddit",
+       "32285",
+       "11692",
+       "0.362"
+      ],
+      [
+       "43201",
+       "x",
+       "32285",
+       "8732",
+       "0.270"
+      ],
+      [
+       "60622",
+       "youtube",
+       "47404",
+       "42335",
+       "0.893"
+      ],
+      [
+       "60622",
+       "facebook",
+       "47404",
+       "34623",
+       "0.730"
+      ],
+      [
+       "60622",
+       "instagram",
+       "47404",
+       "29459",
+       "0.621"
+      ],
+      [
+       "60622",
+       "tiktok",
+       "47404",
+       "21971",
+       "0.463"
+      ],
+      [
+       "60622",
+       "reddit",
+       "47404",
+       "15221",
+       "0.321"
+      ],
+      [
+       "60622",
+       "x",
+       "47404",
+       "10308",
+       "0.217"
+      ],
+      [
+       "78704",
+       "youtube",
+       "44357",
+       "39425",
+       "0.889"
+      ],
+      [
+       "78704",
+       "facebook",
+       "44357",
+       "32137",
+       "0.725"
+      ],
+      [
+       "78704",
+       "instagram",
+       "44357",
+       "27006",
+       "0.609"
+      ],
+      [
+       "78704",
+       "tiktok",
+       "44357",
+       "20251",
+       "0.457"
+      ],
+      [
+       "78704",
+       "reddit",
+       "44357",
+       "13805",
+       "0.311"
+      ],
+      [
+       "78704",
+       "x",
+       "44357",
+       "9598",
+       "0.216"
+      ],
+      [
+       "United States",
+       "youtube",
+       "267181678",
+       "225625633",
+       "0.844"
+      ],
+      [
+       "United States",
+       "facebook",
+       "267181678",
+       "187590227",
+       "0.702"
+      ],
+      [
+       "United States",
+       "instagram",
+       "267181678",
+       "138402791",
+       "0.518"
+      ],
+      [
+       "United States",
+       "tiktok",
+       "267181678",
+       "101424669",
+       "0.380"
+      ],
+      [
+       "United States",
+       "reddit",
+       "267181678",
+       "67864670",
+       "0.254"
+      ],
+      [
+       "United States",
+       "x",
+       "267181678",
+       "49505031",
+       "0.185"
+      ]
+     ]
+    },
+    {
+     "id": "usl_q4_population_consistency",
+     "question": "Does population_by_age add up to the Census total for each geography? (USL vs raw source)",
+     "sql": "SELECT u.geo_id, u.people_in_usl, t.estimate AS census_total, u.people_in_usl - t.estimate AS difference\nFROM (SELECT geo_id, SUM(people) AS people_in_usl FROM lightning.metastore.ripple.audience.population_by_age GROUP BY geo_id) u\nJOIN dryrun.census_acs_zips t ON t.geo_id = u.geo_id AND t.column_id = 'B01001001' ORDER BY u.geo_id",
+     "ok": true,
+     "ms": 773,
+     "columns": [
+      "geo_id",
+      "people_in_usl",
+      "census_total",
+      "difference"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "01000US",
+       "340110990",
+       "340110980",
+       "10"
+      ],
+      [
+       "86000US43201",
+       "34322",
+       "34322",
+       "0"
+      ],
+      [
+       "86000US60622",
+       "54609",
+       "54609",
+       "0"
+      ],
+      [
+       "86000US78704",
+       "50688",
+       "50688",
+       "0"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/05_data_quality.jsonl",
+   "sql_file": "docs/zetaris-usl/sql/05_data_quality.sql",
+   "statements": [
+    {
+     "id": "dq_remove_reach",
+     "question": "",
+     "sql": "REMOVE DQ reach_pct_in_range TABLE lightning.metastore.ripple.audience.platform_reach",
+     "ok": true,
+     "ms": 283,
+     "columns": [
+      "remove"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "true"
+      ]
+     ]
+    },
+    {
+     "id": "dq_register_reach",
+     "question": "Rule 1: a reach row must have a percentage in [0, 100] and no more reachable users than adults.",
+     "sql": "REGISTER DQ reach_pct_in_range TABLE lightning.metastore.ripple.audience.platform_reach AS pct_ever_use >= 0 AND pct_ever_use <= 100 AND reachable_users <= adults",
+     "ok": true,
+     "ms": 2837,
+     "columns": [
+      "json"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"namespace\":[\"metastore\",\"ripple\"],\"name\":\"audience\",\"tables\":[{\"name\":\"population_by_age\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"release\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"sex\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_lo\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"people\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(geo_id, '') AS geo_id, geo_name, release,\\n  CASE WHEN CAST(substr(column_id, 7, 3) AS INT) <= 25 THEN 'male' ELSE 'female' END AS sex,\\n  COALESCE(CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END, 0) AS age_lo,\\n  CASE WHEN column_name LIKE 'Under%' THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 18 THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 30 THEN '18-29'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 50 THEN '30-49'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(estimate AS BIGINT), CAST(0 AS BIGINT)) AS people\\nFROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\"},{\"name\":\"behaviour_prior\",\"columnSpecs\":[{\"name\":\"param\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dimension\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dist\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"a\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"b\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"prior_mean\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(param, '') AS param, COALESCE(dimension, '') AS dimension, COALESCE(band, '') AS band, dist,\\n  CAST(a AS DOUBLE) AS a, CAST(b AS DOUBLE) AS b,\\n  CASE WHEN dist = 'beta' THEN CAST(a AS DOUBLE) / (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) ELSE CAST(NULL AS DOUBLE) END AS prior_mean,\\n  COALESCE(label, '') AS label\\nFROM dryrun.priors_behaviour\"},{\"name\":\"customer\",\"columnSpecs\":[{\"name\":\"customer_id\",\"dataType\":\"\\\"string\\\"\",\"primaryKey\":{\"columns\":[]},\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"zip\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"visits_per_month\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"avg_ticket\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"monthly_spend\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"tenure_months\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(customer_id, '') AS customer_id, COALESCE(CAST(age AS INT), 0) AS age,\\n  CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(zip AS STRING), '') AS zip, CAST(visits_per_month AS INT) AS visits_per_month, CAST(avg_ticket AS DOUBLE) AS avg_ticket,\\n  CAST(visits_per_month * avg_ticket AS DOUBLE) AS monthly_spend, CAST(tenure_months AS INT) AS tenure_months, label\\nFROM dryrun.biz_customers\"},{\"name\":\"headline_package\",\"columnSpecs\":[{\"name\":\"test_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"headline\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"impressions\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"clicks\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"ctr\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(clickability_test_id, '') AS test_id, headline,\\n  COALESCE(CAST(impressions AS BIGINT), CAST(0 AS BIGINT)) AS impressions, COALESCE(CAST(clicks AS BIGINT), CAST(0 AS BIGINT)) AS clicks,\\n  CASE WHEN CAST(impressions AS BIGINT) > 0 THEN CAST(clicks AS DOUBLE) / CAST(impressions AS DOUBLE) ELSE CAST(NULL AS DOUBLE) END AS ctr\\nFROM dryrun.upworthy_tests\"},{\"name\":\"platform_reach\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"platform\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"adults\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"pct_ever_use\",\"dataType\":\"\\\"double\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"reachable_users\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[{\"expression\":\"pct_ever_use>=0\",\"name\":\"pct_not_negative\"},{\"expression\":\"pct_ever_use<=100\",\"name\":\"pct_at_most_100\"}],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"reach_pct_in_range\",\"expression\":\"pct_ever_use >= 0 AND pct_ever_use <= 100 AND reachable_users <= adults\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"WITH ages AS (\\n  SELECT geo_id, geo_name, CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END AS age_lo, CAST(estimate AS BIGINT) AS estimate\\n  FROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\\n), banded AS (\\n  SELECT geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults\\n  FROM ages GROUP BY geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END\\n)\\nSELECT COALESCE(b.geo_id, '') AS geo_id, b.geo_name, COALESCE(p.platform, '') AS platform, COALESCE(b.band, '') AS age_band,\\n  COALESCE(b.adults, CAST(0 AS BIGINT)) AS adults,\\n  COALESCE(CAST(p.pct_us_adults_ever_use AS DOUBLE), CAST(0 AS DOUBLE)) AS pct_ever_use,\\n  COALESCE(CAST(ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS BIGINT), CAST(0 AS BIGINT)) AS reachable_users\\nFROM banded b JOIN dryrun.pew_platform_use p ON p.dimension = 'age' AND p.band = b.band\\nWHERE b.band IS NOT NULL\"}]}"
+      ]
+     ]
+    },
+    {
+     "id": "dq_remove_customer",
+     "question": "",
+     "sql": "REMOVE DQ customer_is_adult_with_ticket TABLE lightning.metastore.ripple.audience.customer",
+     "ok": true,
+     "ms": 106,
+     "columns": [
+      "remove"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "true"
+      ]
+     ]
+    },
+    {
+     "id": "dq_register_customer",
+     "question": "Rule 2: every customer is an adult with a positive average ticket.",
+     "sql": "REGISTER DQ customer_is_adult_with_ticket TABLE lightning.metastore.ripple.audience.customer AS age >= 18 AND avg_ticket > 0",
+     "ok": true,
+     "ms": 461,
+     "columns": [
+      "json"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"namespace\":[\"metastore\",\"ripple\"],\"name\":\"audience\",\"tables\":[{\"name\":\"population_by_age\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"release\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"sex\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_lo\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"people\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(geo_id, '') AS geo_id, geo_name, release,\\n  CASE WHEN CAST(substr(column_id, 7, 3) AS INT) <= 25 THEN 'male' ELSE 'female' END AS sex,\\n  COALESCE(CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END, 0) AS age_lo,\\n  CASE WHEN column_name LIKE 'Under%' THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 18 THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 30 THEN '18-29'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 50 THEN '30-49'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(estimate AS BIGINT), CAST(0 AS BIGINT)) AS people\\nFROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\"},{\"name\":\"platform_reach\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"platform\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"adults\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"pct_ever_use\",\"dataType\":\"\\\"double\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"reachable_users\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[{\"expression\":\"pct_ever_use>=0\",\"name\":\"pct_not_negative\"},{\"expression\":\"pct_ever_use<=100\",\"name\":\"pct_at_most_100\"}],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"reach_pct_in_range\",\"expression\":\"pct_ever_use >= 0 AND pct_ever_use <= 100 AND reachable_users <= adults\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"WITH ages AS (\\n  SELECT geo_id, geo_name, CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END AS age_lo, CAST(estimate AS BIGINT) AS estimate\\n  FROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\\n), banded AS (\\n  SELECT geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults\\n  FROM ages GROUP BY geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END\\n)\\nSELECT COALESCE(b.geo_id, '') AS geo_id, b.geo_name, COALESCE(p.platform, '') AS platform, COALESCE(b.band, '') AS age_band,\\n  COALESCE(b.adults, CAST(0 AS BIGINT)) AS adults,\\n  COALESCE(CAST(p.pct_us_adults_ever_use AS DOUBLE), CAST(0 AS DOUBLE)) AS pct_ever_use,\\n  COALESCE(CAST(ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS BIGINT), CAST(0 AS BIGINT)) AS reachable_users\\nFROM banded b JOIN dryrun.pew_platform_use p ON p.dimension = 'age' AND p.band = b.band\\nWHERE b.band IS NOT NULL\"},{\"name\":\"behaviour_prior\",\"columnSpecs\":[{\"name\":\"param\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dimension\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dist\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"a\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"b\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"prior_mean\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(param, '') AS param, COALESCE(dimension, '') AS dimension, COALESCE(band, '') AS band, dist,\\n  CAST(a AS DOUBLE) AS a, CAST(b AS DOUBLE) AS b,\\n  CASE WHEN dist = 'beta' THEN CAST(a AS DOUBLE) / (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) ELSE CAST(NULL AS DOUBLE) END AS prior_mean,\\n  COALESCE(label, '') AS label\\nFROM dryrun.priors_behaviour\"},{\"name\":\"headline_package\",\"columnSpecs\":[{\"name\":\"test_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"headline\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"impressions\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"clicks\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"ctr\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(clickability_test_id, '') AS test_id, headline,\\n  COALESCE(CAST(impressions AS BIGINT), CAST(0 AS BIGINT)) AS impressions, COALESCE(CAST(clicks AS BIGINT), CAST(0 AS BIGINT)) AS clicks,\\n  CASE WHEN CAST(impressions AS BIGINT) > 0 THEN CAST(clicks AS DOUBLE) / CAST(impressions AS DOUBLE) ELSE CAST(NULL AS DOUBLE) END AS ctr\\nFROM dryrun.upworthy_tests\"},{\"name\":\"customer\",\"columnSpecs\":[{\"name\":\"customer_id\",\"dataType\":\"\\\"string\\\"\",\"primaryKey\":{\"columns\":[]},\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"zip\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"visits_per_month\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"avg_ticket\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"monthly_spend\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"tenure_months\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"customer_is_adult_with_ticket\",\"expression\":\"age >= 18 AND avg_ticket > 0\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(customer_id, '') AS customer_id, COALESCE(CAST(age AS INT), 0) AS age,\\n  CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(zip AS STRING), '') AS zip, CAST(visits_per_month AS INT) AS visits_per_month, CAST(avg_ticket AS DOUBLE) AS avg_ticket,\\n  CAST(visits_per_month * avg_ticket AS DOUBLE) AS monthly_spend, CAST(tenure_months AS INT) AS tenure_months, label\\nFROM dryrun.biz_customers\"}]}"
+      ]
+     ]
+    },
+    {
+     "id": "dq_remove_headline",
+     "question": "",
+     "sql": "REMOVE DQ headline_clicks_within_impressions TABLE lightning.metastore.ripple.audience.headline_package",
+     "ok": true,
+     "ms": 44,
+     "columns": [
+      "remove"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "true"
+      ]
+     ]
+    },
+    {
+     "id": "dq_register_headline",
+     "question": "Rule 3: clicks never exceed impressions, and a package was shown at least once.",
+     "sql": "REGISTER DQ headline_clicks_within_impressions TABLE lightning.metastore.ripple.audience.headline_package AS clicks <= impressions AND impressions > 0",
+     "ok": true,
+     "ms": 273,
+     "columns": [
+      "json"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"namespace\":[\"metastore\",\"ripple\"],\"name\":\"audience\",\"tables\":[{\"name\":\"population_by_age\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"release\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"sex\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_lo\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"people\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(geo_id, '') AS geo_id, geo_name, release,\\n  CASE WHEN CAST(substr(column_id, 7, 3) AS INT) <= 25 THEN 'male' ELSE 'female' END AS sex,\\n  COALESCE(CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END, 0) AS age_lo,\\n  CASE WHEN column_name LIKE 'Under%' THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 18 THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 30 THEN '18-29'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 50 THEN '30-49'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(estimate AS BIGINT), CAST(0 AS BIGINT)) AS people\\nFROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\"},{\"name\":\"platform_reach\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"platform\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"adults\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"pct_ever_use\",\"dataType\":\"\\\"double\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"reachable_users\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[{\"expression\":\"pct_ever_use>=0\",\"name\":\"pct_not_negative\"},{\"expression\":\"pct_ever_use<=100\",\"name\":\"pct_at_most_100\"}],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"reach_pct_in_range\",\"expression\":\"pct_ever_use >= 0 AND pct_ever_use <= 100 AND reachable_users <= adults\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"WITH ages AS (\\n  SELECT geo_id, geo_name, CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END AS age_lo, CAST(estimate AS BIGINT) AS estimate\\n  FROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\\n), banded AS (\\n  SELECT geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults\\n  FROM ages GROUP BY geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END\\n)\\nSELECT COALESCE(b.geo_id, '') AS geo_id, b.geo_name, COALESCE(p.platform, '') AS platform, COALESCE(b.band, '') AS age_band,\\n  COALESCE(b.adults, CAST(0 AS BIGINT)) AS adults,\\n  COALESCE(CAST(p.pct_us_adults_ever_use AS DOUBLE), CAST(0 AS DOUBLE)) AS pct_ever_use,\\n  COALESCE(CAST(ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS BIGINT), CAST(0 AS BIGINT)) AS reachable_users\\nFROM banded b JOIN dryrun.pew_platform_use p ON p.dimension = 'age' AND p.band = b.band\\nWHERE b.band IS NOT NULL\"},{\"name\":\"behaviour_prior\",\"columnSpecs\":[{\"name\":\"param\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dimension\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dist\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"a\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"b\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"prior_mean\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(param, '') AS param, COALESCE(dimension, '') AS dimension, COALESCE(band, '') AS band, dist,\\n  CAST(a AS DOUBLE) AS a, CAST(b AS DOUBLE) AS b,\\n  CASE WHEN dist = 'beta' THEN CAST(a AS DOUBLE) / (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) ELSE CAST(NULL AS DOUBLE) END AS prior_mean,\\n  COALESCE(label, '') AS label\\nFROM dryrun.priors_behaviour\"},{\"name\":\"customer\",\"columnSpecs\":[{\"name\":\"customer_id\",\"dataType\":\"\\\"string\\\"\",\"primaryKey\":{\"columns\":[]},\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"zip\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"visits_per_month\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"avg_ticket\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"monthly_spend\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"tenure_months\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"customer_is_adult_with_ticket\",\"expression\":\"age >= 18 AND avg_ticket > 0\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(customer_id, '') AS customer_id, COALESCE(CAST(age AS INT), 0) AS age,\\n  CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(zip AS STRING), '') AS zip, CAST(visits_per_month AS INT) AS visits_per_month, CAST(avg_ticket AS DOUBLE) AS avg_ticket,\\n  CAST(visits_per_month * avg_ticket AS DOUBLE) AS monthly_spend, CAST(tenure_months AS INT) AS tenure_months, label\\nFROM dryrun.biz_customers\"},{\"name\":\"headline_package\",\"columnSpecs\":[{\"name\":\"test_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"headline\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"impressions\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"clicks\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"ctr\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"headline_clicks_within_impressions\",\"expression\":\"clicks <= impressions AND impressions > 0\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(clickability_test_id, '') AS test_id, headline,\\n  COALESCE(CAST(impressions AS BIGINT), CAST(0 AS BIGINT)) AS impressions, COALESCE(CAST(clicks AS BIGINT), CAST(0 AS BIGINT)) AS clicks,\\n  CASE WHEN CAST(impressions AS BIGINT) > 0 THEN CAST(clicks AS DOUBLE) / CAST(impressions AS DOUBLE) ELSE CAST(NULL AS DOUBLE) END AS ctr\\nFROM dryrun.upworthy_tests\"}]}"
+      ]
+     ]
+    },
+    {
+     "id": "dq_remove_backtest",
+     "question": "",
+     "sql": "REMOVE DQ backtest_min_impressions TABLE lightning.metastore.ripple.audience.headline_package",
+     "ok": true,
+     "ms": 45,
+     "columns": [
+      "remove"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "true"
+      ]
+     ]
+    },
+    {
+     "id": "dq_register_backtest",
+     "question": "Rule 4: a package needs 1000+ impressions to enter the backtest (FILTERS.min_impressions in src/backtest/select.ts). Expected to flag rows.",
+     "sql": "REGISTER DQ backtest_min_impressions TABLE lightning.metastore.ripple.audience.headline_package AS impressions >= 1000",
+     "ok": true,
+     "ms": 264,
+     "columns": [
+      "json"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "{\"namespace\":[\"metastore\",\"ripple\"],\"name\":\"audience\",\"tables\":[{\"name\":\"population_by_age\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"release\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"sex\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_lo\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"people\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(geo_id, '') AS geo_id, geo_name, release,\\n  CASE WHEN CAST(substr(column_id, 7, 3) AS INT) <= 25 THEN 'male' ELSE 'female' END AS sex,\\n  COALESCE(CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END, 0) AS age_lo,\\n  CASE WHEN column_name LIKE 'Under%' THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 18 THEN 'under 18'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 30 THEN '18-29'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 50 THEN '30-49'\\n       WHEN CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(estimate AS BIGINT), CAST(0 AS BIGINT)) AS people\\nFROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\"},{\"name\":\"platform_reach\",\"columnSpecs\":[{\"name\":\"geo_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"geo_name\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"platform\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"adults\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"pct_ever_use\",\"dataType\":\"\\\"double\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"reachable_users\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[{\"expression\":\"pct_ever_use>=0\",\"name\":\"pct_not_negative\"},{\"expression\":\"pct_ever_use<=100\",\"name\":\"pct_at_most_100\"}],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"reach_pct_in_range\",\"expression\":\"pct_ever_use >= 0 AND pct_ever_use <= 100 AND reachable_users <= adults\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"WITH ages AS (\\n  SELECT geo_id, geo_name, CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INT) END AS age_lo, CAST(estimate AS BIGINT) AS estimate\\n  FROM dryrun.census_acs_zips WHERE table_id = 'B01001' AND indent = 2\\n), banded AS (\\n  SELECT geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults\\n  FROM ages GROUP BY geo_id, geo_name, CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END\\n)\\nSELECT COALESCE(b.geo_id, '') AS geo_id, b.geo_name, COALESCE(p.platform, '') AS platform, COALESCE(b.band, '') AS age_band,\\n  COALESCE(b.adults, CAST(0 AS BIGINT)) AS adults,\\n  COALESCE(CAST(p.pct_us_adults_ever_use AS DOUBLE), CAST(0 AS DOUBLE)) AS pct_ever_use,\\n  COALESCE(CAST(ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS BIGINT), CAST(0 AS BIGINT)) AS reachable_users\\nFROM banded b JOIN dryrun.pew_platform_use p ON p.dimension = 'age' AND p.band = b.band\\nWHERE b.band IS NOT NULL\"},{\"name\":\"behaviour_prior\",\"columnSpecs\":[{\"name\":\"param\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dimension\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"dist\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"a\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"b\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"prior_mean\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(param, '') AS param, COALESCE(dimension, '') AS dimension, COALESCE(band, '') AS band, dist,\\n  CAST(a AS DOUBLE) AS a, CAST(b AS DOUBLE) AS b,\\n  CASE WHEN dist = 'beta' THEN CAST(a AS DOUBLE) / (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) ELSE CAST(NULL AS DOUBLE) END AS prior_mean,\\n  COALESCE(label, '') AS label\\nFROM dryrun.priors_behaviour\"},{\"name\":\"customer\",\"columnSpecs\":[{\"name\":\"customer_id\",\"dataType\":\"\\\"string\\\"\",\"primaryKey\":{\"columns\":[]},\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age\",\"dataType\":\"\\\"integer\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"age_band\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"zip\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"visits_per_month\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"avg_ticket\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"monthly_spend\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"tenure_months\",\"dataType\":\"\\\"integer\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"label\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"customer_is_adult_with_ticket\",\"expression\":\"age >= 18 AND avg_ticket > 0\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(customer_id, '') AS customer_id, COALESCE(CAST(age AS INT), 0) AS age,\\n  CASE WHEN age < 30 THEN '18-29' WHEN age < 50 THEN '30-49' WHEN age < 65 THEN '50-64' ELSE '65+' END AS age_band,\\n  COALESCE(CAST(zip AS STRING), '') AS zip, CAST(visits_per_month AS INT) AS visits_per_month, CAST(avg_ticket AS DOUBLE) AS avg_ticket,\\n  CAST(visits_per_month * avg_ticket AS DOUBLE) AS monthly_spend, CAST(tenure_months AS INT) AS tenure_months, label\\nFROM dryrun.biz_customers\"},{\"name\":\"headline_package\",\"columnSpecs\":[{\"name\":\"test_id\",\"dataType\":\"\\\"string\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"headline\",\"dataType\":\"\\\"string\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"impressions\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"clicks\",\"dataType\":\"\\\"long\\\"\",\"notNull\":{\"columns\":[]},\"dqAnnotations\":[],\"acAnnotations\":[]},{\"name\":\"ctr\",\"dataType\":\"\\\"double\\\"\",\"dqAnnotations\":[],\"acAnnotations\":[]}],\"unique\":[],\"foreignKeys\":[],\"checks\":[],\"ifNotExit\":true,\"namespace\":[\"lightning\",\"metastore\",\"ripple\",\"audience\"],\"dqAnnotations\":[{\"name\":\"headline_clicks_within_impressions\",\"expression\":\"clicks <= impressions AND impressions > 0\",\"cte\":{}},{\"name\":\"backtest_min_impressions\",\"expression\":\"impressions >= 1000\",\"cte\":{}}],\"acAnnotations\":[],\"activateQuery\":\"SELECT COALESCE(clickability_test_id, '') AS test_id, headline,\\n  COALESCE(CAST(impressions AS BIGINT), CAST(0 AS BIGINT)) AS impressions, COALESCE(CAST(clicks AS BIGINT), CAST(0 AS BIGINT)) AS clicks,\\n  CASE WHEN CAST(impressions AS BIGINT) > 0 THEN CAST(clicks AS DOUBLE) / CAST(impressions AS DOUBLE) ELSE CAST(NULL AS DOUBLE) END AS ctr\\nFROM dryrun.upworthy_tests\"}]}"
+      ]
+     ]
+    },
+    {
+     "id": "dq_list",
+     "question": "Every rule on the USL: registered DQ expressions plus the DDL's primary keys and CHECK constraints.",
+     "sql": "LIST DQ USL lightning.metastore.ripple.audience",
+     "ok": true,
+     "ms": 99,
+     "columns": [
+      "name",
+      "table",
+      "type",
+      "expression"
+     ],
+     "row_count": 5,
+     "rows": [
+      [
+       "reach_pct_in_range",
+       "platform_reach",
+       "Custom Data Quality",
+       "pct_ever_use >= 0 AND pct_ever_use <= 100 AND reachable_users <= adults"
+      ],
+      [
+       "customer_id",
+       "customer",
+       "Primary key constraints",
+       ""
+      ],
+      [
+       "customer_is_adult_with_ticket",
+       "customer",
+       "Custom Data Quality",
+       "age >= 18 AND avg_ticket > 0"
+      ],
+      [
+       "headline_clicks_within_impressions",
+       "headline_package",
+       "Custom Data Quality",
+       "clicks <= impressions AND impressions > 0"
+      ],
+      [
+       "backtest_min_impressions",
+       "headline_package",
+       "Custom Data Quality",
+       "impressions >= 1000"
+      ]
+     ]
+    },
+    {
+     "id": "dq_run_reach",
+     "question": "",
+     "sql": "RUN DQ reach_pct_in_range TABLE lightning.metastore.ripple.audience.platform_reach",
+     "ok": true,
+     "ms": 3112,
+     "columns": [
+      "name",
+      "table",
+      "type",
+      "total_record",
+      "valid_record",
+      "invalid_record"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "reach_pct_in_range",
+       "platform_reach",
+       "Custom Data Quality",
+       "96",
+       "96",
+       "0"
+      ]
+     ]
+    },
+    {
+     "id": "dq_run_customer",
+     "question": "",
+     "sql": "RUN DQ customer_is_adult_with_ticket TABLE lightning.metastore.ripple.audience.customer",
+     "ok": true,
+     "ms": 1431,
+     "columns": [
+      "name",
+      "table",
+      "type",
+      "total_record",
+      "valid_record",
+      "invalid_record"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "customer_is_adult_with_ticket",
+       "customer",
+       "Custom Data Quality",
+       "640",
+       "640",
+       "0"
+      ]
+     ]
+    },
+    {
+     "id": "dq_run_headline",
+     "question": "",
+     "sql": "RUN DQ headline_clicks_within_impressions TABLE lightning.metastore.ripple.audience.headline_package",
+     "ok": true,
+     "ms": 14816,
+     "columns": [
+      "name",
+      "table",
+      "type",
+      "total_record",
+      "valid_record",
+      "invalid_record"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "headline_clicks_within_impressions",
+       "headline_package",
+       "Custom Data Quality",
+       "22666",
+       "22666",
+       "0"
+      ]
+     ]
+    },
+    {
+     "id": "dq_run_backtest",
+     "question": "",
+     "sql": "RUN DQ backtest_min_impressions TABLE lightning.metastore.ripple.audience.headline_package",
+     "ok": true,
+     "ms": 6556,
+     "columns": [
+      "name",
+      "table",
+      "type",
+      "total_record",
+      "valid_record",
+      "invalid_record"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "backtest_min_impressions",
+       "headline_package",
+       "Custom Data Quality",
+       "22666",
+       "22625",
+       "41"
+      ]
+     ]
+    },
+    {
+     "id": "dq_invalid_rows_backtest",
+     "question": "The rows rule 4 flags (first 50 kept in the receipt).",
+     "sql": "SHOW DQ INVALID RECORD backtest_min_impressions TABLE lightning.metastore.ripple.audience.headline_package",
+     "ok": true,
+     "ms": 5568,
+     "columns": [
+      "test_id",
+      "headline",
+      "impressions",
+      "clicks",
+      "ctr"
+     ],
+     "row_count": 41,
+     "rows": [
+      [
+       "55158fe8616664002c240000",
+       "São Paulo sounds like a city of dreams. Until I saw its reservoir.",
+       "792",
+       "8",
+       "0.010101010101010102"
+      ],
+      [
+       "55158fe8616664002c240000",
+       "Folks in this city survive on contaminated water. He calls the city home and is trying to help.",
+       "831",
+       "2",
+       "0.0024067388688327317"
+      ],
+      [
+       "55158fe8616664002c240000",
+       "Meet Raphael Alvardo, who's saving this Nicaraguan city's water supply.",
+       "758",
+       "2",
+       "0.002638522427440633"
+      ],
+      [
+       "55158fe8616664002c240000",
+       "It takes a community: How one man got support from his neighbors to save its water supply.",
+       "794",
+       "3",
+       "0.003778337531486146"
+      ],
+      [
+       "55158fe8616664002c240000",
+       "Folks in this city survive on $3 per day. He calls the city home and is trying to help.",
+       "801",
+       "1",
+       "0.0012484394506866417"
+      ],
+      [
+       "55258c9c313437002c350100",
+       "For over 100 years, scientists have said the Brontosaurus wasn't real. They might have been wrong.",
+       "809",
+       "2",
+       "0.002472187886279357"
+      ],
+      [
+       "55258c9c313437002c350100",
+       "For over 100 years, scientists have said the Brontosaurus wasn't real. They might have been wrong.",
+       "764",
+       "0",
+       "0.0"
+      ],
+      [
+       "55258c9c313437002c350100",
+       "For over 100 years, scientists have said the Brontosaurus wasn't real. They might have been wrong.",
+       "788",
+       "7",
+       "0.008883248730964468"
+      ],
+      [
+       "55258c9c313437002c350100",
+       "For over 100 years, scientists have said the Brontosaurus wasn't real. They might have been wrong.",
+       "787",
+       "2",
+       "0.0025412960609911056"
+      ],
+      [
+       "51ca7702a37121db4d002519",
+       "An Unforgettable Act Of Forgiveness In 1 Minute",
+       "661",
+       "15",
+       "0.0226928895612708"
+      ],
+      [
+       "51ca7702a37121db4d002519",
+       "The One Thing You Would Never Expect Someone To Say To The Man Who Murdered His Child",
+       "638",
+       "25",
+       "0.03918495297805643"
+      ],
+      [
+       "51ca7702a37121db4d002519",
+       "An Unforgettable Act Of Forgiveness In 1 Minute",
+       "642",
+       "13",
+       "0.020249221183800622"
+      ],
+      [
+       "51ca7702a37121db4d002519",
+       "The One Thing You Would Never Expect Someone To Say To The Man Who Murdered His Child",
+       "750",
+       "27",
+       "0.036"
+      ],
+      [
+       "51d1c9d3673bc77ab500046d",
+       "This Adorable 6-Year-Old Won A Case That Will Change The Lives Of Thousands",
+       "915",
+       "33",
+       "0.036065573770491806"
+      ],
+      [
+       "51db74c459375e5052002cc7",
+       "If This Sweet Project Won Second Place At The Science Fair, First Place Must’ve Been A Time Machine",
+       "51",
+       "2",
+       "0.0392156862745098"
+      ],
+      [
+       "51db74c459375e5052002cc7",
+       "If This Sweet Project Won Second Place At The Science Fair, First Place Must’ve Been A Time Machine",
+       "70",
+       "1",
+       "0.014285714285714285"
+      ],
+      [
+       "51db74c459375e5052002cc7",
+       "If This Sweet Project Won Second Place At The Science Fair, First Place Must’ve Been A Time Machine",
+       "48",
+       "1",
+       "0.020833333333333332"
+      ],
+      [
+       "51db74c459375e5052002cc7",
+       "If This Sweet Project Won Second Place At The Science Fair, First Place Must’ve Been A Time Machine",
+       "26",
+       "1",
+       "0.038461538461538464"
+      ],
+      [
+       "51ddbd415d8e6fa6d2006471",
+       "The Top Reason We're All Stressed To The Max Is Right Here",
+       "948",
+       "15",
+       "0.015822784810126583"
+      ],
+      [
+       "5206bfd65e0d8f2d80007436",
+       "Hey, Ad Agencies: This Is What Your Jerkmercials For Women Look Like",
+       "98",
+       "9",
+       "0.09183673469387756"
+      ],
+      [
+       "5206bfd65e0d8f2d80007436",
+       "Hey, Companies: This Is What Your Panderscending Ads For Women Look Like",
+       "88",
+       "2",
+       "0.022727272727272728"
+      ],
+      [
+       "5206bfd65e0d8f2d80007436",
+       "Companies Deserve To Be Made Fun Of When Their Ads For Women Are This Condescenderiffic",
+       "87",
+       "2",
+       "0.022988505747126436"
+      ],
+      [
+       "5206bfd65e0d8f2d80007436",
+       "Companies Deserve To Be Made Fun Of When Their Ads For Women Are This Condescentastic",
+       "92",
+       "5",
+       "0.05434782608695652"
+      ],
+      [
+       "52376139590f7caae50022d4",
+       "Perhaps We Should Let The Pentagon Raise Money From Bake Sales And Use Their Budget For Schools?",
+       "876",
+       "8",
+       "0.0091324200913242"
+      ],
+      [
+       "52376139590f7caae50022d4",
+       "If You Don't Think Teachers Do Enough On The Job, Have I Got A Graphic For You",
+       "669",
+       "23",
+       "0.0343796711509716"
+      ],
+      [
+       "52376139590f7caae50022d4",
+       "Those Damned Teachers, Buying Schools Supplies For Our Kids And Stuff. The Nerve...",
+       "844",
+       "35",
+       "0.041469194312796206"
+      ],
+      [
+       "52376139590f7caae50022d4",
+       "You Know, Teachers Don't Do Enough For Our Kids. Wait, What?!",
+       "942",
+       "20",
+       "0.021231422505307854"
+      ],
+      [
+       "526d4c1c94d1f182f600574f",
+       "The Dude Is Furious. Unfortunately, We Can Relate To The Reason Why.",
+       "54",
+       "3",
+       "0.05555555555555555"
+      ],
+      [
+       "526d4c1c94d1f182f600574f",
+       "The Dude Is Pissed. Unfortunately, We Can All Recognize The Reason Why.",
+       "37",
+       "1",
+       "0.02702702702702703"
+      ],
+      [
+       "526d4c1c94d1f182f600574f",
+       "The Dude Is Pissed. Unfortunately, We Can All Relate To The Reason Why.",
+       "17",
+       "0",
+       "0.0"
+      ],
+      [
+       "526d4c1c94d1f182f600574f",
+       "The Dude Is Pissed. It's Easy To Relate To The Reason Why.",
+       "38",
+       "2",
+       "0.05263157894736842"
+      ],
+      [
+       "526d4c1c94d1f182f600574f",
+       "This Poet Is Pissed. Unfortunately, We Can All Relate To The Reason Why.",
+       "29",
+       "0",
+       "0.0"
+      ],
+      [
+       "52a5cf335de7b1f7a3000e04",
+       "They Had Me At \"Flying Rhinos\"",
+       "522",
+       "4",
+       "0.007662835249042145"
+      ],
+      [
+       "52a5cf335de7b1f7a3000e04",
+       "Who Wants To See Flying Rhinos? Me Too!",
+       "373",
+       "3",
+       "0.00804289544235925"
+      ],
+      [
+       "52a5cf335de7b1f7a3000e04",
+       "The Extreme Lengths It Takes To Protect Black Rhinos",
+       "353",
+       "1",
+       "0.0028328611898017"
+      ],
+      [
+       "52a5cf335de7b1f7a3000e04",
+       "Wow, So Rhinos, Very Black, Much Endangered.",
+       "280",
+       "2",
+       "0.007142857142857143"
+      ],
+      [
+       "52a5cf335de7b1f7a3000e04",
+       "Wow, So Rhinos, Very Black, Much Endangered.",
+       "460",
+       "1",
+       "0.002173913043478261"
+      ],
+      [
+       "53507921f6bdf72973000006",
+       "Economist Paul Krugman Lays Out The Basics Of Why Everybody’s In A World Of Hurt Except For The 1%",
+       "24",
+       "0",
+       "0.0"
+      ],
+      [
+       "53507921f6bdf72973000006",
+       "Economist Paul Krugman Lays Out The Basics Of Why Everybody’s In A World Of Hurt Except For The 1%",
+       "21",
+       "0",
+       "0.0"
+      ],
+      [
+       "53507921f6bdf72973000006",
+       "Economist Paul Krugman Lays Out The Basics Of Why Everybody’s In A World Of Hurt Except For The 1%",
+       "13",
+       "0",
+       "0.0"
+      ],
+      [
+       "53507921f6bdf72973000006",
+       "Economist Paul Krugman Lays Out The Basics Of Why Everybody’s In A World Of Hurt Except For The 1%",
+       "28",
+       "0",
+       "0.0"
+      ]
+     ]
+    },
+    {
+     "id": "dq_run_check_constraint",
+     "question": "The DDL's CHECK constraint, run as a rule by its name. (It compiles, but LIST DQ does not show it; this records what RUN DQ does.)",
+     "sql": "RUN DQ pct_at_most_100 TABLE lightning.metastore.ripple.audience.platform_reach",
+     "ok": false,
+     "ms": 446,
+     "error": "SQLException: org.apache.hive.service.cli.HiveSQLException: com.zetaris.lightning.sql.lightningcatalog.DataQualityNotFoundException: <<<Some(pct_at_most_100) is not found in lightning.metastore.ripple.audience.platform_reach>>>"
+    },
+    {
+     "id": "dq_run_primary_key",
+     "question": "The DDL's primary key (customer_id), run as a uniqueness rule by its column name.",
+     "sql": "RUN DQ customer_id TABLE lightning.metastore.ripple.audience.customer",
+     "ok": true,
+     "ms": 2201,
+     "columns": [
+      "name",
+      "table",
+      "type",
+      "total_record",
+      "valid_record",
+      "invalid_record"
+     ],
+     "row_count": 1,
+     "rows": [
+      [
+       "customer_id",
+       "customer",
+       "Primary Key Constraint",
+       "640",
+       "640",
+       "0"
+      ]
+     ]
+    },
+    {
+     "id": "dq_check_constraints_as_select",
+     "question": "Workaround today: the two CHECK constraints written as one plain SELECT over the USL (this form also runs over the REST API).",
+     "sql": "SELECT 'pct_not_negative' AS rule, COUNT(*) AS total_record, SUM(CASE WHEN pct_ever_use >= 0 THEN 1 ELSE 0 END) AS valid_record, SUM(CASE WHEN pct_ever_use >= 0 THEN 0 ELSE 1 END) AS invalid_record FROM lightning.metastore.ripple.audience.platform_reach\nUNION ALL\nSELECT 'pct_at_most_100' AS rule, COUNT(*) AS total_record, SUM(CASE WHEN pct_ever_use <= 100 THEN 1 ELSE 0 END) AS valid_record, SUM(CASE WHEN pct_ever_use <= 100 THEN 0 ELSE 1 END) AS invalid_record FROM lightning.metastore.ripple.audience.platform_reach",
+     "ok": true,
+     "ms": 3888,
+     "columns": [
+      "rule",
+      "total_record",
+      "valid_record",
+      "invalid_record"
+     ],
+     "row_count": 2,
+     "rows": [
+      [
+       "pct_not_negative",
+       "96",
+       "96",
+       "0"
+      ],
+      [
+       "pct_at_most_100",
+       "96",
+       "96",
+       "0"
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "file": "docs/zetaris-usl/receipts/06_rest_api.jsonl",
+   "sql_file": null,
+   "statements": [
+    {
+     "id": "usl_q1_via_rest_api",
+     "question": "usl_q1 again, through the REST API the app uses",
+     "sql": "SELECT age_band, adults, pct_ever_use, reachable_users FROM lightning.metastore.ripple.audience.platform_reach WHERE geo_id = '86000US78704' AND platform = 'instagram' ORDER BY age_band",
+     "ok": true,
+     "ms": 4372,
+     "columns": [
+      "age_band",
+      "adults",
+      "pct_ever_use",
+      "reachable_users"
+     ],
+     "row_count": 4,
+     "rows": [
+      [
+       "18-29",
+       "13292",
+       "79",
+       "10501"
+      ],
+      [
+       "30-49",
+       "19854",
+       "64",
+       "12707"
+      ],
+      [
+       "50-64",
+       "7219",
+       "41",
+       "2960"
+      ],
+      [
+       "65+",
+       "3992",
+       "21",
+       "838"
+      ]
+     ]
+    },
+    {
+     "id": "dq_list_via_rest_api",
+     "question": "Can the REST API list the USL quality rules?",
+     "sql": "LIST DQ USL lightning.metastore.ripple.audience",
+     "ok": false,
+     "ms": 216,
+     "error": "Zetaris start HTTP 400: Invalid value for: body (Bad Select SQL at 'select')"
+    },
+    {
+     "id": "dq_run_via_rest_api",
+     "question": "Can the REST API run a USL quality rule?",
+     "sql": "RUN DQ reach_pct_in_range TABLE lightning.metastore.ripple.audience.platform_reach",
+     "ok": false,
+     "ms": 193,
+     "error": "Zetaris start HTTP 400: Invalid value for: body (Bad Select SQL at 'select')"
+    }
+   ]
+  }
+ ]
+}

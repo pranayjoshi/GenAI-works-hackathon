@@ -8,6 +8,7 @@
  */
 import { sha, clamp } from '../util/core.js';
 import { traceBus } from '../llm.js';
+import { agentLog } from '../util/agentlog.js';
 import { config } from '../config.js';
 import type { CrowdDecision } from '../schemas/action.js';
 import type { Persona } from '../schemas/persona.js';
@@ -162,4 +163,10 @@ export function decideOffline(turns: AgentTurn[], ctx: RenderCtx, runTag: string
 export function noteOffline(tag: string, n: number) {
   offlineCalls.set(tag, (offlineCalls.get(tag) ?? 0) + 1);
   traceBus.emit({ ts: new Date().toISOString(), tag, role: 'crowd', provider: 'replay', model: 'persona-rules', served_by: OFFLINE_SERVED_BY, ms: 0, tokens_in: 0, tokens_out: n, ok: true, repaired: false });
+  // recovery line after the ModelRouter error for the same request, so the trace shows who answered in the end
+  agentLog({
+    run_id: tag && tag !== 'misc' ? tag.split(':')[0] : undefined, agent_name: 'ModelRouter', action: 'request:crowd', quiet: true,
+    model: 'persona-rules', served_by: OFFLINE_SERVED_BY, status: 'fallback', retry_count: 1,
+    input_summary: `role crowd tag ${tag}`, output_summary: `no model provider answered; offline persona model made ${n} decisions`,
+  });
 }

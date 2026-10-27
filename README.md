@@ -74,7 +74,7 @@ Copy `.env.example` to `.env`. Everything is optional; values below are placehol
 
 ### Sample mode, honestly
 
-`SAMPLE_MODE=true` needs no credentials. For each model call, Ripple first looks for an exact recorded answer for the same prompt in `samples/recordings.sqlite` and replays it (`served_by: replay(...)`). If none matches, the crowd decisions come from an offline persona-driven decision model ([src/sim/offline.ts](src/sim/offline.ts)). It scores each person's sampled traits (price sensitivity, skepticism, customer status, role, activity, age) against features parsed from the post text (discount, price, new, local, urgency), with seeded randomness. Its answers are real logic on your input and are logged `served_by: offline-model`. They are not a language model's reading of the post. Census rows fall back to cached geographies when the API is unreachable. A sample-mode result shows the pipeline working; it is not evidence about your posts.
+`SAMPLE_MODE=true` needs no credentials. For each model call, Ripple first looks for an exact recorded answer for the same prompt in `samples/recordings.sqlite` and replays it (`served_by: replay(...)`). If none matches, the crowd decisions come from an offline persona-driven decision model ([src/sim/offline.ts](src/sim/offline.ts)). It scores each person's sampled traits (price sensitivity, skepticism, customer status, role, activity, age) against features parsed from the post text (discount, price, new, local, urgency), with seeded randomness. Its answers are real logic on your input and are logged `served_by: offline-model`. They are not a language model's reading of the post. Census rows fall back to cached geographies when the API is unreachable. With no model at all, the report is the code-built fallback (`report.fallback: true`), Version C is skipped with a logged error ("No model provider answered"), and short runs recall few or no H-MEM lines, because the offline model does not read memories. The trace marks each of these. A sample-mode result shows the pipeline working; it is not evidence about your posts.
 
 <!-- RESULTS -->
 ## Results so far (local Nemotron 3 Nano 4B unless stated)
@@ -262,6 +262,10 @@ Full write-up: [docs/SPONSOR_TECH.md](docs/SPONSOR_TECH.md). Setup: [docs/SPONSO
 | **Meterless Markovian** | One step per round with bounded carryover | Keeps prompt size flat over 12 rounds | `src/sim/engine.ts` |
 
 The 20-person hosted test (27 Oct): crowd and voice, and report review, were served by Nightshift. The reasoning and interview role fell back to direct NVIDIA because Nightshift currently excludes Super VL (`model_excluded`). Local Ollama is the last fallback. Run `20261027-south-congress-coffe-28ba` (20 people, 3 rounds): 12 crowd calls and 1 voice call served by `nightshift:nvidia/nemotron-3.5-lightning-30b-a3b`, 2 review calls by `nightshift:nvidia/nemotron-3-ultra-550b-a55b`, 4 reasoning calls by direct NVIDIA; all 7 audience-building queries answered by `zetaris`. Per-run `sim.*` tables stay on DuckDB, and the UI labels them.
+
+### Zetaris Unified Semantic Layer
+
+The "Build with Zetaris" write-up is [docs/ZETARIS_USL.md](docs/ZETARIS_USL.md). It covers the use case and five sources, 15 exploratory queries, and USL `lightning.metastore.ripple.audience` with its DDL: five entities, including `platform_reach`, the Census x Pew join. It also has 4 queries against the USL, 5 data-quality rules run by Zetaris (one flags 41 real rows), a hand-coded comparison and a mocked feature request. Every result is a saved Zetaris receipt in `docs/zetaris-usl/receipts.json`. To reproduce on the running bundle (needs Java 17+): `scripts/zetaris-usl.sh`. The app itself still queries the `dryrun.*` tables. Moving it onto the USL is listed as a next step.
 
 ## Limitations
 

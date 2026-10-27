@@ -1,0 +1,1 @@
+{"id":"onboard_census_acs_zips","question":"","sql":"CREATE LIGHTNING FILESTORE TABLE census_acs_zips FROM dryrun FORMAT csv OPTIONS (path \"/home/zetaris/customer-data/shared/dryrun/data/cache/census_usl.csv\", header \"true\", inferSchema \"true\")","ok":true,"ms":7690,"columns":["Result"],"row_count":0,"rows":[]}
