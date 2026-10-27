@@ -105,7 +105,7 @@ curl -X POST http://localhost:8000/run -H "Content-Type: application/json" -d @i
 **Platforms, version types and places.** `platform` is one of `instagram`, `facebook`, `tiktok`, `youtube`, `x`, `reddit` (default `instagram`; Pew rates are per platform; LinkedIn is not supported because we have no Pew data). Each version (`variants[]`, shapes from `src/runApi.ts`) has a `type`:
 
 - `post`: `{"type":"post","text":"..."}`
-- `image`: `{"type":"image","image":"<data URL or https URL>","caption":"..."}`. The VisionAgent (Nemotron Super VL via NVIDIA) describes the image factually, the description is cached, and the crowd reads that description. SVG text is read directly. The crowd reacts to the vision model's description, not to pixels. Image tests were checked with one vision call, not a full live run.
+- `image`: `{"type":"image","image":"<data URL or https URL>","caption":"..."}`. The VisionAgent asks a vision model through Nightshift to describe the image factually (if Nightshift serves no vision model, the image is noted as not described), the description is cached, and the crowd reads that description. SVG text is read directly. The crowd reacts to the vision model's description, not to pixels. Image tests were checked with one vision call, not a full live run.
 - `ad`: `{"type":"ad","headline":"...","primary_text":"...","cta":"Learn more","image":"..."}`
 - `campaign`: `{"type":"campaign","posts":[{"text":"...","image":"..."}, ...]}` with 2 or 3 posts delivered across rounds.
 
@@ -130,9 +130,8 @@ Copy `.env.example` to `.env`. Everything is optional; values below are placehol
 
 | Variable | Meaning |
 |---|---|
-| `PROVIDERS=nightshift,nvidia,ollama` | Order of model providers per call |
+| `PROVIDERS=nightshift,ollama` | Order of model providers per call |
 | `NIGHTSHIFT_BASE_URL=http://127.0.0.1:8088/v1`, `NIGHTSHIFT_TOKEN=<runtime token>` | Nightshift proxy. If the token is unset it is read from Nightshift's `proxy-token` file |
-| `NVIDIA_API_KEY=<nvapi-...>`, `NVIDIA_RPM=38` | Direct NVIDIA fallback |
 | `OLLAMA_BASE_URL=http://127.0.0.1:11434` | Local `nemotron-3-nano:4b` |
 | `ZETARIS_BASE_URL`, `ZETARIS_API_KEY` or `ZETARIS_USER`+`ZETARIS_PASSWORD`, `ZETARIS_ORG_ID`, `ZETARIS_FILE_ROOT` | Zetaris Lightning. Blank means local DuckDB, labelled |
 | `SAMPLE_MODE=true` | Replay mode (below) |
@@ -185,7 +184,7 @@ flowchart LR
   end
   subgraph NV["NVIDIA Nemotron"]
     direction TB
-    L["3.5 Lightning: crowd, voices"] --- SV["3.5 Super VL: reasoning"] --- U["3 Ultra: critic"] --- N["3 Nano 4B: local fallback"]
+    L["3.5 Lightning: crowd, voices"] --- SV["3 Ultra: reasoning, critic"] --- N["3 Nano 4B: local fallback"]
   end
   DATA -->|"federated SQL"| RIPPLE
   RIPPLE <-->|"engines and every model call"| METER
@@ -198,7 +197,7 @@ flowchart LR
   class S1,S2,S3,S4,S5 zet
   class DA,CB,TW,RD rip
   class WM,MK,HM,NS met
-  class L,SV,U,N nv
+  class L,SV,N nv
   style DATA fill:#FFF7F0,stroke:#B85A16,color:#151A28
   style RIPPLE fill:#F3F6FE,stroke:#2F5FD0,color:#151A28
   style METER fill:#F6F4FE,stroke:#6B5BD2,color:#151A28
@@ -354,13 +353,13 @@ Full write-up: [docs/SPONSOR_TECH.md](docs/SPONSOR_TECH.md). Setup: [docs/SPONSO
 | Sponsor | What it does in Ripple | Why it is load-bearing | Proof |
 |---|---|---|---|
 | **Meterless Nightshift** | Primary provider (`127.0.0.1:8088/v1`, runtime token, `meterless-app` header). `served_by` is logged per call | Every model call tries it first | `src/llm.ts`; `served_by` in `runs/trace.jsonl` |
-| **NVIDIA Nemotron** | Crowd and voice: `nemotron-3.5-lightning-30b-a3b`. Reason, interview, rewriter: `nemotron-3.5-super-vl-120b-a12b`. Report review, critic and honesty check: `nemotron-3-ultra-550b-a55b`. Last fallback: local `nemotron-3-nano:4b` | All agent reasoning is Nemotron | `src/config.ts`; the 600-person demo run used the local 4B |
+| **NVIDIA Nemotron** | Crowd and voice: `nemotron-3.5-lightning-30b-a3b`. Reason, rewriter, report review, critic and honesty check: `nemotron-3-ultra-550b-a55b`. Interview: `nemotron-3.5-lightning-30b-a3b`. Last fallback: local `nemotron-3-nano:4b` | All agent reasoning is Nemotron | `src/config.ts`; the 600-person demo run used the local 4B |
 | **Zetaris** | Local hackathon bundle 2.4.3. Source tables registered as Lightning file-store tables in database `dryrun`. In the hosted test, all 7 audience-building queries ran on Zetaris | The crowd's age, income, platform use and priors come from these queries; each persona field carries the query id | `scripts/zetaris-mount.sh`, `scripts/zetaris-register.sh`, `tests/zetaris-contract.test.ts`, query `engine` in the trace |
 | **Meterless H-MEM** | One memory per person per world; recalled before each decision; interviews may cite only these lines | It is the memory the "Ask why" answers come from | `src/memory/hmem.ts`, `tests/conformance.test.ts` |
 | **Meterless World Model** | Append-only world log; twin worlds are forks with hash-verified identical base logs | Makes the A/B comparison fair | `src/sim/world.ts`, `tests/fairness.test.ts` |
 | **Meterless Markovian** | One step per round with bounded carryover | Keeps prompt size flat over 12 rounds | `src/sim/engine.ts` |
 
-The 20-person hosted test (27 Oct): crowd and voice, and report review, were served by Nightshift. The reasoning and interview role fell back to direct NVIDIA because Nightshift currently excludes Super VL (`model_excluded`). Local Ollama is the last fallback. Run `20261027-south-congress-coffe-28ba` (20 people, 3 rounds): 12 crowd calls and 1 voice call served by `nightshift:nvidia/nemotron-3.5-lightning-30b-a3b`, 2 review calls by `nightshift:nvidia/nemotron-3-ultra-550b-a55b`, 4 reasoning calls by direct NVIDIA; all 7 audience-building queries answered by `zetaris`. Per-run `sim.*` tables stay on DuckDB, and the UI labels them.
+The 20-person hosted test (27 Oct): crowd and voice, and report review, were served by Nightshift. The reasoning and interview role then ran on Super 120B through a direct NVIDIA key, because Nightshift excludes Super VL (`model_excluded`). We removed that path: the app now holds no NVIDIA key, the reasoning role runs on Ultra and interviews on Lightning, both through Nightshift (checked with `npm run probe`, not re-run end to end). Local Ollama is the last fallback. Run `20261027-south-congress-coffe-28ba` (20 people, 3 rounds): 12 crowd calls and 1 voice call served by `nightshift:nvidia/nemotron-3.5-lightning-30b-a3b`, 2 review calls by `nightshift:nvidia/nemotron-3-ultra-550b-a55b`, 4 reasoning calls by the since-removed direct-NVIDIA path; all 7 audience-building queries answered by `zetaris`. Per-run `sim.*` tables stay on DuckDB, and the UI labels them.
 
 ### Zetaris Unified Semantic Layer
 

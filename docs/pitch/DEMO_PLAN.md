@@ -11,7 +11,7 @@ One protagonist (South Congress Coffee, Austin 78704), one question ("is this te
 | Model | Job in Ripple | Route |
 |---|---|---|
 | Nemotron 3.5 Lightning 30B | every simulated person's decision and voice (thinking off) | Nightshift |
-| Nemotron 3.5 Super 120B | reasoning: audience segments, report, interviews, Version C draft | direct NVIDIA |
+| Nemotron 3.5 Super 120B (headline run only) | reasoning: audience segments, report, interviews, Version C draft | direct NVIDIA, since removed; now Ultra via Nightshift |
 | Nemotron 3 Ultra 550B | the critic: report review and the honesty check on Version C | Nightshift |
 | Nemotron 3 Nano 4B | the whole product on a laptop; the offline fallback | local Ollama |
 

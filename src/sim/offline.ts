@@ -18,7 +18,7 @@ export const OFFLINE_SERVED_BY = 'offline-model';
 const hashU = (...parts: (string | number)[]) => parseInt(sha(parts.join('|'), 8), 16) / 0x100000000;
 
 /** Offline fallback applies in sample mode, or when no hosted provider is set (a local Ollama that answers still wins first). */
-export const offlineAllowed = () => !config.sampleStrict && (config.sampleMode || (!config.nightshift.token && !config.nvidia.apiKey));
+export const offlineAllowed = () => !config.sampleStrict && (config.sampleMode || !config.nightshift.token);
 
 /** calls answered offline, per run tag (for the /run trace summary) */
 export const offlineCalls = new Map<string, number>();

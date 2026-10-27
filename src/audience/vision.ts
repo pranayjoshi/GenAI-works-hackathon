@@ -96,7 +96,7 @@ export async function describeImage(ref: string, ctx: { run_id?: string; label?:
     for (const model of VISION_MODELS) {
       try {
         const r = await chat({
-          role: 'reason', model, providers: ['nvidia'], thinking: false, images: [dataUrl], system: SYSTEM,
+          role: 'reason', model, providers: ['nightshift'], thinking: false, images: [dataUrl], system: SYSTEM,
           user: `Describe this image${ctx.business ? ` from ${ctx.business}'s post` : ''}. Return {"description": "..."}.`,
           schema: Description, schemaName: 'ImageDescription', tag: ctx.run_id ?? 'vision', maxTokens: 300, temperature: 0.2,
         });

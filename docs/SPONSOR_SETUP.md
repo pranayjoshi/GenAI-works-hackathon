@@ -5,7 +5,7 @@ Ripple runs fully offline on local Nemotron 3 Nano 4B and an in-process DuckDB. 
 ## 1. NVIDIA hosted Nemotron (the three-model roles)
 
 1. Get a key at build.nvidia.com (it starts with `nvapi-`).
-2. Put it in `.env` as `NVIDIA_API_KEY=...` (`.env` is gitignored; copy `.env.example` if it is missing). With Nightshift running, the same key also goes in Nightshift's Providers tab.
+2. Put it in Nightshift's Providers tab (step 2 below), not in this project. The app holds no NVIDIA key; it only needs the Nightshift URL and token.
 3. Check it:
 
 ```bash
@@ -17,7 +17,8 @@ The roles then map to:
 | Role | Model |
 |---|---|
 | crowd, voice | `nvidia/nemotron-3.5-lightning-30b-a3b` (thinking off) |
-| reason, interview, rewriter | `nvidia/nemotron-3.5-super-vl-120b-a12b` (the 3.0 Super id returns 404 on build.nvidia.com keys) |
+| reason, rewriter | `nvidia/nemotron-3-ultra-550b-a55b` (Nightshift serves Lightning and Ultra; it excludes the Super VL id) |
+| interview | `nvidia/nemotron-3.5-lightning-30b-a3b` (thinking off) |
 | review (report critic, honesty check) | `nvidia/nemotron-3-ultra-550b-a55b` |
 
 Every call logs `served_by` in `runs/trace.jsonl` and in the Nemotron panel, so the role split is visible.
@@ -30,7 +31,7 @@ Every call logs `served_by` in `runs/trace.jsonl` and in the Nemotron panel, so 
 4. Copy the key from Nightshift > Console (⌘5) > API key into `.env` as `NIGHTSHIFT_TOKEN=...`. Without it the runtime answers 401 `runtime_token_missing`. If unset, the token is read from Nightshift's `proxy-token` file (`~/Library/Application Support/ai.meterless.runtime/`, then the older locations), or from `NIGHTSHIFT_TOKEN` / `NIGHTSHIFT_STATE_DIR` if set. Calls carry `meterless-app: dryrun`.
 5. `npm run probe` should show `nightshift ONLINE` and `served_by=nightshift:...` for each role.
 
-Observed 27 Oct: Nightshift served the crowd, voice and review roles, and refused the Super VL id (`model_excluded`), so the reason/interview role fell through to direct NVIDIA. Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVIDIA models may be missing from Nightshift's lane picker. Ripple asks for the model id directly, so this may not matter; if Nightshift refuses the NVIDIA ids, the calls fall through to the direct NVIDIA path (step 1) and `served_by` says so.
+Observed 27 Oct: Nightshift served the crowd, voice, reason and review roles on Lightning and Ultra (`npm run probe`), and refused the Super VL id (`model_excluded`), so Ripple no longer asks for it. Known issue on M1-M4 builds (Meterless/Meterless issue #4, version 0.92.0): NVIDIA models may be missing from Nightshift's lane picker. Ripple asks for the model id directly, so this may not matter; if Nightshift refuses the ids, calls fall through to local Ollama and `served_by` says so.
 
 ## 3. Zetaris (federated SQL)
 

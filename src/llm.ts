@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { config, THINKING, type ProviderName, type Role } from './config.js';
 import { agentLog } from './util/agentlog.js';
-import { Bus, RpmLimiter, Semaphore, sha, sleep } from './util/core.js';
+import { Bus, Semaphore, sha, sleep } from './util/core.js';
 
 export interface TraceEntry {
   ts: string;
@@ -126,32 +126,26 @@ interface RawResult { text: string; tokens_in: number; tokens_out: number; serve
 
 const sems: Record<ProviderName, Semaphore> = {
   nightshift: new Semaphore(config.nightshift.concurrency),
-  nvidia: new Semaphore(config.nvidia.concurrency),
   ollama: new Semaphore(config.ollama.concurrency),
 };
-const nvidiaRpm = new RpmLimiter(config.nvidia.rpm);
 const downUntil: Partial<Record<ProviderName, number>> = {};
 const lastError: Partial<Record<ProviderName, string>> = {};
 
 function providerConfigured(p: ProviderName): boolean {
   if (p === 'nightshift') return Boolean(config.nightshift.token);
-  if (p === 'nvidia') return Boolean(config.nvidia.apiKey);
   return true;
 }
 
-async function openAiCompat(p: 'nightshift' | 'nvidia', o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
-  const c = p === 'nightshift' ? config.nightshift : config.nvidia;
+async function openAiCompat(p: 'nightshift', o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawResult> {
+  const c = config.nightshift;
   const model = o.model ?? c.models[o.role];
   const thinking = o.thinking ?? THINKING[o.role];
-  const headers: Record<string, string> = { 'content-type': 'application/json' };
-  if (p === 'nightshift') {
-    headers.authorization = `Bearer ${config.nightshift.token}`;
-    headers['meterless-app'] = config.nightshift.app;
-    headers['meterless-scope'] = 'user';
-  } else {
-    headers.authorization = `Bearer ${config.nvidia.apiKey}`;
-    await nvidiaRpm.take();
-  }
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    authorization: `Bearer ${config.nightshift.token}`,
+    'meterless-app': config.nightshift.app,
+    'meterless-scope': 'user',
+  };
   const system = jsonSchema
     ? `${o.system}\n\nReply with a single JSON object that matches this JSON Schema. No prose, no code fences.\n${JSON.stringify(jsonSchema)}`
     : o.system;
@@ -333,7 +327,7 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
 /** Provider status for the UI and the probe script. */
 export async function providerStatus() {
   const out: { provider: ProviderName; configured: boolean; online: boolean; detail: string; models: Record<string, string> }[] = [];
-  for (const p of ['nightshift', 'nvidia', 'ollama'] as ProviderName[]) {
+  for (const p of ['nightshift', 'ollama'] as ProviderName[]) {
     const configured = providerConfigured(p);
     let online = false, detail = configured ? '' : 'not configured';
     if (configured) {
@@ -345,16 +339,14 @@ export async function providerStatus() {
           online = names.some((n) => n.startsWith('nemotron'));
           detail = online ? `local models: ${names.filter((n) => n.includes('nemotron')).join(', ')}` : 'no nemotron model pulled';
         } else {
-          const c = p === 'nightshift' ? config.nightshift : config.nvidia;
-          const headers: Record<string, string> = { authorization: `Bearer ${p === 'nightshift' ? config.nightshift.token : config.nvidia.apiKey}` };
-          if (p === 'nightshift') { headers['meterless-app'] = config.nightshift.app; headers['meterless-scope'] = 'user'; }
-          const r = await fetch(`${c.baseUrl}/models`, { headers, signal: AbortSignal.timeout(5000) });
+          const headers: Record<string, string> = { authorization: `Bearer ${config.nightshift.token}`, 'meterless-app': config.nightshift.app, 'meterless-scope': 'user' };
+          const r = await fetch(`${config.nightshift.baseUrl}/models`, { headers, signal: AbortSignal.timeout(5000) });
           online = r.ok;
           detail = `GET /models -> ${r.status}`;
         }
       } catch (e) { detail = (e as Error).message; }
     }
-    const models = p === 'ollama' ? config.ollama.models : p === 'nvidia' ? config.nvidia.models : config.nightshift.models;
+    const models = p === 'ollama' ? config.ollama.models : config.nightshift.models;
     out.push({ provider: p, configured, online, detail: lastError[p] && !online ? `${detail}; last error: ${lastError[p]}` : detail, models });
   }
   return { sampleMode: config.sampleMode, order: config.providers, providers: out };

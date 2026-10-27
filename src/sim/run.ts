@@ -121,7 +121,7 @@ export function specFromInput(inp: RunInput, run_id = newRunId(inp.business)): R
   const handle = inp.handle || `@${inp.business.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
   const rounds = Math.min(32, Math.max(6, inp.rounds ?? 24));
   const seeds = Math.max(1, Math.min(3, inp.seeds ?? 2));
-  const local = !config.nvidia.apiKey && !config.nightshift.token;
+  const local = !config.nightshift.token;
   // outside the US: country-level World Bank data (data/geo.ts); the persona zip field then carries the ISO3 code
   const geo = /^\d{5}$/.test(inp.zip ?? '') ? null : resolveGeo(inp.location || inp.zip);
   if (geo) inp = { ...inp, zip: geo.iso3, place: inp.place || geo.label, useCustomers: inp.useCustomers ?? false };
