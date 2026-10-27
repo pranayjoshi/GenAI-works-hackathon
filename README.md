@@ -57,10 +57,10 @@ Built for the Open Agent Hackathon 2026, Track 3 (Reasoning Architecture) and th
   <tr>
     <td align="center"><h3>600</h3>simulated Instagram users in ZIP 78704</td>
     <td align="center"><h3>2 × 2</h3>seeds × twin worlds, hash-verified</td>
-    <td align="center"><h3>4,146</h3>simulated reactions</td>
-    <td align="center"><h3>+1.4 pts</h3>A leads, 70% likely better (run 1458)</td>
-    <td align="center"><h3>3,828</h3>people per version a real test needs</td>
-    <td align="center"><h3>$0</h3>ad spend; a live test needs 29,274 people</td>
+    <td align="center"><h3>3,328</h3>simulated decisions (run 1458)</td>
+    <td align="center"><h3>+1.4 pts</h3>A leads, 70% likely better</td>
+    <td align="center"><h3>29,274</h3>people a live split test needs: 108% of the ZIP's Instagram users</td>
+    <td align="center"><h3>$0</h3>ad spend to find the leader</td>
   </tr>
 </table>
 
