@@ -62,7 +62,9 @@ export function guardDecision(g: GuardInput): GuardOutput {
 
   // public text: must be the person's own words, not the brand's, not a copy of the reason
   if (text) {
-    const tp = factProblem(text) ?? (BRAND_VOICE.test(text) ? 'brand_voice' : null) ?? (text.trim().toLowerCase() === (g.reason ?? '').trim().toLowerCase() ? 'copied_reason' : null);
+    const tp = factProblem(text) ?? (BRAND_VOICE.test(text) ? 'brand_voice' : null);
+    // a comment that repeats the person's own reason is still their words: noted, not withheld
+    if (!tp && text.trim().toLowerCase() === (g.reason ?? '').trim().toLowerCase()) checks.push('text:copied_reason');
     if (tp) {
       checks.push(`text:${tp}`);
       text = '';

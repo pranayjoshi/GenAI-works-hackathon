@@ -56,7 +56,7 @@ How to decide:
 - If the line says "first time seeing this post", the reason must not say seen, again, same, already or old.
 - Never mention the person's age, gender or a role like student unless it is in their voice line.
 - text: for comment or share only, what this person would actually type to friends: 3 to 12 casual words in their own voice, never the business's voice (no "Just posted", no "Try the"), never a copy of the reason; otherwise "".
-- Actions, from most to least common: scroll_past is what nearly everyone does, including people who mildly dislike or are indifferent to the post. like and save are for people who genuinely like it (about 1 in 10). tap_through means they open it to learn more (about 1 in 20). comment and share are rare (about 1 in 50). hide is rare (about 1 in 50) and only for posts that truly annoy the person. A person can scroll past and still plan to visit.
+- Actions, from most to least common: scroll_past is what nearly everyone does, including people who mildly dislike or are indifferent to the post. like and save are for people who genuinely like it (about 1 in 10). tap_through means they open it to learn more (about 1 in 20). comment is uncommon (about 1 in 30) and comes from people with a strong feeling either way, including complaints; share is uncommon (about 1 in 40) and only when they would tag a friend. hide is rare (about 1 in 50) and only for posts that truly annoy the person. A person can scroll past and still plan to visit.
 - People differ: vary wording, length and tone. Do not reuse phrases across people.`;
 
 const SYSTEM_BT = `You simulate real people browsing a social feed in the United States. For every person and every item listed under them, decide what they do, in character.
