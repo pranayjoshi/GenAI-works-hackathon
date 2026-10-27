@@ -57,8 +57,10 @@
     },
     "seeds_agree": 2,
     "winner": null,
-    "call": "too close to call",
-    "headline": "Too close to call on intent to visit: A 24.8% vs B 23.4% (±5.1 pts), A ahead in 2 of 2 seeds.",
+    "call": "leader",
+    "leader": "A",
+    "p_better": 0.7043,
+    "headline": "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version.",
     "segments": [
       {
         "key": "age:18-24",
@@ -1217,25 +1219,19 @@
     }
   ],
   "decision": {
-    "call": "cancel_ab",
-    "headline": "Don't pay to A/B test these two posts: they are too close to tell apart with the people South Congress Coffee can reach. Test a bolder version instead.",
+    "call": "leader",
+    "headline": "Launch A: it leads by 1.4 points and is 70% likely to be the better version. A sharper Version C could widen the gap.",
     "reasons": [
-      "The simulated gap is 1.4 points (A 24.8% vs B 23.4%), inside a ±5.1-point interval: no winner.",
-      "A real test needs about 14,637 people per version to detect a gap that small (5% two-sided, 80% power): 29,274 in all.",
-      "There are about 27,006 Instagram users in Austin, TX 78704 (Census x Pew join), so that test would have to reach 108.4% of them.",
-      "A test using at most 20.0% of the local audience (2,700 per version) can only detect a gap of about 3.4 points, so the next version must move intent by at least that much to be worth testing.",
-      "Version C moved intent by +1.0 points on the same crowd (30.1% vs 29.0%), short of the 3.6-point bar. Keep A and don't pay for a real test of C."
+      "A leads on intent to visit: 24.8% vs 23.4%, a 1.4-point gap with a 95% interval of ±5.1 points, and A is ahead in 2 of 2 seeds. A is 70% likely to be the better version.",
+      "A live split test would need about 14,637 people per version (108.4% of the local Instagram users) and paid impressions to detect this gap. Ripple ran it on the simulated crowd for $0 of ad spend.",
+      "There are about 27,006 Instagram users in Austin, TX 78704 (Census x Pew join).",
+      "A sharper Version C, drafted from what people objected to, could widen the gap. It is worth acting on only if it moves intent by at least 3.4 points, the smallest gap that would be worth acting on.",
+      "C moved intent +1.0 pts vs A on the same crowd (30.1% vs 29.0%): keep A. The bar is 3.6 pts, the smallest gap that would be worth acting on."
     ],
     "actions": [
       {
-        "id": "cancel_ab",
-        "title": "Don't pay for an A/B test of A vs B",
-        "policy": "auto",
-        "status": "done"
-      },
-      {
         "id": "draft_c",
-        "title": "Draft a bolder version from what people objected to",
+        "title": "Draft a sharper version from what people objected to",
         "policy": "auto",
         "status": "done"
       },
@@ -1246,8 +1242,8 @@
         "status": "done"
       },
       {
-        "id": "launch_test",
-        "title": "Set up a paused A vs C test in Meta Ads (two ad sets)",
+        "id": "launch",
+        "title": "Launch Version A in Meta Ads (paused)",
         "policy": "needs_approval",
         "status": "proposed"
       }
@@ -1301,8 +1297,8 @@
     "decision_ms": 40124
   },
   "report": {
-    "summary": "Too close to call on intent to visit: A 24.8% vs B 23.4% (±5.1 pts), A ahead in 2 of 2 seeds.",
-    "recommendation": "The versions are too close to call; test a sharper version C.",
+    "summary": "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version.",
+    "recommendation": "Launch version A, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.",
     "claims": [
       {
         "text": "income $50-75k: intent 18.9% on A vs 28.8% on B (66 people deciding, pooled over 2 seeds).",

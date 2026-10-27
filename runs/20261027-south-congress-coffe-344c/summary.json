@@ -49,8 +49,10 @@
     },
     "seeds_agree": 2,
     "winner": null,
-    "call": "too close to call",
-    "headline": "Too close to call on intent to visit: A 13.5% vs C 14.6% (±4.2 pts), C ahead in 2 of 2 seeds.",
+    "call": "leader",
+    "leader": "C",
+    "p_better": 0.6883,
+    "headline": "C leads on intent to visit: 14.6% vs 13.5% (+1.1 pts, 95% CI −3.2 to +5.3); C ahead in 2 of 2 seeds; 69% likely to be the better version.",
     "segments": [
       {
         "key": "age:18-24",
@@ -1208,9 +1210,9 @@
   ],
   "decision": {
     "call": "verification",
-    "headline": "Verification run: Version C against 20261027-south-congress-coffe-e52a's leader on the same crowd. Too close to call on intent to visit: A 13.5% vs C 14.6% (±4.2 pts), C ahead in 2 of 2 seeds.",
+    "headline": "Verification run: Version C against 20261027-south-congress-coffe-e52a's leader on the same crowd. C leads on intent to visit: 14.6% vs 13.5% (+1.1 pts, 95% CI −3.2 to +5.3); C ahead in 2 of 2 seeds; 69% likely to be the better version.",
     "reasons": [
-      "This run only checks whether Version C beats the leader on the same crowd. The spend decision is on the parent run 20261027-south-congress-coffe-e52a."
+      "This run only checks whether Version C beats the leader on the same crowd. The launch decision is on the parent run 20261027-south-congress-coffe-e52a."
     ],
     "actions": []
   },
@@ -1263,8 +1265,8 @@
     "decision_ms": 149840
   },
   "report": {
-    "summary": "Too close to call on intent to visit: A 13.5% vs C 14.6% (±4.2 pts), C ahead in 2 of 2 seeds.",
-    "recommendation": "The versions are too close to call; test a sharper version C.",
+    "summary": "C leads on intent to visit: 14.6% vs 13.5% (+1.1 pts, 95% CI −3.2 to +5.3); C ahead in 2 of 2 seeds; 69% likely to be the better version.",
+    "recommendation": "Launch version C, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.",
     "claims": [
       {
         "text": "income $75-100k: intent 13.3% on A vs 17.7% on C (57 people deciding, pooled over 2 seeds).",

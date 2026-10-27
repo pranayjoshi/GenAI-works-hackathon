@@ -32,7 +32,7 @@ beforeAll(async () => {
 afterAll(() => server?.close());
 
 describe('Meta launch action', () => {
-  it('creates a paused split test with chained ids', async () => {
+  it('creates paused ads with chained ids (the builder accepts several variants)', async () => {
     const r = await meta.launchOnMeta({ run_id: 'r1', business: 'Demo Café', zip: '78704', age_bands: ['25-34'], days: 7, variants: [{ label: 'Version A', text: 'a' }, { label: 'Version C', text: 'c' }] });
     expect(r.mode).toBe('live');
     expect(r.ok).toBe(true);
@@ -46,6 +46,15 @@ describe('Meta launch action', () => {
     expect(calls[3].body.adset_id).toBe('2');
     expect(JSON.parse(calls[3].body.creative)).toEqual({ creative_id: '3' });
     expect(r.ad_sets).toEqual([{ label: 'Version A', ad_set_id: '2', creative_id: '3', ad_id: '4' }, { label: 'Version C', ad_set_id: '5', creative_id: '6', ad_id: '7' }]);
+  });
+
+  it('launches ONE paused ad: campaign, ad set, creative, ad', async () => {
+    calls.length = 0;
+    const r = await meta.launchOnMeta({ run_id: 'r2', business: 'Demo Café', zip: '78704', age_bands: ['25-34'], days: 7, variants: [{ label: 'Version A', text: 'a' }] });
+    expect(r.ok).toBe(true);
+    expect(calls.map((c) => c.path.split('/').pop())).toEqual(['campaigns', 'adsets', 'adcreatives', 'ads']);
+    expect(r.ad_sets).toHaveLength(1);
+    expect(calls[0].body.name).not.toMatch(/split test/i);
   });
 
   it('refuses to create anything that is not paused', () => {

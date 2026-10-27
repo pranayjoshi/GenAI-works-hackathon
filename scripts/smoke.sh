@@ -9,7 +9,7 @@ export SAMPLE_MODE=true SAMPLE_STRICT=true REPLAY_CROWD_MS=0 PROVIDERS=none RECO
 export RECORDINGS_DB=${RECORDINGS_DB:-samples/smoke-recordings.sqlite}
 npx tsc --noEmit
 npx vitest run
-want="Too close to call on intent to visit: A 15.8% vs B 34.2% (±19.0 pts), B ahead in 1 of 1 seed."
+want="B leads on intent to visit: 34.2% vs 15.8% (+18.4 pts, 95% CI −0.6 to +37.4); B ahead in 1 of 1 seed; 97% likely to be the better version."
 got=$(npx tsx scripts/run-ab.ts --crowd 40 --rounds 6 --seeds 1 \
   --event "3|Bean There, the cafe across the street, just posted 30% off all lattes today only" | tee /dev/stderr | grep '^VERDICT:' | sed 's/^VERDICT: //')
 if [ "$got" = "$want" ]; then echo "SMOKE OK: offline replay reproduced the recorded run: $got"; else echo "SMOKE MISMATCH"; echo " recorded: $want"; echo " replay:   $got"; exit 1; fi

@@ -36,7 +36,7 @@ const NODES = [
   { id: 'critic', i: 8, ord: 8, x: 880, y: R3, w: 210, h: 68, label: 'Critic', role: 'review', rc: '--warn', go: 'report',
     short: 'Reviews every claim against the data before it ships.', long: 'Role review. Checks the written report against the numbers and flags claims the data does not support.' },
   { id: 'verdict', i: 9, ord: 9, x: 835, y: R4, w: 300, h: 64, label: 'Verdict and report', rc: '--good', go: 'verdict',
-    short: 'A winner, or too close to call, with the written report.', long: 'The finished answer: which version wins, how sure the simulation is, or "too close to call" when the interval spans zero.' },
+    short: 'Which version leads or wins, with the statistics and the written report.', long: 'The finished answer: which version wins or leads, the gap with its 95% interval, and how likely it is to be the better version.' },
   // "Ask why" side branch under the analyst, dimmer
   { id: 'interviewer', side: true, ord: 31, x: 120, y: R4, w: 195, h: 60, label: 'Interviewer', role: 'interview', rc: '--muted', go: 'ask',
     short: 'Asks one simulated person why.', long: 'Role interview. Answers "why did you do that" in the voice of one specific simulated person, using their own memories.' },
@@ -265,7 +265,7 @@ export default {
         txt = S.verdict ? 'verdict ready' : '';
       } else if (n.id === 'verdict') {
         const v = S.verdict;
-        if (v) txt = v.call === 'winner' ? `Version ${v.winner} wins` : 'too close to call';
+        if (v) txt = v.call === 'winner' ? `Version ${v.winner} wins` : `Version ${v.leader || (v.pooled.a >= v.pooled.b ? 'A' : 'B')} leads`;
         nd.dataset.call = v ? (v.call === 'winner' ? 'win' : 'tie') : '';
       } else {
         const st = nodeStats(n);

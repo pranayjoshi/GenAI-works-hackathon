@@ -52,10 +52,21 @@ export interface Verdict {
   pooled: { a: number; b: number; na: number; nb: number; diff: number; ci_half: number; moe_a: number; moe_b: number };
   seeds_agree: number;
   winner: string | null;
-  call: 'winner' | 'too close to call';
+  call: 'winner' | 'leader';
+  /** Version ahead on the pooled rate (A on an exact tie). */
+  leader?: string;
+  /** P(leader is the better version) = Phi(diff / se), normal approximation of the pooled difference. */
+  p_better?: number;
   headline: string;
   segments: { key: string; a: number; b: number; na: number; nb: number; prefers: string | null; clear: boolean }[];
   secondary: Record<string, { a: number; b: number }>;
+}
+
+/** Standard normal CDF (Abramowitz-Stegun 7.1.26 erf, error < 1.5e-7). */
+export function normCdf(x: number): number {
+  const t = 1 / (1 + 0.3275911 * Math.abs(x) / Math.SQRT2);
+  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x / 2);
+  return x >= 0 ? 0.5 * (1 + y) : 0.5 * (1 - y);
 }
 
 export function verdict(summaries: WorldSummary[], variants: [string, string], metric: Verdict['metric'], label: string): Verdict {
@@ -82,9 +93,11 @@ export function verdict(summaries: WorldSummary[], variants: [string, string], m
   const agree = leaders.filter((l) => l === lead).length;
   const winner = agree === seeds.length && Math.abs(diff) > ci_half ? lead : null;
   const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
-  const headline = winner
-    ? `${winner} wins on ${label}, ${pct(winner === va ? A.p : B.p)} vs ${pct(winner === va ? B.p : A.p)} (±${(ci_half * 100).toFixed(1)} pts), ${agree} of ${seeds.length} seed${seeds.length > 1 ? 's' : ''}.`
-    : `Too close to call on ${label}: ${va} ${pct(A.p)} vs ${vb} ${pct(B.p)} (±${(ci_half * 100).toFixed(1)} pts), ${lead} ahead in ${agree} of ${seeds.length} seed${seeds.length > 1 ? 's' : ''}.`;
+  const gap = Math.abs(diff);
+  const p_better = ci_half > 0 ? normCdf(gap / (ci_half / z)) : gap > 0 ? 1 : 0.5;
+  const sgn = (x: number) => `${x < 0 ? '\u2212' : '+'}${Math.abs(x * 100).toFixed(1)}`;
+  const [pl, po] = lead === va ? [A.p, B.p] : [B.p, A.p];
+  const headline = `${lead} ${winner ? 'wins' : 'leads'} on ${label}: ${pct(pl)} vs ${pct(po)} (${sgn(gap)} pts, 95% CI ${sgn(gap - ci_half)} to ${sgn(gap + ci_half)}); ${lead} ahead in ${agree} of ${seeds.length} seed${seeds.length > 1 ? 's' : ''}; ${Math.round(p_better * 100)}% likely to be the better version.`;
 
   const segKeys = Object.keys(summaries[0]?.segments ?? {});
   const segments = segKeys.map((key) => {
@@ -101,7 +114,7 @@ export function verdict(summaries: WorldSummary[], variants: [string, string], m
   return {
     metric, variants, per_seed,
     pooled: { a: round(A.p, 4), b: round(B.p, 4), na: A.n, nb: B.n, diff: round(diff, 4), ci_half: round(ci_half, 4), moe_a: round(moe(A.p, A.n), 4), moe_b: round(moe(B.p, B.n), 4) },
-    seeds_agree: agree, winner, call: winner ? 'winner' : 'too close to call', headline, segments,
+    seeds_agree: agree, winner, call: winner ? 'winner' : 'leader', leader: lead, p_better: round(p_better, 4), headline, segments,
     secondary: {
       engagement_rate: sec((m) => m.engagement_rate), mean_stance: sec((m) => m.mean_stance), vocal_share: sec((m) => m.vocal_share),
       silent_negative_share: sec((m) => m.silent_negative_share), hide_rate: sec((m) => m.hide_rate), tap_rate: sec((m) => m.tap_rate),

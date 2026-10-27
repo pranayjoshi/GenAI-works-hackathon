@@ -1,7 +1,7 @@
 {
   "run_id": "20261027-south-congress-coffe-344c",
   "call": "verification",
-  "headline": "Verification run: Version C against 20261027-south-congress-coffe-e52a's leader on the same crowd. Too close to call on intent to visit: A 13.5% vs C 14.6% (±4.2 pts), C ahead in 2 of 2 seeds.",
+  "headline": "Verification run: Version C against 20261027-south-congress-coffe-e52a's leader on the same crowd. C leads on intent to visit: 14.6% vs 13.5% (+1.1 pts, 95% CI −3.2 to +5.3); C ahead in 2 of 2 seeds; 69% likely to be the better version.",
   "approved_actions": [],
   "plan": {
     "variants": [],
@@ -20,8 +20,8 @@
     "assumptions": []
   },
   "reasons": [
-    "This run only checks whether Version C beats the leader on the same crowd. The spend decision is on the parent run 20261027-south-congress-coffe-e52a."
+    "This run only checks whether Version C beats the leader on the same crowd. The launch decision is on the parent run 20261027-south-congress-coffe-e52a."
   ],
-  "exported": "2026-10-27T18:32:08.292Z",
+  "exported": "2026-10-27T21:29:52.650Z",
   "note": "Exported by Dry Run. Nothing was posted or spent."
 }

@@ -1,8 +1,8 @@
 /**
- * Launch action: set up a paused test in Meta Ads (one campaign, one ad set per version), when the owner approves (docs/META_SETUP.md).
+ * Launch action: set up the chosen version as a paused ad in Meta Ads (one campaign, one ad set, one ad), when the owner approves (docs/META_SETUP.md).
  *
- * One campaign; one ad set per version with identical targeting and budget (an even split test); one creative and
- * one ad per ad set. Every object is created with status PAUSED and the code refuses anything else, so nothing
+ * One campaign; one ad set; one creative and one ad. (The builder still accepts several variants, one ad set each, with
+ * identical targeting and budget, but the decision only ever sends one.) Every object is created with status PAUSED and the code refuses anything else, so nothing
  * delivers or spends until a person switches it on in Ads Manager. Use a sandbox ad account for demos.
  * Without META_* settings this returns the exact payloads it would send (mode "preview") and sends nothing.
  */
@@ -66,13 +66,13 @@ export function metaPayloads(inp: MetaLaunchInput): { path: string; body: Record
     ...ageRange(inp.age_bands),
     publisher_platforms: ['instagram'],
     instagram_positions: ['stream'],
-    // Advantage audience off: both versions must reach exactly the same people for a fair split test
+    // Advantage audience off: every ad set must reach exactly the same people
     targeting_automation: { advantage_audience: 0 },
   };
   const out: { path: string; body: Record<string, unknown> }[] = [];
   out.push({
     path: `${act}/campaigns`,
-    body: { name: `Dry Run split test: ${inp.business} (${inp.run_id})`, objective: 'OUTCOME_TRAFFIC', status: PAUSED, special_ad_categories: [], buying_type: 'AUCTION', is_adset_budget_sharing_enabled: false },
+    body: { name: `Ripple launch: ${inp.business} (${inp.run_id})`, objective: 'OUTCOME_TRAFFIC', status: PAUSED, special_ad_categories: [], buying_type: 'AUCTION', is_adset_budget_sharing_enabled: false },
   });
   inp.variants.forEach((v, i) => {
     out.push({
@@ -118,7 +118,7 @@ async function graphPost(p: string, body: Record<string, unknown>, deadline: num
 
 export async function launchOnMeta(inp: MetaLaunchInput): Promise<MetaLaunchResult> {
   const r = await launchOnMetaInner(inp);
-  agentLog({ run_id: inp.run_id, agent_name: 'LaunchAgent', action: 'create_split_test', target_agent: 'Meta Ads', status: r.ok ? 'success' : 'error', input_summary: `${inp.variants.length} variants, ZIP ${inp.zip}, all created paused`, output_summary: `${r.mode}${r.campaign_id ? ` campaign ${r.campaign_id}` : ''}${r.error ? `: ${r.error.slice(0, 160)}` : ''}`, refs: { mode: r.mode } });
+  agentLog({ run_id: inp.run_id, agent_name: 'LaunchAgent', action: 'create_paused_ad', target_agent: 'Meta Ads', status: r.ok ? 'success' : 'error', input_summary: `${inp.variants.length} variants, ZIP ${inp.zip}, all created paused`, output_summary: `${r.mode}${r.campaign_id ? ` campaign ${r.campaign_id}` : ''}${r.error ? `: ${r.error.slice(0, 160)}` : ''}`, refs: { mode: r.mode } });
   return r;
 }
 
@@ -158,7 +158,6 @@ function adsManagerUrl(campaignId: string) {
 export function launchInputFromDecision(d: Decision, business: string): MetaLaunchInput {
   const variants = d.plan.variants.filter((v) => v.text && !v.text.startsWith('('));
   if (!variants.length) throw Object.assign(new Error('The launch plan has no finished variant text yet'), { statusCode: 400 });
-  if (d.actions.some((x) => x.kind === 'launch_test') && new Set(variants.map((v) => v.text)).size < 2) throw Object.assign(new Error('A split test needs two different finished variants; Version C has not been drafted (or the Rewriter returned nothing). Draft Version C first.'), { statusCode: 400 });
   for (const v of variants) { const m = v.label.match(/\b([ABC])\b/); if (m) v.image_url = creativeUrl(d.run_id, m[1], 'feed', `http://localhost:${config.port}`); }
   return { run_id: d.run_id, business, zip: d.plan.targeting.zip, age_bands: d.plan.targeting.age_bands, variants, days: 7 };
 }

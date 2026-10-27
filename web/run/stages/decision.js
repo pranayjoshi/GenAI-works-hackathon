@@ -1,4 +1,4 @@
-/* Decision stage: should the owner pay for a real A/B test, and what to do next.
+/* Decision stage: Ripple is the A/B test; this says what to do with the result (launch the winner or leader, try a sharper C).
  * Reads the `decision` from the run snapshot (S.decision is not in the shared state, so this stage keeps its own copy
  * from GET /api/runs/:id/decision, which builds one without an LLM if the run has none).
  * Shape: see src/report/decision.ts (Decision). Approve/Reject: POST /api/runs/:id/decision/actions/:action {choice}.
@@ -10,10 +10,9 @@ import { api, fail } from '../../core/api.js';
 import { stagger, reduced } from '../../core/motion.js';
 
 const CALL = {
-  cancel_ab: ['bad', 'Do not run the A/B test'],
-  run_ab: ['warn', 'A real test is affordable'],
-  launch_winner: ['good', 'Launch the winner'],
-  cant_size: ['warn', 'Cannot size the test'],
+  winner: ['good', 'Launch the winner'],
+  leader: ['good', 'Launch the leader'],
+  cant_size: ['good', 'Launch the leader'],
 };
 const pctStr = (x, d = 0) => (x == null ? '-' : `${(x * 100).toFixed(d)}%`);
 const variantVar = (v) => { const k = String(v || '').toLowerCase(); return k === 'a' || k === 'b' || k === 'c' ? `var(--${k})` : 'var(--accent)'; };
@@ -53,15 +52,15 @@ export default {
       const over = share > cap;
       return h('div.dc-size',
         h('div.dc-size-nums',
-          h('div', h('b.dc-big', fmtInt(need)), h('span', ' people needed'), h('div.expl', `${fmtInt(d.sample_size.per_version)} per version, to detect the simulated gap at ${pctStr(d.sample_size.alpha, 0)} significance and ${pctStr(d.sample_size.power, 0)} power`)),
-          h('div', h('b.dc-big', fmtInt(aud)), h('span', ' local Instagram users'), h('div.expl', d.audience.place + ' (estimate)'))),
-        h('div.dc-bar', { role: 'img', 'aria-label': `${fmtInt(need)} people needed is ${pctStr(share, 0)} of ${fmtInt(aud)} local Instagram users. The budget line is at ${pctStr(cap, 0)}.` },
+          h('div', h('b.dc-big', fmtInt(need)), h('span', ' people a live test needs'), h('div.expl', `${fmtInt(d.sample_size.per_version)} per version, to detect this gap at ${pctStr(d.sample_size.alpha, 0)} significance and ${pctStr(d.sample_size.power, 0)} power`)),
+          h('div', h('b.dc-big', fmtInt(aud)), h('span', ' local users on the platform'), h('div.expl', d.audience.place + ' (estimate)'))),
+        h('div.dc-bar', { role: 'img', 'aria-label': `${fmtInt(need)} people for a live test is ${pctStr(share, 0)} of ${fmtInt(aud)} local Instagram users. The budget line is at ${pctStr(cap, 0)}.` },
           h('div.dc-bar-fill' + (over ? '.over' : ''), { style: { width: `${needW}%` } }),
           h('div.dc-bar-line', { style: { left: `${lineW}%` } }, h('span', `${pctStr(cap, 0)} budget line`))),
         h('div.dc-bar-legend',
-          h('span', h('i.dc-sw.need' + (over ? '.over' : '')), `${fmtInt(need)} needed = ${pctStr(share, 0)} of local users`),
+          h('span', h('i.dc-sw.need' + (over ? '.over' : '')), `${fmtInt(need)} for a live test = ${pctStr(share, 0)} of local users`),
           h('span', h('i.dc-sw.line'), `${pctStr(cap, 0)} budget line = ${fmtInt(d.affordable.per_version * 2)} people`)),
-        h('p.expl', over ? 'The test needs more people than the budget line allows.' : 'The test fits under the budget line.'),
+        h('p.expl', over ? 'A live test would need more people than the budget line allows. Ripple ran it on the simulated crowd for $0 of ad spend.' : 'A live test would fit under the budget line. Ripple ran it for $0 of ad spend.'),
         h('div.dc-src', d.audience.query_id ? [h('span.muted', 'Audience number comes from query '), qidChip(d.audience.query_id)] : null, h('span.muted', ` ${d.audience.source}.`)));
     }
 
@@ -100,7 +99,7 @@ export default {
 
     /* ---------------------------------------------------------- ad preview (creatives from GET /api/runs/:id/creative/:variant.svg) */
     const letterOf = (label) => (String(label).match(/\b([ABC])\b/) || [])[1] || 'A';
-    const launchAct = (d) => d.actions.find((a) => a.kind === 'launch_test' || a.kind === 'publish');
+    const launchAct = (d) => d.actions.find((a) => a.kind === 'publish');
     const imgUrl = (v, pl) => `${v.image_url || `/api/runs/${encodeURIComponent(id)}/creative/${letterOf(v.label).toLowerCase()}.svg`}${pl === 'story' ? '?placement=story' : ''}`;
     const icon = (d) => s('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true', class: 'ad-ic' }, s('path', { d }));
     const IC = { like: 'M12 21s-7.5-4.6-9.5-9.2C1.2 8.600 3 5.500 6.200 5.500c1.900 0 3.300 1 3.800 2.200.5-1.200 1.900-2.200 3.800-2.200 3.200 0 5 3.100 3.700 6.300C19.500 16.400 12 21 12 21z', cmt: 'M21 12a8 8 0 0 1-11.800 7L3 20.500l1.500-5.200A8 8 0 1 1 21 12z', share: 'M22 3L9.500 10.500 3 8.500 22 3zM22 3l-5.500 17-5-8.500', save: 'M6 3h12v18l-6-4.500L6 21z' };
@@ -158,7 +157,7 @@ export default {
     function launchPlan(d) {
       const p = d.plan, t = p.targeting || {};
       const row = (k, v) => h('div.dc-kv', h('dt', k), h('dd', v));
-      return sec('Launch plan', 'What a real test would look like', 'nothing here has been posted or paid for',
+      return sec('Launch plan', 'What gets launched', 'nothing here has been posted or paid for',
         h('div.dc-plan',
           h('div.dc-variants', p.variants.map((v) => h('div.dc-post', { style: { '--vc': variantVar(v.label.replace(/^.*?([ABC])\b.*$/i, '$1')) } }, h('span.dc-post-tag', v.label), h('p', v.text)))),
           h('dl.dc-kvs',
@@ -256,9 +255,9 @@ export default {
       }
       mount(root,
         h('header.dc-head',
-          h('div.dc-eyebrow', 'Decision', h('span.chip.' + cls, label), h('span.muted', 'no model call, computed from the finished run')),
+          h('div.dc-eyebrow', 'Decision', h('span.chip.' + cls, label), h('span.muted', 'computed from the finished run, no model call')),
           h('h2.dc-headline', d.headline)),
-        sec('The numbers', 'People a real test needs vs people you can reach', null, sizeChart(d)),
+        sec('The numbers', 'What a live split test would have needed, vs people you can reach', null, sizeChart(d)),
         sec('Why', 'Reasons', null, h('ul.dc-reasons', d.reasons.map((r) => h('li', r)))),
         sec('In their words', 'Why people hesitated, and what drew them', 'each quote links to the action it came from',
           h('div.dc-cols', themeCol('Why people hesitated', 'objections', d.brief?.objections || []), themeCol('What drew them', 'likes', d.brief?.likes || []))),

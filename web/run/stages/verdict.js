@@ -3,7 +3,7 @@
  * Verdict: hero (headline, pooled numbers, 3D pillars with CI caps), CI number line, then tabs:
  * segments (diverging bars), seeds + other measures, tipping points, validity + fact check.
  * Data: S.verdict {variants, call, winner, headline, metric, pooled{a,b,moe_a,moe_b,na,nb,diff,ci_half}, per_seed[], seeds_agree,
- * secondary{}, segments[]}, S.tipping, S.validity. A tie is always shown as "Too close to call". Styles: css/verdict.css (prefix vd-). */
+ * secondary{}, segments[]}, S.tipping, S.validity. Without a strict winner it shows "X leads" with P(better). Styles: css/verdict.css (prefix vd-). */
 import { h, s, mount, clear, pct, num, fmtInt, vcolor, avatar, checkLabel, cssVar } from '../../core/dom.js';
 import { roundTime } from '../../core/dom.js';
 import { reduced, countUp, riseWords, EASE } from '../../core/motion.js';
@@ -79,6 +79,10 @@ export default {
     }
 
     /* ---------------------------------------------------------------- hero */
+    /* leader and P(leader is better) = Phi(gap / se); older stored verdicts lack p_better, so derive it */
+    const cdf = (x) => { const t = 1 / (1 + 0.3275911 * Math.abs(x) / Math.SQRT2), y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x / 2); return x >= 0 ? 0.5 * (1 + y) : 0.5 * (1 - y); };
+    const leaderOf = (v) => v.winner || v.leader || ((v.pooled?.a ?? 0) >= (v.pooled?.b ?? 0) ? (v.variants || ['A', 'B'])[0] : (v.variants || ['A', 'B'])[1]);
+    const pBetterOf = (v) => v.p_better ?? (v.pooled?.ci_half > 0 ? cdf(Math.abs(v.pooled.diff ?? v.pooled.a - v.pooled.b) / (v.pooled.ci_half / 1.96)) : 0.5);
     function vkey(v) { return JSON.stringify([v.call, v.winner, v.headline, v.pooled]); }
     function buildVerdict(v) {
       destroyHero();
@@ -94,9 +98,9 @@ export default {
         countUp(valEl, val, (x) => pct(x), 1300);
         return card;
       };
-      const headline = h('h2.vd-headline', v.headline || (tie ? 'Too close to call' : `Version ${v.winner} wins`));
+      const headline = h('h2.vd-headline', v.headline || `Version ${leaderOf(v)} ${tie ? 'leads' : 'wins'}`);
       const explain = tie
-        ? 'The interval around the difference includes zero, or the seeds disagree. We do not pick a winner on noise.'
+        ? `The gap is small enough that its interval includes zero or the seeds do not all agree, so this is a lean, not a certainty: ${Math.round(pBetterOf(v) * 100)}% likely that ${leaderOf(v)} is the better version.`
         : `The interval excludes zero and ${v.seeds_agree ?? '?'} of ${(v.per_seed || []).length} seeds agree.`;
       const host = h('div.vd-3d', { 'aria-hidden': 'true' });
       const ciHost = h('div.vd-ci');
@@ -105,7 +109,7 @@ export default {
       mount(root,
         h('div.card.vd-hero' + (tie ? '.tie' : '.win'),
           h('div.vd-hero-copy',
-            h('span.vd-badge.' + (tie ? 'tie' : 'win'), tie ? 'Too close to call' : 'We have a winner'),
+            h('span.vd-badge.' + (tie ? 'tie' : 'win'), tie ? `${Math.round(pBetterOf(v) * 100)}% likely ${leaderOf(v)} is better` : 'We have a winner'),
             headline,
             h('div.vd-pair', side(va, p.a, p.moe_a, p.na), side(vb, p.b, p.moe_b, p.nb)),
             h('p.expl.vd-why', explain)),
@@ -272,7 +276,7 @@ export default {
       const H = 120, ml = 20, mr = 20;
       const svg = s('svg', { class: 'vd-ci-svg', role: 'img', 'aria-label': `Difference ${va} minus ${vb}: ${(diff * 100).toFixed(1)} points, interval ${(lo * 100).toFixed(1)} to ${(hi * 100).toFixed(1)}${includesZero ? ', includes zero' : ', excludes zero'}` });
       const note = h('div.vd-ci-note', h('b', `Difference ${va} - ${vb}: ${diff >= 0 ? '+' : ''}${(diff * 100).toFixed(1)} pts`), h('span', ` ± ${(half * 100).toFixed(1)} (interval ${(lo * 100).toFixed(1)} to ${(hi * 100).toFixed(1)})`),
-        h('span.chip.' + (includesZero ? 'warn' : 'good'), includesZero ? 'interval includes zero' : 'interval excludes zero'));
+        h('span.chip.' + (includesZero ? 'warn' : 'good'), `${Math.round((v.p_better ?? pBetterOf(v)) * 100)}% likely ${leaderOf(v)} is better`));
       mount(host, svg, note);
       let W = 640;
       const draw = (k) => {
@@ -407,7 +411,7 @@ export default {
           h('div.vd-m-row', h('span.mono', vb), bar(b, vb), h('span.mono.vd-m-val', f(b))));
       });
       return h('div.vd-seeds',
-        h('div.vd-sub', h('h3', 'Per seed'), h('span.sub', seeds.length ? (tie ? 'No overall winner; each seed is shown on its own.' : `${v.seeds_agree ?? '?'} of ${seeds.length} seeds agree with the overall result`) : 'No per-seed results.')),
+        h('div.vd-sub', h('h3', 'Per seed'), h('span.sub', seeds.length ? (tie ? 'Each seed is shown on its own.' : `${v.seeds_agree ?? '?'} of ${seeds.length} seeds agree with the overall result`) : 'No per-seed results.')),
         seeds.length ? h('div.vd-seedgrid', cards) : null,
         h('div.vd-sub', { style: { marginTop: '22px' } }, h('h3', 'Other measures'), h('span.sub', `${va} vs ${vb}; bars share one scale per measure and start at zero`)),
         rows.length ? h('div.vd-measures', rows) : h('div.empty', 'No secondary measures for this run.'));

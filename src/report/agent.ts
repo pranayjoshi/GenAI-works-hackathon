@@ -34,6 +34,9 @@ export interface ReportBundle {
 }
 
 /** What the model sees of each tool result: only the columns it needs, so the prompt stays a few thousand tokens. */
+/** The version ahead on the pooled rate. */
+const lead = (v: { winner: string | null; leader?: string; variants: [string, string]; pooled: { a: number; b: number } }) => v.winner ?? v.leader ?? (v.pooled.a >= v.pooled.b ? v.variants[0] : v.variants[1]);
+
 function compactTool(t: ToolResult): string {
   if (t.tool === 'query_actions' && t.args.sentiment) {
     return JSON.stringify(t.rows.slice(0, 14).map((r) => ({ action_id: r.action_id, reason: String(r.reason ?? '').slice(0, 90), role: r.role, age: r.age_band })));
@@ -175,7 +178,7 @@ ${toolText}`;
     issues.push('Summary was too thin; replaced with the computed verdict.');
   }
   if (report.recommendation.trim().length < 30) {
-    report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C on the same crowd before spending.';
+    report.recommendation = `Launch version ${lead(v)}, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.`;
     issues.push('Recommendation was too thin; replaced with a rule-based one.');
   }
   report.claims = report.claims.filter((c) => c.text.trim().length >= 25);
@@ -183,7 +186,7 @@ ${toolText}`;
   report.claims = report.claims.filter((c) => !issues.some((i) => i.includes(`"${c.text}"`)));
   if (issues.some((i) => i.includes('summary or recommendation') || (i.startsWith('Price') && (i.includes(report!.summary) || i.includes(report!.recommendation))))) {
     report.summary = v.headline;
-    report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C before spending.';
+    report.recommendation = `Launch version ${lead(v)}, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.`;
   }
   for (const th of [...report.objections, ...report.likes]) th.action_ids = th.action_ids.filter((id) => recById.has(id));
   // a quote must point the same way as its theme, and three quotes are enough
@@ -203,17 +206,12 @@ ${toolText}`;
   report.summary = noAlias(report.summary);
   report.recommendation = noAlias(report.recommendation);
   for (const c of report.claims) c.text = noAlias(c.text);
-  // no winner: the summary must say so up front, and the recommendation must be a next test, not a pick
+  // without a strict winner the summary is the computed verdict (it carries the stats); "wins" claims are dropped, "leads" is allowed
   if (!v.winner) {
-    // with no winner the summary is the computed verdict; model sentences there tend to pick a side
-    if (report.summary.trim() !== v.headline) { report.summary = v.headline; issues.push('Summary set to the computed verdict (no winner).'); }
+    if (report.summary.trim() !== v.headline) { report.summary = v.headline; issues.push('Summary set to the computed verdict (no strict winner).'); }
     const before = report.claims.length;
-    report.claims = report.claims.filter((c) => !/\b(leads?|wins?|winner|beats?|outperforms?|higher|better|stronger)\b/i.test(c.text));
-    if (report.claims.length < before) issues.push('Dropped claims that named a winner although the verdict is too close to call.');
-    if (!/version c|test|re-?run|bigger|larger/i.test(report.recommendation)) {
-      report.recommendation = 'Too close to call: test a sharper version C on the same crowd before spending.';
-      issues.push('Recommendation picked a side without a winner; replaced with the next test.');
-    }
+    report.claims = report.claims.filter((c) => !/\b(wins?|winner|beats?|outperforms?|proven|significant)\b/i.test(c.text));
+    if (report.claims.length < before) issues.push('Dropped claims that said "wins" although the verdict does not meet the strict winner rule.');
   }
   // floor: at least 3 claims; extras are the widest segment gaps, built in code from the segment queries they cite
   if (report.claims.length < 3) {
@@ -282,7 +280,7 @@ function fallbackReport(st: RunState, tools: ToolResult[], samples: ToolResult[]
     objections: [va, vb].map((variant, i) => themeFrom(samples[i * 2], variant, 'negative') ?? { theme: `Negative reactions to ${variant}`, variant, action_ids: pick(samples[i * 2]) }),
     likes: [va, vb].map((variant, i) => themeFrom(samples[i * 2 + 1], variant, 'positive') ?? { theme: `Positive reactions to ${variant}`, variant, action_ids: pick(samples[i * 2 + 1]) }),
     tipping_note: tippingNote(st),
-    recommendation: v.winner ? `Run version ${v.winner}, and test a version C aimed at the losing segments.` : 'The versions are too close to call; test a sharper version C.',
+    recommendation: `Launch version ${lead(v)}, and try a version C aimed at the losing segments.`,
   };
 }
 

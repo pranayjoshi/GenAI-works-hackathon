@@ -299,7 +299,7 @@ export default function workspace(view, params) {
         S.verdict = e.verdict;
         refetch().then(() => {
           bus.emit('verdict', S.verdict);
-          if (!S.verdictShown) { S.verdictShown = true; if (cur !== 'verdict') toast(S.verdict.call === 'winner' ? `Verdict: Version ${S.verdict.winner} wins` : 'Verdict: too close to call', false, { label: 'Open verdict', onclick: () => ctx.go('verdict') }); }
+          if (!S.verdictShown) { S.verdictShown = true; if (cur !== 'verdict') toast(S.verdict.call === 'winner' ? `Verdict: Version ${S.verdict.winner} wins` : `Verdict: Version ${S.verdict.leader || (S.verdict.pooled.a >= S.verdict.pooled.b ? 'A' : 'B')} leads`, false, { label: 'Open verdict', onclick: () => ctx.go('verdict') }); }
         });
         break;
       case 'report': S.report = e.report; bus.emit('report', S.report); break;

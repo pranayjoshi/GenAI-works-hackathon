@@ -243,8 +243,8 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
       agentLog({ run_id: spec.run_id, agent_name: 'ReportWriter', action: 'build_report', status: 'error', output_summary: (e as Error).message.slice(0, 200) });
     }
     timing.report_ms = Date.now() - t2;
-    // spend decision and launch plan: is a real test worth paying for, and what to test instead
-    phase(st, 'report', 'Deciding whether a real test is worth paying for');
+    // decision and launch plan: what to do with the result, and whether a sharper Version C is worth trying
+    phase(st, 'report', 'Deciding what to launch');
     const t3 = Date.now();
     try {
       agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'handoff', target_agent: 'DecisionAgent', status: 'started', input_summary: 'verdict, report and audience size' });
@@ -253,7 +253,7 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
       persist(st);
     } catch (e) { console.warn(`[run] decision skipped: ${(e as Error).message}`); }
     // the Version C draft is separate: a provider failure here must not drop the decision above
-    if (st.decision && !spec.parent_run && st.decision.call !== 'launch_winner') {
+    if (st.decision && !spec.parent_run && st.decision.actions.some((a) => a.id === 'draft_c')) {
       try {
         st.decision = await buildDecision(st, { draft: true });
         writeLaunchPlan(runDir(spec.run_id), st.decision);

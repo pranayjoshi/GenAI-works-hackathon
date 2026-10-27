@@ -1,6 +1,7 @@
 {
   "run_id": "20261027-south-congress-coffe-13b7",
   "status": "done",
+  "error": null,
   "created": "2026-10-27T20:57:37.264Z",
   "crowd": 600,
   "rounds": 12,
@@ -48,8 +49,10 @@
     },
     "seeds_agree": 2,
     "winner": null,
-    "call": "too close to call",
-    "headline": "Too close to call on intent to visit: A 29.0% vs C 30.1% (±5.5 pts), C ahead in 2 of 2 seeds.",
+    "call": "leader",
+    "leader": "C",
+    "p_better": 0.6433,
+    "headline": "C leads on intent to visit: 30.1% vs 29.0% (+1.0 pts, 95% CI −4.4 to +6.5); C ahead in 2 of 2 seeds; 64% likely to be the better version.",
     "segments": [
       {
         "key": "age:18-24",
@@ -1206,9 +1209,9 @@
   ],
   "decision": {
     "call": "verification",
-    "headline": "Verification run: Version C against 20261027-south-congress-coffe-1458's leader on the same crowd. Too close to call on intent to visit: A 29.0% vs C 30.1% (±5.5 pts), C ahead in 2 of 2 seeds.",
+    "headline": "Verification run: Version C against 20261027-south-congress-coffe-1458's leader on the same crowd. C leads on intent to visit: 30.1% vs 29.0% (+1.0 pts, 95% CI −4.4 to +6.5); C ahead in 2 of 2 seeds; 64% likely to be the better version.",
     "reasons": [
-      "This run only checks whether Version C beats the leader on the same crowd. The spend decision is on the parent run 20261027-south-congress-coffe-1458."
+      "This run only checks whether Version C beats the leader on the same crowd. The launch decision is on the parent run 20261027-south-congress-coffe-1458."
     ],
     "actions": []
   },
@@ -1247,8 +1250,8 @@
     "decision_ms": 52
   },
   "report": {
-    "summary": "Too close to call on intent to visit: A 29.0% vs C 30.1% (±5.5 pts), C ahead in 2 of 2 seeds.",
-    "recommendation": "The versions are too close to call; test a sharper version C.",
+    "summary": "C leads on intent to visit: 30.1% vs 29.0% (+1.0 pts, 95% CI −4.4 to +6.5); C ahead in 2 of 2 seeds; 64% likely to be the better version.",
+    "recommendation": "Launch version C, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.",
     "claims": [
       {
         "text": "income <$25k: intent 12.0% on A vs 7.7% on C (59 people deciding, pooled over 2 seeds).",

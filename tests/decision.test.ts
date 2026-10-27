@@ -1,8 +1,8 @@
-/** The spend decision's arithmetic (src/report/decision.ts): sample size, detectable gap, and the call it leads to. */
+/** The decision's arithmetic (src/report/decision.ts): the live-test sample size Ripple saves, the detectable gap, and the wording helpers. */
 import { describe, expect, it } from 'vitest';
-import { detectableGap, perVersion, MAX_TEST_SHARE } from '../src/report/decision.js';
+import { detectableGap, perVersion, MAX_TEST_SHARE, platformName } from '../src/report/decision.js';
 
-describe('spend decision math', () => {
+describe('decision math', () => {
   it('matches the textbook two-proportion sample size', () => {
     // 50% vs 60%, 5% two-sided, 80% power: about 388 per group (standard tables give 385-389)
     const n = perVersion(0.5, 0.6)!;
@@ -26,8 +26,13 @@ describe('spend decision math', () => {
     expect(gap * 100).toBeCloseTo(3.5, 0);
   });
 
-  it('a test needing more than the budget share of the audience is not worth running', () => {
+  it('a live test for the demo gap would need more than the budget share of the audience', () => {
     const total = perVersion(0.296, 0.2672)! * 2;
     expect(total / 27006).toBeGreaterThan(MAX_TEST_SHARE);
+  });
+
+  it('names the platform, defaulting to Instagram', () => {
+    expect(platformName({ spec: {} } as any)).toBe('Instagram');
+    expect(platformName({ spec: { platform: 'tiktok' } } as any)).toBe('TikTok');
   });
 });
