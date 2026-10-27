@@ -21,16 +21,16 @@ Numbers are the claim-checked figures of the copy-only demo run `20261027-south-
 | 1:47 | 3 · Analyse | Every claim has a receipt | Every claim cites its query: customers leaned to A; people earning fifty to seventy-five thousand leaned to B. And most stayed silent: 60 people wrote a reaction they kept private, against 13 public comments. |
 | 1:59 | 4 · Ask | Same person, two worlds | One person, in both worlds. The product-first post gave them a reason to try it. The story-first one? Six fifty felt steep for a daily habit. |
 | 2:08 | 4 · Ask | Interview, live | Ask them why, live, on Nemotron Super. They answer only from their own memory, and cite it. |
-| 2:20 | 4 · Ask | Focus group | Or seat six of them at one table, a focus group, where each person speaks from their own memory. |
-| 2:26 | 5 · Decide | Needed vs reachable | Here's the decision. To tell these two apart, a real test needs 14,637 people per version: more than everyone on Instagram in this ZIP. A test she can afford only detects a 3.4-point gap. So: don't pay for this test. |
-| 2:41 | 5 · Decide | Version C, drafted and checked | So Ripple wrote a Version C from what people said. Nemotron Super drafted it, and Nemotron Ultra checked that it invents nothing. |
-| 2:49 | 5 · Decide | C against A, same 600 people | Then it ran C against A on the same 600 people. C moved intent by one point, well below what an affordable test can detect. Keep A, keep the money. |
-| 2:59 | 6 · Act | Nothing spends without approval | Anything that spends money waits for the owner. Ripple advises against this test, but if she still wants it, Approve builds a paused Meta Ads campaign. Without Meta keys, it shows the exact requests and sends nothing. |
-| 3:11 | 7 · Proof | The unedited agent trace | Every step is in the trace: agents handing off, the critic asking for a revision, and the Nemotron model behind every call. Judges can run it with one curl, no keys needed. |
-| 3:22 | Impact | impact | Ripple told a café not to pay for a test it couldn't win, showed why in the crowd's own words, and lined up the next step for one click. |
-| 3:29 | Cast | cast | Four Nemotron models, each on the job it's best at: Lightning for the crowd, Super for reasoning, Ultra as critic, Nano on a laptop. |
-| 3:38 | Close | close | Built with Meterless, Zetaris and NVIDIA Nemotron. Simulated people, not real customers; the limits are on the card. Ripple. |
+| 2:19 | 4 · Ask | Focus group | Or seat six of them at one table, a focus group, where each person speaks from their own memory. |
+| 2:25 | 5 · Decide | Needed vs reachable | Here's the decision. To tell these two apart, a real test needs 14,637 people per version: more than everyone on Instagram in this ZIP. A test she can afford only detects a 3.4-point gap. So: don't pay for this test. |
+| 2:40 | 5 · Decide | Version C, drafted and checked | So Ripple wrote a Version C from what people said. Nemotron Super drafted it, and Nemotron Ultra checked that it invents nothing. |
+| 2:48 | 5 · Decide | C against A, same 600 people | Then it ran C against A on the same 600 people. C moved intent by one point, well below what an affordable test can detect. Keep A, keep the money. |
+| 2:57 | 6 · Act | Nothing spends without approval | Anything that spends money waits for the owner. Ripple advises against this test, but if she still wants it, Approve builds a paused Meta Ads campaign. Without Meta keys, it shows the exact requests and sends nothing. |
+| 3:10 | 7 · Proof | The unedited agent trace | Every step is in the trace: agents handing off, the critic asking for a revision, and the Nemotron model behind every call. Judges can run it with one curl, no keys needed. |
+| 3:20 | Impact | impact | Ripple told a café not to pay for a test it couldn't win, showed why in the crowd's own words, and lined up the next step for one click. |
+| 3:28 | Cast | cast | Four Nemotron models, each on the job it's best at: Lightning for the crowd, Super for reasoning, Ultra as critic, Nano on a laptop. |
+| 3:36 | Close | close | Built with Meterless, Zetaris and NVIDIA Nemotron. Simulated people, not real customers; the limits are on the card. Ripple. |
 
-Total voice plus pauses: about 229 s (3539 characters). The final cut adds cross-fades and is checked to run 3:30 to 4:00.
+Total voice plus pauses: about 227 s (3539 characters). The final cut adds cross-fades and is checked to run 3:30 to 4:00.
 
 On-screen honesty rules: every shot of the app is the real app; shots of the saved run `20261027-south-congress-coffe-1458` carry a "saved run" corner label; live shots carry a "live" label; sped-up footage carries a "sped up" chip; nothing shows a credential.

@@ -91,7 +91,7 @@ export const SEGMENTS = [
     overlay: { act: '4 · Ask', title: 'Same person, two worlds', saved: SAVED },
     vo: 'One person, in both worlds. The product-first post gave them a reason to try it. The story-first one? Six fifty felt steep for a daily habit.',
     say: 'One person, in both worlds. The product first post gave them a reason to try it. The story first one? Six fifty felt steep, for a daily habit.' },
-  { id: 'ask2', src: { clip: 'ask', ranges: [['asked-1', 'interview_end', 1]] }, pad: 6.0,
+  { id: 'ask2', src: { clip: 'ask', ranges: [['asked-1', 'interview_end', 1]] }, pad: 5.0,
     overlay: { act: '4 · Ask', title: 'Interview, live', badge: 'super', live: true },
     vo: 'Ask them why, live, on Nemotron Super. They answer only from their own memory, and cite it.' },
   { id: 'ask3', src: { clip: 'ask', ranges: [['focus_run-0.9', 'focus_run+0.4', 1], ['focus_run+0.4', 'focus_run+280', 40]] }, pad: 1.2,
@@ -103,7 +103,7 @@ export const SEGMENTS = [
     overlay: { act: '5 · Decide', title: 'Needed vs reachable', saved: SAVED },
     vo: "Here's the decision. To tell these two apart, a real test needs 14,637 people per version: more than everyone on Instagram in this ZIP. A test she can afford only detects a 3.4-point gap. So: don't pay for this test.",
     say: "Here's the decision. To tell these two apart, a real test needs 14,637 people per version: more than everyone on Instagram in this zip. A test she can afford only detects a 3.4 point gap. So: don't pay for this test." },
-  { id: 'decide2', src: { clip: 'decide', ranges: [['versionc', 'versionc+6.5', 1], ['c_result-0.5', 'to_c', 1]] }, pad: 0.6,
+  { id: 'decide2', src: { clip: 'decide', ranges: [['versionc', 'versionc+6.5', 1], ['c_result-0.5', 'to_c', 1]] }, pad: 0.4,
     overlay: { act: '5 · Decide', title: 'Version C, drafted and checked', badge: ['super', 'ultra'], saved: SAVED },
     vo: 'So Ripple wrote a Version C from what people said. Nemotron Super drafted it, and Nemotron Ultra checked that it invents nothing.' },
   { id: 'decide3', src: { clip: 'decide', ranges: [['c_verdict-0.3', 'end', 1]] }, pad: 0.4,
@@ -111,7 +111,7 @@ export const SEGMENTS = [
     vo: 'Then it ran C against A on the same 600 people. C moved intent by one point, well below what an affordable test can detect. Keep A, keep the money.' },
 
   // ---------------------------------------------------------------- 6 · act
-  { id: 'act', src: { clip: 'act', ranges: [['start', 'start+6', 1.3], ['launch-0.3', 'end-0.5', 1.3]] }, pad: 1.0,
+  { id: 'act', src: { clip: 'act', ranges: [['start', 'start+6', 1.3], ['launch-0.3', 'end-0.5', 1.3]] }, pad: 0.6,
     overlay: { act: '6 · Act', title: 'Nothing spends without approval', live: true },
     vo: "Anything that spends money waits for the owner. Ripple advises against this test, but if she still wants it, Approve builds a paused Meta Ads campaign. Without Meta keys, it shows the exact requests and sends nothing." },
 
@@ -125,7 +125,7 @@ export const SEGMENTS = [
     vo: "Ripple told a café not to pay for a test it couldn't win, showed why in the crowd's own words, and lined up the next step for one click." },
   { id: 'cast', src: { scene: 'cast' }, pad: 0.5,
     vo: "Four Nemotron models, each on the job it's best at: Lightning for the crowd, Super for reasoning, Ultra as critic, Nano on a laptop." },
-  { id: 'close', src: { scene: 'close' }, pad: 2.4,
+  { id: 'close', src: { scene: 'close' }, pad: 2.0,
     vo: 'Built with Meterless, Zetaris and NVIDIA Nemotron. Simulated people, not real customers; the limits are on the card. Ripple.',
     say: 'Built with Meterless, Zetaris, and NVIDIA Nemotron. Simulated people, not real customers; the limits are on the card. [[slnc 300]] Ripple.' },
 ];
