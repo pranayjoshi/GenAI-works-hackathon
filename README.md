@@ -7,6 +7,30 @@ Dry Run A/B tests an ad, post or announcement on a simulated crowd of people sam
 Built for the Open Agent Hackathon 2026, Track 3 (Reasoning Architecture), on NVIDIA Nemotron, Meterless engines, Nightshift and Zetaris-style federated SQL.
 
 <!-- RESULTS -->
+## Results so far (all on local Nemotron 3 Nano 4B)
+
+Every number below came from a laptop run on Nemotron 3 Nano 4B through Ollama. No hosted model, Nightshift or Zetaris instance was available while building, so none of these numbers come from those paths. [docs/SPONSOR_SETUP.md](docs/SPONSOR_SETUP.md) shows how to turn each one on.
+
+**Reality check: the Upworthy backtest.** We ran the crowd on 50 held-out Upworthy headline A/B tests (the scored slice). The crowd had 40 simulated people, 4 rounds and 1 seed. It picked the real winner outright 21 times and tied 3 times, a score of 22.5 of 50 with ties counted as half.
+
+| Method | Score | Rate | 95% CI (Wilson) |
+|---|---|---|---|
+| Dry Run crowd | 22.5 / 50 | 45.0% | 32.1 to 58.7% |
+| Single prompt, same model, thinking on | 24 / 50 | 48.0% | 34.8 to 61.5% |
+| Single prompt, same model, thinking off | 25 / 50 | 50.0% | 36.6 to 63.4% |
+| Coin flip | | 50.0% | |
+
+None of the three methods can be told apart from chance on the 4B model, because every interval includes 50%. The crowd and the single prompts do not differ measurably either. An exact McNemar test with the 3 crowd ties excluded gives 10 vs 12 discordant tests, p = 0.83. Fifty tests cannot detect a difference smaller than about 15 points. The result file is [samples/backtest/2026-10-27T04-59-44-210Z.json](samples/backtest/2026-10-27T04-59-44-210Z.json).
+
+How the tests were picked: Upworthy headline-only tests, meaning the same image and lede, where the best and worst package each had at least 1,000 impressions. The click-through gap had to be at least 30% relative, with a two-proportion z of at least 2.58 on the real clicks. Tests created between 2013-06-25 and 2014-01-10 were excluded. That leaves 982 tests, ordered by the md5 of the test id. Ranks 1 to 20 are the dev slice, used for tuning and never scored. Ranks 21 to 70 are the scored slice.
+
+What this means: a 4B local model does not predict which headline wins, and neither does one prompt to it. Dry Run's value on this model is the parts a single prompt can't give you. You get who reacted and why, what people kept to themselves, how a competitor's post moved intent, and a version C tested on the same crowd. Each of those is tied to an action you can open. Rerunning the backtest on hosted Nemotron is one command once a key is set:
+
+```bash
+npm run backtest -- --slice scored --n 50
+```
+
+<!-- DEMO_RUN -->
 
 ## What happens in a run
 
@@ -59,12 +83,12 @@ Built for the Open Agent Hackathon 2026, Track 3 (Reasoning Architecture), on NV
 
 | Sponsor | What it does in Dry Run |
 |---|---|
-| **NVIDIA Nemotron** | Every model call. Hosted roles: Nemotron 3.5 Lightning for the crowd and voices (thinking off), Nemotron 3 Super for the Audience agent, report, rewriter and interviews, Nemotron 3 Ultra for the report critic and honesty check. Local fallback: Nemotron 3 Nano 4B through Ollama, so the whole product runs offline on a laptop. |
-| **Nightshift** | First provider in the chain (`http://127.0.0.1:8088/v1`, runtime token, `meterless-app` header). `served_by` is logged for every call and shown in the UI. |
+| **NVIDIA Nemotron** | Every model call. Hosted roles (used when `NVIDIA_API_KEY` is set; not exercised in the runs above): Nemotron 3.5 Lightning for the crowd and voices (thinking off), Nemotron 3 Super for the Audience agent, report, rewriter and interviews, Nemotron 3 Ultra for the report critic and honesty check. Local fallback: Nemotron 3 Nano 4B through Ollama, so the whole product runs offline on a laptop. |
+| **Nightshift** | First provider in the chain (`http://127.0.0.1:8088/v1`, runtime token, `meterless-app` header). `served_by` is logged for every call and shown in the UI. The token is read from Nightshift's own state file, so no setup is needed once it runs. Not exercised in the runs above. |
 | **Meterless H-MEM** | One memory per person per world on the simulated clock. Recalled before every decision; interviews may cite only these lines; cited lines get `feedback('helpful')`. |
 | **Meterless World Model** | The shared world as an append-only, content-addressed event log. Twin worlds are forks that replay the identical base writes; the test suite proves the logs differ only by the post. |
 | **Meterless Markovian** | Each world is one Markovian run with one step per round. The `[STATE_CHECKPOINT]` carryover is the world summary that goes into the next round's prompts, so prompt size stays flat. |
-| **Zetaris** | The federation layer speaks the Zetaris Lightning REST API (login, open, page, close; `CREATE LIGHTNING FILESTORE TABLE`). Without credentials it runs the same SQL on an in-process DuckDB, and the UI labels which engine answered. |
+| **Zetaris** | The federation layer speaks the Zetaris Lightning REST API (login, open, page, close; `CREATE LIGHTNING FILESTORE TABLE`). The client follows Zetaris's published OpenAPI spec and passes a contract test against a fake server built from it. It has not yet run against a live instance. Without credentials it runs the same SQL on an in-process DuckDB, and every query records which engine answered. |
 
 All three vendored engines pass their own conformance suites in `npm test`.
 
