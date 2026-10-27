@@ -33,6 +33,8 @@ export interface DecisionAction {
   status: ActionStatus;
   evidence: string[];
   decided_at?: string;
+  /** What the action did when it ran (for the launch: the Meta campaign, ad set and ad ids, or the preview payloads). */
+  result?: unknown;
 }
 
 export interface Decision {
@@ -86,7 +88,7 @@ export function detectableGap(p: number, n: number): number {
   return hi;
 }
 
-export async function buildDecision(st: RunState, opts: { draft?: boolean } = {}): Promise<Decision> {
+export async function buildDecision(st: RunState, opts: { draft?: boolean; keepVariant?: boolean } = {}): Promise<Decision> {
   const v = st.verdict;
   if (!v) throw new Error('Run has no verdict yet');
   const bundle = (st.report as any) ?? {};
@@ -123,8 +125,8 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean } = {}
   if (audienceN) reasons.push(`There are about ${audienceN.toLocaleString('en-US')} Instagram users in ${st.spec.place} (Census x Pew join), so that test would have to reach ${share !== null ? pct(share) : 'more than all'} of them.`);
   reasons.push(`A test using at most ${pct(MAX_TEST_SHARE)} of the local audience (${affordablePer.toLocaleString('en-US')} per version) can only detect a gap of about ${(mde * 100).toFixed(1)} points, so the next version must move intent by at least that much to be worth testing.`);
 
-  let variant: Decision['variant'] = null;
-  if (opts.draft && call !== 'launch_winner') {
+  let variant: Decision['variant'] = opts.keepVariant ? st.decision?.variant ?? null : null;
+  if (opts.draft && !variant && call !== 'launch_winner') {
     const c = await draftVersionC(st);
     variant = { text: c.c.text, rationale: c.c.rationale, targets: c.c.targets ?? [], honesty: c.honesty };
   }
@@ -159,11 +161,11 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean } = {}
     actions.push({ id: 'cancel_ab', kind: 'cancel_test', title: `Don't pay for an A/B test of ${A.variant} vs ${B.variant}`, detail: `It would need ${total?.toLocaleString('en-US') ?? 'more than all'} people, ${share !== null ? pct(share) : 'more than all'} of local Instagram users, to tell apart a ${gapPts.toFixed(1)}-point gap.`, policy: 'auto', why_policy: 'Not spending is free and reversible.', status: 'done', evidence: audienceQ ? [audienceQ.query_id] : [] });
     actions.push({ id: 'draft_c', kind: 'draft_variant', title: 'Draft a bolder version from what people objected to', detail: variant ? `"${variant.text}"${variant.honesty.ok ? ' (passed the honesty check)' : ` (honesty check: ${variant.honesty.issues.join('; ')})`}` : 'Rewrite brief ready; draft runs on request.', policy: 'auto', why_policy: 'A draft spends nothing and is never published on its own.', status: variant ? 'done' : 'proposed', evidence: ev.slice(1) });
     actions.push({ id: 'simulate_c', kind: 'simulate_variant', title: `Simulate version C against ${leader} on the same crowd`, detail: `Worth a real test only if C moves intent by at least ${(mde * 100).toFixed(1)} points.`, policy: 'auto', why_policy: 'Simulation spends no ad money; it runs on the local model.', status: 'proposed', evidence: [] });
-    actions.push({ id: 'launch_test', kind: 'launch_test', title: `Run the real test: ${leader} vs C`, detail: `${planPer.toLocaleString('en-US')} people per version in ${st.spec.zip}, Instagram, core ${coreBands.join(', ') || 'segment'} first.`, policy: 'needs_approval', why_policy: 'Spends ad money and publishes: the owner decides.', status: 'proposed', evidence: ev });
+    actions.push({ id: 'launch_test', kind: 'launch_test', title: `Create the real split test in Meta Ads: ${leader} vs C`, detail: `One paused campaign, one ad set per version (same targeting and budget): Instagram, ZIP ${st.spec.zip}, ages ${coreBands.join(', ') || 'core'}, ${planPer.toLocaleString('en-US')} people per version.`, policy: 'needs_approval', why_policy: 'It sets up ad spend and public posts in your ad account: you decide. Everything is created paused.', status: 'proposed', evidence: ev });
   } else if (call === 'run_ab') {
-    actions.push({ id: 'launch_test', kind: 'launch_test', title: `Run the real A/B test of ${A.variant} vs ${B.variant}`, detail: `${n!.toLocaleString('en-US')} people per version (${share !== null ? pct(share) : '?'} of local Instagram users).`, policy: 'needs_approval', why_policy: 'Spends ad money and publishes: the owner decides.', status: 'proposed', evidence: ev });
+    actions.push({ id: 'launch_test', kind: 'launch_test', title: `Create the real split test in Meta Ads: ${A.variant} vs ${B.variant}`, detail: `One paused campaign, one ad set per version: ${n!.toLocaleString('en-US')} people per version (${share !== null ? pct(share) : '?'} of local Instagram users).`, policy: 'needs_approval', why_policy: 'It sets up ad spend and public posts in your ad account: you decide. Everything is created paused.', status: 'proposed', evidence: ev });
   } else {
-    actions.push({ id: 'publish', kind: 'publish', title: `Publish version ${leader}`, detail: leaderPost.text, policy: 'needs_approval', why_policy: 'Publishing is public and hard to undo: the owner decides.', status: 'proposed', evidence: ev });
+    actions.push({ id: 'publish', kind: 'publish', title: `Create the version ${leader} ad in Meta Ads (paused)`, detail: leaderPost.text, policy: 'needs_approval', why_policy: 'Publishing is public and hard to undo: you decide. It is created paused.', status: 'proposed', evidence: ev });
   }
 
   const headline = call === 'cancel_ab'
@@ -182,13 +184,24 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean } = {}
   };
 }
 
-/** Record the owner's approval or rejection of one action. Dry Run never posts or spends: approval exports the plan. */
-export function decideAction(d: Decision, actionId: string, choice: 'approve' | 'reject'): DecisionAction {
+/**
+ * Record the owner's approval or rejection of one action. Approving a launch runs it: the split test is created in
+ * Meta Ads, paused (src/actions/meta.ts), or previewed when Meta is not configured. Dry Run never activates or spends.
+ */
+export async function decideAction(d: Decision, actionId: string, choice: 'approve' | 'reject', business: string): Promise<DecisionAction> {
   const a = d.actions.find((x) => x.id === actionId);
   if (!a) throw Object.assign(new Error(`No action ${actionId}`), { statusCode: 404 });
   if (a.policy !== 'needs_approval') throw Object.assign(new Error('This action runs on its own and needs no approval'), { statusCode: 400 });
-  a.status = choice === 'approve' ? 'approved' : 'rejected';
+  if (a.status === 'approved' && (a.result as any)?.ok && (a.result as any)?.mode === 'live') throw Object.assign(new Error('Already created in Meta Ads'), { statusCode: 409 });
   a.decided_at = new Date().toISOString();
+  if (choice === 'reject') { a.status = 'rejected'; return a; }
+  if (a.kind === 'launch_test' || a.kind === 'publish') {
+    const { launchOnMeta, launchInputFromDecision } = await import('../actions/meta.js');
+    const inp = launchInputFromDecision(d, business);
+    if (a.kind === 'publish') inp.variants = inp.variants.slice(0, 1);
+    a.result = await launchOnMeta(inp);
+  }
+  a.status = 'approved';
   return a;
 }
 

@@ -72,6 +72,17 @@ export const config = {
     concurrency: num('OLLAMA_CONCURRENCY', 3),
     thinking: env('OLLAMA_THINKING', 'false') === 'true',
   },
+  // Meta Ads (launch action). Sandbox ad account recommended; every object is created paused (docs/META_SETUP.md)
+  meta: {
+    accessToken: env('META_ACCESS_TOKEN'),
+    adAccountId: env('META_AD_ACCOUNT_ID'),
+    pageId: env('META_PAGE_ID'),
+    instagramUserId: env('META_INSTAGRAM_USER_ID'),
+    linkUrl: env('META_LINK_URL', 'https://example.com'),
+    apiVersion: env('META_API_VERSION', 'v23.0'),
+    graphUrl: env('META_GRAPH_URL', 'https://graph.facebook.com'),
+    dailyBudgetCents: num('META_DAILY_BUDGET_CENTS', 500),
+  },
   zetaris: {
     baseUrl: env('ZETARIS_BASE_URL'), // e.g. https://api.saas.enterprise.zetaris.com or a local Docker host
     user: env('ZETARIS_USER'),
@@ -81,7 +92,7 @@ export const config = {
     openPath: env('ZETARIS_OPEN_PATH', '/api/v1.0/query/sql/start'),
     pagePath: env('ZETARIS_PAGE_PATH', '/api/v1.0/query/sql/page'),
     closePath: env('ZETARIS_CLOSE_PATH', '/api/v1.0/query/sql/close'),
-    fileRoot: env('ZETARIS_FILE_ROOT'), // where Zetaris sees this project's files, e.g. /data/dryrun in a Docker volume
+    fileRoot: env('ZETARIS_FILE_ROOT'), // where Zetaris sees this project's files, e.g. /home/zetaris/customer-data/shared/dryrun in a Docker volume
   },
   censusReporter: env('CENSUS_REPORTER_URL', 'https://api.censusreporter.org/1.0'),
   paths: {

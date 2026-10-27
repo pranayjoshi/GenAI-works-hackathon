@@ -11,6 +11,7 @@ import { proposeSegments } from './audience/agent.js';
 import { CAFE_DEMO } from './demo.js';
 import { runs, startRun, loadRun, listRunsOnDisk, injectEvent, allRecords, specFromInput, persist, runDir, type RunState, type RunInput } from './sim/run.js';
 import { buildDecision, decideAction, writeLaunchPlan } from './report/decision.js';
+import { metaConfigured } from './actions/meta.js';
 import { interview, askSegment, focusGroup } from './report/interview.js';
 import { draftVersionC } from './report/rewriter.js';
 import { queryActions } from './report/tools.js';
@@ -38,7 +39,7 @@ function snapshot(st: RunState) {
 
 app.get('/api/status', async () => {
   const [providers, sources] = await Promise.all([providerStatus(), sourceSummary().catch((e) => ({ engine: 'error', tables: [], error: (e as Error).message }))]);
-  return { providers, sources, sampleMode: config.sampleMode };
+  return { providers, sources, sampleMode: config.sampleMode, meta: { configured: metaConfigured(), mode: metaConfigured() ? 'live (paused objects)' : 'preview' } };
 });
 app.get('/api/demo', async () => CAFE_DEMO);
 
@@ -153,10 +154,10 @@ app.post('/api/runs/:id/decision/actions/:action', async (req) => {
   const st = await getRun((req.params as any).id);
   if (!st.decision) throw Object.assign(new Error('No decision yet'), { statusCode: 404 });
   const choice = (req.body as any)?.choice === 'reject' ? 'reject' : 'approve';
-  const action = decideAction(st.decision, (req.params as any).action, choice);
+  const action = await decideAction(st.decision, (req.params as any).action, choice, st.spec.business);
   persist(st);
   const file = writeLaunchPlan(runDir(st.spec.run_id), st.decision);
-  return { action, launch_plan: `/api/runs/${st.spec.run_id}/launch-plan.json`, file: path.relative(process.cwd(), file), note: 'Nothing was posted or spent. The approved plan is exported for your ad tool.' };
+  return { action, launch_plan: `/api/runs/${st.spec.run_id}/launch-plan.json`, file: path.relative(process.cwd(), file), note: (action.result as any)?.note ?? 'Nothing was posted or spent. The plan is exported.' };
 });
 app.get('/api/runs/:id/launch-plan.json', async (req, reply) => {
   const st = await getRun((req.params as any).id);

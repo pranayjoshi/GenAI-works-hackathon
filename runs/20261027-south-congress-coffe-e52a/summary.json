@@ -1250,7 +1250,7 @@
       },
       {
         "id": "launch_test",
-        "title": "Run the real test: A vs C",
+        "title": "Create the real split test in Meta Ads: A vs C",
         "policy": "needs_approval",
         "status": "proposed"
       }
