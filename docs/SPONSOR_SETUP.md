@@ -48,9 +48,16 @@ cd ~/Downloads/zetaris-platform && docker compose up -d
 
    The script writes a `docker-compose.override.yml` that mounts the project read-only at `/home/zetaris/customer-data/shared/dryrun` in the Lightning server and API containers.
 4. Sign in to the Zetaris UI, create a token under Management > API Tokens, and put it in `.env` as `ZETARIS_API_KEY=...` (or set `ZETARIS_USER` / `ZETARIS_PASSWORD`). `.env` already has `ZETARIS_BASE_URL=http://localhost:8888` (8888, not 8889), `ZETARIS_ORG_ID=1` and `ZETARIS_FILE_ROOT=/home/zetaris/customer-data/shared/dryrun`.
-5. `npm run probe` reports the engine. Every query in `runs/queries.jsonl` records whether `zetaris` or `local-duckdb` answered it, and the UI shows the same label.
+5. Register the source tables (about 90 seconds; the REST API only runs SELECT, so this goes through the driver's `lightning-sql` CLI):
 
-The client follows the published OpenAPI spec (`/api/v1.0/auth/login`, `/api/v1.0/query/sql/start`, `/query/sql/page`, `/query/sql/close/{queryToken}`) and is checked against a fake server built from that spec in `tests/zetaris-contract.test.ts`. It has not yet run against a live Zetaris instance.
+```bash
+scripts/zetaris-register.sh ~/Downloads/zetaris-platform
+```
+
+   It creates one Lightning database, `dryrun`, with `census_acs`, `pew_platform_use`, `priors_behaviour`, `biz_customers` and `upworthy_tests` as file-store tables over the mounted CSVs, and writes `data/cache/zetaris-registered.json`. The app rewrites `pew.platform_use` to `dryrun.pew_platform_use` and so on when it sends a query to Zetaris. Lightning has no `IF NOT EXISTS`, and dropping a file-store table breaks its catalog, so to register again use a new database name: `ZETARIS_DB=dryrun2 scripts/zetaris-register.sh ...`. Run tables (`sim.*`) and a customer file other than the café demo stay on DuckDB and are labelled so.
+6. `npm run probe` reports the engine. Every query in `runs/queries.jsonl` records whether `zetaris` or `local-duckdb` answered it, and the UI shows the same label.
+
+The client follows the published OpenAPI spec (`/api/v1.0/auth/login`, `/api/v1.0/query/sql/start`, `/query/sql/page`, `/query/sql/close/{queryToken}`) and is checked against a fake server built from that spec in `tests/zetaris-contract.test.ts`. It also runs live against the local hackathon bundle (Zetaris 2.4.3): all five source tables answer through `zetaris` with the same row counts as DuckDB. The REST API returns every value as text, so the client turns numeric strings back into numbers.
 
 A query goes to Zetaris only when every table it names is registered there. If Zetaris rejects one query, for example a DuckDB-only function, that query falls back to DuckDB and the log records why. An auth or network failure switches the rest of the process to DuckDB, so a run never dies on it.
 
