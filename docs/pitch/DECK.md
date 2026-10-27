@@ -46,7 +46,7 @@ Track 3, Reasoning Architecture: "turn data, knowledge, memory, and reasoning in
 **Notes:** Run 13b7 had no competitor event, so its A rate differs from the parent run's; the comparison is on the same crowd. The decision needs the measured gap and the audience size, not a predicted winner.
 
 ## 10. Approval-gated action
-**On slide:** Cancelling the pointless test and drafting C need no approval. Anything that spends or publishes waits for the owner. Ripple renders an Instagram-style ad mockup per version (`src/actions/creative.ts`). Approve creates one campaign with two paused ad sets (identical ZIP and age targeting, a fixed daily budget) and one ad each. It is not Meta's split-test study object. No Meta credentials: it shows the exact requests and sends nothing.
+**On slide:** Drafting and simulating Version C need no approval. Anything that spends or publishes waits for the owner. Ripple renders an Instagram-style ad mockup per version (`src/actions/creative.ts`). Approve creates one campaign with two paused ad sets (identical ZIP and age targeting, a fixed daily budget) and one ad each. It is not Meta's split-test study object. No Meta credentials: it shows the exact requests and sends nothing.
 **Visual:** approval panel with the preview.
 **Notes:** The code refuses any status other than paused (`src/actions/meta.ts`). Live launch is optional; our sandbox attempt currently fails at ad creative ("Select a Facebook Page").
 
