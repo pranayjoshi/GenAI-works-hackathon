@@ -171,6 +171,11 @@ export class WorldRunner {
               unsaid = text; text = '';
               action = feeling > 0 ? 'like' : 'scroll_past';
             }
+          } else if (text && this.spec.mode !== 'backtest' && (action === 'scroll_past' || action === 'like') && Math.abs(feeling) >= 2) {
+            // the model wrote what this person would say; their own propensity to speak decides if it is posted
+            // (same hash draw in both twin worlds). Otherwise it is kept private and counted as unsaid.
+            if (hashU(this.base.seed, p.id, it.item_id, r, 'comment') < p.speak_p) action = 'comment';
+            else { unsaid = text; text = ''; }
           } else text = '';
           const prev = this.stance.get(p.id) ?? 0;
           const next = rnd(clamp(prev + p.susceptibility * (feeling / 2 - prev), -1, 1), 3);
