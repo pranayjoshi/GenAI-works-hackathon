@@ -7,6 +7,8 @@ import { config } from './config.js';
 import { providerStatus, traceStats, traceBus, type TraceEntry } from './llm.js';
 import { getQuery } from './data/federation.js';
 import { registerSources, ensureCensus, sourceSummary, geoIdForZip } from './data/sources.js';
+import { resolveGeo, ensureGeo } from './data/geo.js';
+import { wbJoinSql } from './data/worldbank.js';
 import { proposeSegments } from './audience/agent.js';
 import { CAFE_DEMO } from './demo.js';
 import { runs, startRun, loadRun, listRunsOnDisk, injectEvent, allRecords, specFromInput, persist, runDir, type RunState, type RunInput } from './sim/run.js';
@@ -18,8 +20,9 @@ import { draftVersionC } from './report/rewriter.js';
 import { queryActions } from './report/tools.js';
 import { query } from './data/federation.js';
 import { handleRun } from './runApi.js';
+import { findImage } from './audience/vision.js';
 
-const app = Fastify({ logger: false, bodyLimit: 5 * 1024 * 1024 });
+const app = Fastify({ logger: false, bodyLimit: 14 * 1024 * 1024 }); // base64 images up to 8 MB each
 app.register(fastifyStatic, { root: path.join(config.root, 'web'), prefix: '/' });
 
 async function getRun(id: string): Promise<RunState> {
@@ -65,9 +68,18 @@ app.get('/api/demo', async () => CAFE_DEMO);
 
 app.post('/api/audience', async (req) => {
   const b = req.body as RunInput;
+  const platform = String(b.platform || 'instagram').replace(/[^a-z]/g, '');
   await registerSources();
+  // LOCATION: a country (or "City, Country") is answered from World Bank rows; a ZIP follows the original path below
+  const g = resolveGeo((b as RunInput & { location?: string }).location || b.zip);
+  if (g.kind === 'country') {
+    await ensureGeo(g.geoId);
+    const rc = await proposeSegments({ postA: b.postA, postB: b.postB, goal: b.goal, place: b.place || g.label, business: b.business, platform }, 'audience-preview');
+    const jn = await query(wbJoinSql(g.iso3, platform), 'audience preview: World Bank x Pew');
+    return { proposal: rc.proposal, served_by: rc.served_by, fallback: rc.fallback, join: { query_id: jn.query_id, engine: jn.engine, rows: jn.rows }, geo: { geo_name: g.label, release: 'World Bank Open Data', note: g.note } };
+  }
   await ensureCensus([geoIdForZip(b.zip)]);
-  const r = await proposeSegments({ postA: b.postA, postB: b.postB, goal: b.goal, place: b.place || `ZIP ${b.zip}`, business: b.business }, 'audience-preview');
+  const r = await proposeSegments({ postA: b.postA, postB: b.postB, goal: b.goal, place: b.place || `ZIP ${b.zip}`, business: b.business, platform }, 'audience-preview');
   const geo = geoIdForZip(b.zip).replace(/'/g, '');
   const join = await query(`
     WITH ages AS (
@@ -75,7 +87,7 @@ app.post('/api/audience', async (req) => {
       FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' AND indent = 2),
     banded AS (SELECT CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults FROM ages GROUP BY 1)
     SELECT b.band, b.adults, p.pct_us_adults_ever_use AS instagram_pct, ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS instagram_users
-    FROM banded b JOIN pew.platform_use p ON p.platform = 'instagram' AND p.dimension = 'age' AND p.band = b.band
+    FROM banded b JOIN pew.platform_use p ON p.platform = '${platform}' AND p.dimension = 'age' AND p.band = b.band
     WHERE b.band IS NOT NULL ORDER BY b.band`, 'audience preview: Census x Pew');
   const place = await query(`SELECT DISTINCT geo_name, release FROM census.acs WHERE geo_id = '${geo}'`, 'geo name');
   return { proposal: r.proposal, served_by: r.served_by, fallback: r.fallback, join: { query_id: join.query_id, engine: join.engine, rows: join.rows }, geo: place.rows[0] ?? null };
@@ -83,7 +95,7 @@ app.post('/api/audience', async (req) => {
 
 app.post('/api/runs', async (req) => {
   const b = req.body as RunInput;
-  if (!b?.postA || !b?.postB || !b?.zip || !b?.business) throw Object.assign(new Error('business, zip, postA and postB are required'), { statusCode: 400 });
+  if (!b?.postA || !b?.postB || !(b?.zip || (b as RunInput & { location?: string })?.location) || !b?.business) throw Object.assign(new Error('business, zip, postA and postB are required'), { statusCode: 400 });
   const st = startRun(b);
   return { run_id: st.spec.run_id, spec: st.spec };
 });
@@ -163,10 +175,18 @@ app.get('/api/runs/:id/creative/:file', async (req, reply) => {
   const m = String((req.params as any).file).match(/^([abc])\.svg$/i);
   const v = m?.[1].toLowerCase() as 'a' | 'b' | 'c' | undefined;
   const text = v ? variantText(st, v) : null;
+  // an uploaded image is the creative itself (the UI loads it like the generated SVG)
+  const img = v && v !== 'c' ? findImage(st.spec.posts.find((p) => p.variant.toLowerCase() === v)?.image_id ?? '') : null;
+  if (img) return reply.header('content-type', img.mime).header('cache-control', 'public, max-age=300').send(fs.readFileSync(img.file));
   if (!v || !text) return reply.code(404).send({ error: v === 'c' ? 'No Version C draft for this run yet' : 'Unknown variant (use a.svg, b.svg or c.svg)' });
   const placement = (req.query as any)?.placement === 'story' ? 'story' : 'feed';
   reply.header('content-type', 'image/svg+xml; charset=utf-8').header('cache-control', 'public, max-age=300');
   return renderCreative({ business: st.spec.business, place: st.spec.place, handle: st.spec.handle, variant: v, text, placement });
+});
+app.get('/api/images/:id', async (req, reply) => {
+  const img = findImage(String((req.params as any).id));
+  if (!img) return reply.code(404).send({ error: 'unknown image' });
+  return reply.header('content-type', img.mime).header('cache-control', 'public, max-age=86400').send(fs.readFileSync(img.file));
 });
 app.get('/api/runs/:id/decision', async (req) => {
   const st = await getRun((req.params as any).id);
@@ -242,7 +262,7 @@ const start = async () => {
   await registerSources().catch((e) => console.warn('[sources]', e.message));
   for (const id of listRunsOnDisk().slice(0, 20)) await loadRun(id).catch(() => undefined);
   // register census.acs from the most recent run's ZIP (cached rows, no network when cached) so the Data sources panels can show it, then warm the summary
-  const lastRun = listRunsOnDisk().map((id) => { try { return (runs.get(id) as any)?.spec?.zip as string | undefined; } catch { return undefined; } }).find(Boolean);
+  const lastRun = listRunsOnDisk().map((id) => { try { return (runs.get(id) as any)?.spec?.zip as string | undefined; } catch { return undefined; } }).find((z) => /^\d{5}$/.test(z ?? ''));
   (lastRun ? ensureCensus([geoIdForZip(lastRun)]).catch(() => undefined) : Promise.resolve()).then(() => sourceSummary()).catch(() => {});
   await app.listen({ port: config.port, host: process.env.HOST || '127.0.0.1' });
   const st = await providerStatus();

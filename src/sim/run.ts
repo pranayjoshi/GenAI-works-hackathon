@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { config } from '../config.js';
-import { registerSources, ensureCensus, geoIdForZip } from '../data/sources.js';
+import { registerSources, geoIdForZip } from '../data/sources.js';
+import { resolveGeo, ensureGeo } from '../data/geo.js';
 import { registerCsv } from '../data/federation.js';
 import { proposeSegments } from '../audience/agent.js';
 import { sampleCrowd, type SampleReport } from '../audience/sampler.js';
@@ -24,18 +25,27 @@ import { buildSchedule } from './schedule.js';
 import { buildBase, SimWorld } from './world.js';
 import { WorldRunner, type WorldResult } from './engine.js';
 import { summarizeWorld, verdict, tippingPoint, validity, type Verdict, type WorldSummary } from './metrics.js';
-import type { InjectedEvent, Post, RunSpec, SimEvent } from './types.js';
+import { describeImage, imageId } from '../audience/vision.js';
+import type { InjectedEvent, Post, PostItem, RunSpec, SimEvent, VersionKind } from './types.js';
+
+/** One side of the test beyond its text: what kind of version it is and its images (data URL or https URL). */
+export interface VersionExtra { kind?: VersionKind; ad?: { headline: string; primary: string; cta: string }; items?: { text: string; image?: string }[] }
+export const adText = (ad: { headline: string; primary: string; cta: string }) => `${ad.headline.trim()}. ${ad.primary.trim()} [Button: ${ad.cta.trim()}]`;
 
 export interface RunInput {
   business: string;
   handle?: string;
   place?: string;
   zip: string;
+  location?: string;     // US ZIP, country, or "City, Country"; used when zip is not a 5-digit ZIP
   goal: string;
   postA: string;
   postB: string;
   imageA?: string;
   imageB?: string;
+  platform?: string;          // instagram (default), facebook, tiktok, youtube, x, reddit
+  versionA?: VersionExtra;
+  versionB?: VersionExtra;
   crowdSize?: number;
   rounds?: number;
   seeds?: number;
@@ -78,18 +88,50 @@ function newRunId(business: string) {
   return `${d.toISOString().slice(0, 10).replace(/-/g, '')}-${business.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 20)}-${sha(String(d.getTime()) + Math.random(), 4)}`;
 }
 
+/** image ids are known up front (hash of the reference); descriptions are filled in by resolveImages before the crowd is built. */
+function mkPost(variant: string, text: string, image: string | undefined, x: VersionExtra | undefined, business: string, handle: string): Post {
+  const post: Post = { variant, text, business, handle };
+  if (x?.kind && x.kind !== 'post') post.kind = x.kind;
+  if (image) post.image_id = imageId(image);
+  if (x?.ad) post.ad = x.ad;
+  if (x?.items?.length) {
+    post.items = x.items.slice(0, 3).map((it): PostItem => ({ text: it.text, image_id: it.image ? imageId(it.image) : undefined }));
+    post.text = post.items.map((it, i) => `Post ${i + 1}: ${it.text}`).join(' ');
+  }
+  return post;
+}
+
+/** VisionAgent pass: each image of each version is described once (cached by hash); both worlds read the same text. */
+export async function resolveImages(st: RunState, inp: RunInput) {
+  const refs: [Post, string | undefined, (string | undefined)[]][] = [
+    [st.spec.posts[0], inp.imageA, inp.versionA?.items?.map((i) => i.image) ?? []],
+    [st.spec.posts[1], inp.imageB, inp.versionB?.items?.map((i) => i.image) ?? []],
+  ];
+  const biz = st.spec.business;
+  for (const [post, main, items] of refs) {
+    if (main && !post.image) post.image = (await describeImage(main, { run_id: st.spec.run_id, label: `version ${post.variant}`, business: biz })).description;
+    for (let i = 0; i < items.length; i++) {
+      const it = post.items?.[i];
+      if (items[i] && it && !it.image) it.image = (await describeImage(items[i]!, { run_id: st.spec.run_id, label: `version ${post.variant} post ${i + 1}`, business: biz })).description;
+    }
+  }
+}
+
 export function specFromInput(inp: RunInput, run_id = newRunId(inp.business)): RunSpec {
   const handle = inp.handle || `@${inp.business.toLowerCase().replace(/[^a-z0-9]+/g, '')}`;
   const rounds = Math.min(32, Math.max(6, inp.rounds ?? 24));
   const seeds = Math.max(1, Math.min(3, inp.seeds ?? 2));
   const local = !config.nvidia.apiKey && !config.nightshift.token;
-  const crowd_seed = sha(JSON.stringify([inp.business, inp.zip, inp.postA, inp.postB, inp.crowdSize ?? 600, rounds, inp.coreAgeBands ?? null, inp.coreShare ?? null, inp.useCustomers ?? true]), 12);
+  // outside the US: country-level World Bank data (data/geo.ts); the persona zip field then carries the ISO3 code
+  const geo = /^\d{5}$/.test(inp.zip ?? '') ? null : resolveGeo(inp.location || inp.zip);
+  if (geo) inp = { ...inp, zip: geo.iso3, place: inp.place || geo.label, useCustomers: inp.useCustomers ?? false };
+  const crowd_seed = sha(JSON.stringify([inp.business, inp.zip, inp.postA, inp.postB, inp.crowdSize ?? 600, rounds, inp.coreAgeBands ?? null, inp.coreShare ?? null, inp.useCustomers ?? true,
+    // appended only when used, so plain Instagram text tests keep their crowd seed
+    ...(inp.platform && inp.platform !== 'instagram' ? [inp.platform] : []),
+    ...(inp.imageA || inp.imageB || inp.versionA || inp.versionB ? [JSON.stringify([inp.imageA, inp.imageB, inp.versionA ?? null, inp.versionB ?? null], (k, v) => (k === 'imageA' || typeof v !== 'string' || v.length < 200 ? v : imageId(v)))] : [])]), 12);
   return {
-    run_id, crowd_seed, business: inp.business, handle, place: inp.place || `ZIP ${inp.zip}`, zip: inp.zip, geoId: geoIdForZip(inp.zip), goal: inp.goal,
-    posts: [
-      { variant: 'A', text: inp.postA, business: inp.business, handle, image: inp.imageA },
-      { variant: 'B', text: inp.postB, business: inp.business, handle, image: inp.imageB },
-    ],
+    run_id, crowd_seed, business: inp.business, handle, place: inp.place || `ZIP ${inp.zip}`, zip: inp.zip, geoId: geo ? geo.geoId : geoIdForZip(inp.zip), goal: inp.goal,
+    posts: [mkPost('A', inp.postA, inp.imageA, inp.versionA, inp.business, handle), mkPost('B', inp.postB, inp.imageB, inp.versionB, inp.business, handle)],
     crowdSize: Math.max(20, Math.min(1000, inp.crowdSize ?? 600)),
     rounds, startHour: 7, hourStep: rounds >= 24 ? 1 : Math.round(24 / rounds) || 1,
     seeds: Array.from({ length: seeds }, (_, i) => i + 1),
@@ -97,6 +139,7 @@ export function specFromInput(inp: RunInput, run_id = newRunId(inp.business)): R
     coreAgeBands: inp.coreAgeBands, coreShare: inp.coreShare, useCustomers: inp.useCustomers ?? true,
     events: (inp.events ?? []).map((e, i) => ({ id: `ev_${i + 1}`, round: e.round, text: e.text, target: e.target ?? 'all', author: 'user' })),
     mode: 'ab',
+    platform: inp.platform || undefined,
   };
 }
 
@@ -133,13 +176,13 @@ export async function buildCrowd(spec: RunSpec, inp: { postA: string; postB: str
   const t0 = Date.now();
   onStatus('data', 'Registering Census, Pew, priors and customer sources');
   await registerSources({ customers: spec.useCustomers ? undefined : null });
-  await ensureCensus([spec.geoId]);
+  await ensureGeo(spec.geoId);
   onStatus('audience', 'Audience agent is naming the segments');
   agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'build_crowd', target_agent: 'AudienceAgent', status: 'started', input_summary: `${spec.business}, ${spec.place}, ${spec.crowdSize} people` });
   let proposal: SegmentProposal & { served_by?: string; fallback?: boolean };
   if (presetProposal) proposal = presetProposal;
   else {
-    const r = await proposeSegments({ postA: inp.postA, postB: inp.postB, goal: spec.goal, place: spec.place, business: spec.business }, spec.run_id);
+    const r = await proposeSegments({ postA: inp.postA, postB: inp.postB, goal: spec.goal, place: spec.place, business: spec.business, platform: spec.mode === 'backtest' ? undefined : spec.platform }, spec.run_id);
     proposal = { ...r.proposal, served_by: r.served_by, fallback: r.fallback };
   }
   if (spec.coreAgeBands?.length) proposal.core.age_bands = spec.coreAgeBands as any;
@@ -150,7 +193,7 @@ export async function buildCrowd(spec: RunSpec, inp: { postA: string; postB: str
   });
   onStatus('voices', 'Writing one-line voices (numbers first, model second)', 0);
   const ctx = `${spec.business} in ${spec.place}. Core: ${proposal.core.name}. ${proposal.interests.length ? `Interests: ${proposal.interests.join(', ')}.` : ''}`;
-  const { voices, fallbacks, rejected } = await writeVoices(raw, ctx, spec.run_id, (done) => onStatus('voices', `${done}/${raw.length} voices`, done / raw.length));
+  const { voices, fallbacks, rejected } = await writeVoices(raw, ctx, spec.run_id, (done) => onStatus('voices', `${done}/${raw.length} voices`, done / raw.length), spec.mode === 'backtest' ? undefined : spec.platform);
   const personas: Persona[] = raw.map((p) => ({ ...p, voice: voices.get(p.id)! }));
   agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'crowd_ready', target_agent: 'CrowdAgent', status: 'success', output_summary: `${personas.length} people with voices; handing the crowd to the simulator`, ms: Date.now() - t0 });
   return { personas, proposal, report: { ...report, voice_fallbacks: fallbacks, voice_rejected: rejected } as SampleReport, ms: Date.now() - t0 };
@@ -165,9 +208,13 @@ async function execute(st: RunState, inp: RunInput, preset?: StartOpts['crowd'])
   });
   const timing: Record<string, number> = {};
   st.status = 'building';
+  if (inp.imageA || inp.imageB || inp.versionA?.items || inp.versionB?.items) {
+    phase(st, 'data', 'VisionAgent is reading the images');
+    await resolveImages(st, inp);
+  }
   if (preset) {
     await registerSources({ customers: spec.useCustomers ? undefined : null });
-    await ensureCensus([spec.geoId]);
+    await ensureGeo(spec.geoId);
     st.personas = preset.personas; st.proposal = preset.proposal; st.sampleReport = preset.sampleReport;
     timing.crowd_ms = 0;
     phase(st, 'sampling', `Reusing the ${preset.personas.length}-person crowd from run ${spec.parent_run}`);

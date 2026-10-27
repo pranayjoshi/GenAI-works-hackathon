@@ -141,5 +141,6 @@ async function computeSummary() {
   await probe('priors.behaviour', 'CSV', 'modeled priors, labelled');
   await probe('biz.customers', 'CSV (customer upload)', 'demo file is synthetic');
   await probe('upworthy.tests', 'CSV (Upworthy archive)', 'real A/B tests, CC BY 4.0');
+  await probe('worldbank.country', 'REST (World Bank Open Data)', 'real public data, CC BY 4.0, country-level');
   return { engine: engineName(), tables: out };
 }

@@ -47,7 +47,7 @@ async function local(): Promise<DuckDBConnection> {
   if (!duck) {
     const inst = await DuckDBInstance.create(':memory:');
     duck = await inst.connect();
-    for (const s of ['census', 'pew', 'priors', 'biz', 'upworthy', 'sim']) await duck.run(`CREATE SCHEMA IF NOT EXISTS ${s}`);
+    for (const s of ['census', 'pew', 'priors', 'biz', 'upworthy', 'sim', 'worldbank']) await duck.run(`CREATE SCHEMA IF NOT EXISTS ${s}`);
   }
   return duck;
 }
@@ -143,11 +143,11 @@ type Registry = Record<string, { zetaris: string; path: string }>;
 function registry(): Registry {
   try { return JSON.parse(fs.readFileSync(process.env.ZETARIS_REGISTRY ?? path.join(config.paths.data, 'cache', 'zetaris-registered.json'), 'utf8')) as Registry; } catch { return {}; }
 }
-const toZetaris = (sql: string) => sql.replace(/\b(census|pew|priors|biz|upworthy|sim)\.(\w+)/gi, (m) => zetarisTables.get(m.toLowerCase()) ?? m);
+const toZetaris = (sql: string) => sql.replace(/\b(census|pew|priors|biz|upworthy|sim|worldbank)\.(\w+)/gi, (m) => zetarisTables.get(m.toLowerCase()) ?? m);
 export function engineName(): 'zetaris' | 'local-duckdb' {
   return zetarisConfigured() && !zetarisDown ? 'zetaris' : 'local-duckdb';
 }
-const tablesIn = (sql: string) => [...sql.matchAll(/\b(census|pew|priors|biz|upworthy|sim)\.(\w+)/gi)].map((m) => `${m[1]}.${m[2]}`.toLowerCase());
+const tablesIn = (sql: string) => [...sql.matchAll(/\b(census|pew|priors|biz|upworthy|sim|worldbank)\.(\w+)/gi)].map((m) => `${m[1]}.${m[2]}`.toLowerCase());
 
 // ------------------------------------------------------------------ public API
 let qCounter = 0;
