@@ -1,39 +1,46 @@
-# Judge Q&A: the 12 hardest questions
+# Dry Run: likely judge questions
 
-All results are from local Nemotron 3 Nano 4B through Ollama.
+## 1. How does this fit Track 3?
+Each layer is one word of the track sentence. Data: federated SQL with receipts. Knowledge: the Census x Pew audience size and labelled priors. Memory: an H-MEM per person per world. Reasoning: twin worlds, two seeds, a verdict in code. Reliable decisions: the spend decision. Actions: an approval-gated, paused Meta Ads test.
 
-**1. Does it predict which post wins?**
-No. On 50 held-out Upworthy tests the crowd scored 22.5/50 (45.0%, CI 32.1 to 58.7). Single prompts scored 48% and 50%. All are consistent with chance. That is why the product abstains and recommends a spend decision.
+## 2. Does it predict what customers will do?
+No. It estimates whether two posts can be told apart on a simulated crowd, and reports the uncertainty. On our backtest no method beat chance, so we do not claim prediction.
 
-**2. So why should anyone use it?**
-It answers a question a prompt can't: can a paid test settle this at all? It also shows who reacted and why, what people kept private, and drafts version C. We have not shown it improves real outcomes.
+## 3. Your backtest is at chance. Why should we trust anything?
+It is at chance: 22.5 of 50 (45.0%, CI 32.1-58.7). Single prompts scored 24 and 25. We trust the decision because it does not rely on picking winners. It uses the measured gap, its interval and the real audience size.
 
-**3. Your agents share one model. Aren't they all alike?**
-Yes, more alike than real people are. Persona spread comes from Census, Pew and priors, not the model. Two seeds must agree, and when they don't it says "too close to call". The single-prompt baseline measures what the crowd adds. On this model, nothing measurable.
+## 4. Is the crowd real people's data?
+No. It is 600 simulated people. Their traits are sampled from Census ACS rows and Pew rates. The customer list is synthetic.
 
-**4. The backtest is news headlines, not small-business posts.**
-Correct. Upworthy 2013-2015 headlines are the only public set of real A/B tests we found with enough volume. It's a weak proxy, and we say so.
+## 5. What did the café run find?
+Too close to call. A 29.6% vs B 26.7%, inside plus or minus 5.5 points. A led in both seeds, but neither seed was significant on a paired test.
 
-**5. Was the backtest tuned?**
-Ranks 1 to 20 were a dev slice and never scored. The scored slice was ranks 21 to 70 by md5 of test id. One run, one seed, 40 people, 4 rounds.
+## 6. Did the competitor's post cause the gap?
+We don't know. A and B were tied before it in both seeds (35.3 vs 35.6, 37.2 vs 37.2) and the gap opened after. We have no run without the event, so we say when it opened, not why.
 
-**6. The competitor event: did it cause the gap?**
-We can't say. A and B were tied before it and A was ahead after it. The gap is not significant, and an interrupted earlier attempt split differently. There is no run without the event.
+## 7. How is "don't pay for the test" calculated?
+A power calculation on the simulated gap: 3,828 people per version, 7,656 in total, at 5% two-sided and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. Capped at 20% (2,700 per version), a test detects about 3.5 points.
 
-**7. Is the 2.9-point gap real?**
-It is inside a ±5.5-point interval, and neither seed was significant on a paired test. We report no measurable difference.
+## 8. Why would the agent's Version C be any better?
+We don't claim it is. It was drafted from the quoted price objections and passed the honesty check. <<C_RESULT: Version C moved intent by X points on the same crowd ... >> The agent then re-decides against the 3.5-point bar.
 
-**8. Where do the audience numbers come from, and are they right?**
-ACS 2024 5-year rows times Pew national Instagram use by age and gender. The 27,006 figure is an estimate: ACS adults in 78704 times national rates. It is not a count of local users.
+## 9. What stops the agent spending money?
+Free, reversible steps run on their own. Anything that spends or publishes waits for the owner. Approval creates the campaign and ad sets paused, and the code refuses anything else. We recommend a sandbox ad account. Without credentials it shows the requests and sends nothing. Code: `src/actions/meta.ts`.
 
-**9. Did you really use Zetaris, Nightshift and hosted Nemotron?**
-Not in these results. Everything ran locally. The Zetaris client follows the published API and passes a contract test against a fake server, but has not hit a live instance. Nightshift and hosted Nemotron are wired and switch on with a token or key (docs/SPONSOR_SETUP.md). Every query logs which engine answered.
+## 10. How do you keep simulated people from making things up?
+A rule-based guard screened every decision. It fired on 731 of 4,146 (17.6%), for example withholding reasons that invented a price. Report claims must cite query ids and a critic rejects the rest. Interviews answer only from memory lines.
 
-**10. Is the customer data real?**
-No. The demo customer CSV is synthetic and labelled. Users can upload their own. Census, Pew and Upworthy data are real and public (Upworthy CC BY 4.0).
+## 11. The simulated people share one model. Isn't that a problem?
+Yes. Their views are less varied than a real crowd's. The Census-sampled traits add variety, but the underlying model is shared. We treat results as a check on whether posts differ at all, not as a market.
 
-**11. Does the guard just hide model errors?**
-It fired on 731 of 4,146 decisions (17.6%), which is a lot, and we report it. It forces a positive action with a negative feeling to scroll-past, and strips invented prices or "seen it before" reasons. 0.9% of outputs needed a repair or default. The guard makes outputs coherent. It does not make them accurate.
+## 12. Where does Nemotron fit?
+The demo run used local Nemotron 3 Nano 4B for everything, and nothing in it was hosted. Now the crowd runs on Nemotron 3.5 Lightning via Nightshift, reasoning on 3.5 Super, and review, critic and honesty on 3 Ultra. `served_by` is logged per call. The Version C simulation ran on hosted Lightning.
 
-**12. Is the decision rule just a power calculation? And is it a stereotype machine?**
-Yes, the 3,828 per version is a standard two-proportion calculation (5% two-sided, 80% power), and that's the point: we wrap it in a simulated gap and a real audience size. On stereotyping: demographics come from Census and Pew, race and ethnicity are not sampled, and the voice writer never sees gender. Nothing is posted or spent without owner approval.
+## 13. Intent isn't a visit. What does the metric mean?
+Right. It is stated intent to visit in a simulation. Clicks are not visits either. The launch plan names the real metric and stop rules for the test worth running.
+
+## 14. Can I reproduce it?
+`npm run smoke` replays a recorded 40-person café run with no model provider. The 600-person run is kept as its saved action log, because its call recordings were damaged by concurrent writers.
+
+## 15. What are the limits?
+Agents share one model. The backtest uses 2013-2015 news headlines, not small-business posts. Clicks are not visits. The customer CSV is synthetic. Data: Census ACS, Pew Research Center, Upworthy Research Archive (CC BY 4.0).

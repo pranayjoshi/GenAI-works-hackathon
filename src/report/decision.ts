@@ -212,3 +212,30 @@ export function writeLaunchPlan(dir: string, d: Decision): string {
   fs.writeFileSync(file, JSON.stringify({ run_id: d.run_id, call: d.call, headline: d.headline, approved_actions: approved, plan: d.plan, reasons: d.reasons, exported: new Date().toISOString(), note: 'Exported by Dry Run. Nothing was posted or spent.' }, null, 2));
   return file;
 }
+
+/**
+ * The agent's own check: Version C, simulated on the same crowd, against the leader. Called when the C run starts
+ * and when it finishes. C is worth a real test only if it beats the leader by the gap an affordable test can detect.
+ */
+export function recordVerification(parent: RunState, child: RunState): void {
+  const d = parent.decision;
+  const act = d?.actions.find((x) => x.kind === 'simulate_variant');
+  if (!d || !act) return;
+  const run_id = child.spec.run_id;
+  const v = child.verdict;
+  if (!v) { act.result = { status: child.status === 'error' ? 'error' : 'running', run_id, error: child.error }; return; }
+  const lead = v.pooled.a, c = v.pooled.b;
+  const gap = (c - lead) * 100, bar = d.affordable.detectable_gap_pts;
+  const passes = gap >= bar;
+  const L = d.verdict.leader;
+  const headline = passes
+    ? `Version C moved intent by ${gap.toFixed(1)} points on the same crowd (${pct(c)} vs ${pct(lead)}), clearing the ${bar.toFixed(1)}-point bar. A real test of ${L} vs C is worth paying for.`
+    : `Version C moved intent by ${gap >= 0 ? '+' : ''}${gap.toFixed(1)} points on the same crowd (${pct(c)} vs ${pct(lead)}), short of the ${bar.toFixed(1)}-point bar. Keep ${L} and don't pay for a real test of C.`;
+  act.status = 'done';
+  act.result = { status: 'done', run_id, leader: L, leader_rate: lead, c_rate: c, gap_pts: gap, bar_pts: bar, passes, verdict: v.headline, headline };
+  const launch = d.actions.find((x) => x.kind === 'launch_test');
+  if (launch && launch.status === 'proposed') {
+    launch.detail = `${passes ? 'Recommended: C cleared the bar in simulation.' : 'Not recommended: C fell short in simulation.'} ${launch.detail.replace(/^(Recommended|Not recommended):[^.]*\.\s*/, '')}`;
+  }
+  d.reasons = [...d.reasons.filter((r) => !r.startsWith('Version C moved intent')), headline];
+}

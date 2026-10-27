@@ -10,7 +10,7 @@ import { registerSources, ensureCensus, sourceSummary, geoIdForZip } from './dat
 import { proposeSegments } from './audience/agent.js';
 import { CAFE_DEMO } from './demo.js';
 import { runs, startRun, loadRun, listRunsOnDisk, injectEvent, allRecords, specFromInput, persist, runDir, type RunState, type RunInput } from './sim/run.js';
-import { buildDecision, decideAction, writeLaunchPlan } from './report/decision.js';
+import { buildDecision, decideAction, writeLaunchPlan, recordVerification } from './report/decision.js';
 import { metaConfigured } from './actions/meta.js';
 import { interview, askSegment, focusGroup } from './report/interview.js';
 import { draftVersionC } from './report/rewriter.js';
@@ -175,6 +175,12 @@ app.post('/api/runs/:id/version-c/run', async (req) => {
   spec.posts = [{ ...wpost }, { ...wpost, variant: 'C', text: b.text, image: undefined }];
   spec.crowd_seed = parent.spec.crowd_seed; // same crowd, same follower graph, same schedules as the parent run
   const st = startRun({} as RunInput, { parent: parent.spec.run_id, spec, crowd: { personas: parent.personas, proposal: parent.proposal, sampleReport: parent.sampleReport } });
+  // the decision's own check: record the C run on the parent's decision now, and its result when it finishes
+  if (parent.decision) {
+    recordVerification(parent, st);
+    persist(parent);
+    st.bus.on((e: any) => { if (e.type === 'done' || e.type === 'error') { recordVerification(parent, st); persist(parent); } });
+  }
   return { run_id: st.spec.run_id };
 });
 app.post('/api/runs/:id/sql', async (req) => queryActions(await getRun((req.params as any).id), (req.body as any).sql));

@@ -152,10 +152,35 @@ export default {
       }
       if (!auto && (a.status === 'approved' || a.status === 'rejected')) {
         box.append(h('div.dc-act-done',
-          n?.note ? h('p', n.note) : h('p.muted', a.decided_at ? `Decided ${new Date(a.decided_at).toLocaleString()}.` : null),
+          n?.note || a.result?.note ? h('p', n?.note || a.result.note) : h('p.muted', a.decided_at ? `Decided ${new Date(a.decided_at).toLocaleString()}.` : null),
+          a.status === 'approved' && a.result ? metaResult(a.result) : null,
           a.status === 'approved' ? h('a.btn.sm', { href: n?.launch_plan || `/api/runs/${encodeURIComponent(id)}/launch-plan.json`, download: '' }, 'Download launch plan') : null));
       }
+      if (a.kind === 'simulate_variant' && a.result) box.append(verifyResult(a.result));
       return box;
+    }
+    /* what the launch did in Meta Ads (src/actions/meta.ts): ids and an Ads Manager link, or the preview payloads */
+    function metaResult(r) {
+      const live = r.mode === 'live';
+      return h('div.dc-meta',
+        h('div.dc-act-top',
+          h('span.chip.' + (live ? (r.ok ? 'good' : 'bad') : 'warn'), live ? (r.ok ? 'Created in Meta Ads' : 'Meta Ads error') : 'Preview: not sent to Meta'),
+          h('span.chip', 'All paused')),
+        r.error ? h('p.banner.bad', r.error) : null,
+        live && r.campaign_id ? h('dl.dc-kvs',
+          h('div.dc-kv', h('dt', 'Campaign'), h('dd', h('code', r.campaign_id))),
+          ...(r.ad_sets || []).map((s) => h('div.dc-kv', h('dt', s.label), h('dd', h('code', `ad set ${s.ad_set_id || '-'}`), ' ', h('code', `ad ${s.ad_id || '-'}`))))) : null,
+        r.ads_manager_url ? h('a.btn.sm', { href: r.ads_manager_url, target: '_blank', rel: 'noopener' }, 'Open in Ads Manager') : null,
+        h('details.dc-payloads', h('summary', `${(r.payloads || []).length} Graph API requests${live ? '' : ' (what Dry Run would send)'}`),
+          h('pre', (r.payloads || []).map((p) => `POST /${p.path}\n${JSON.stringify(p.body, null, 2)}`).join('\n\n'))));
+    }
+    /* the agent's own check of Version C on the same crowd (set when the C run finishes) */
+    function verifyResult(r) {
+      const pass = r.passes;
+      return h('div.dc-meta',
+        h('div.dc-act-top', h('span.chip.' + (r.status === 'running' ? 'warn' : pass ? 'good' : 'bad'), r.status === 'running' ? 'Simulating...' : pass ? 'C clears the bar' : 'C falls short')),
+        r.headline ? h('p', r.headline) : null,
+        r.run_id ? h('a.btn.sm', { href: `#/run/${encodeURIComponent(r.run_id)}` }, 'Open the C run') : null);
     }
 
     /* ---------------------------------------------------------- render */

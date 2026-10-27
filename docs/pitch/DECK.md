@@ -1,99 +1,90 @@
 # Dry Run: pitch deck outline
 
-Track 3, Reasoning Architecture: "turn data, knowledge, memory, and reasoning into reliable decisions and actions." The deck has one layer per word. All results are from the saved run `runs/20261027-south-congress-coffe-e52a` and the Upworthy backtest, on local Nemotron 3 Nano 4B through Ollama.
+Entered track: "Track 3, Reasoning Architecture: Demonstrate a novel ability to turn data, knowledge, memory, and reasoning into reliable decisions and actions." Also targeting Best use of NVIDIA Nemotron.
+
+Each layer of the architecture maps to one word of that sentence. Results come from the saved run `runs/20261027-south-congress-coffe-e52a` (600 simulated people, local Nemotron 3 Nano 4B, 3.3 hours) and the Upworthy backtest `samples/backtest/2026-10-27T04-59-44-210Z.json`. The Version C result is a placeholder until it is inserted.
 
 ## Slide 1. Dry Run
 **On slide:**
 - Dry Run
 - Before you pay for an A/B test, find out whether it can tell anything apart.
-- Open Agent Hackathon 2026, Track 3: Reasoning Architecture
+- Open Agent Hackathon 2026. Track 3, Reasoning Architecture. Nemotron.
 
-**Speaker note:** A small business has two versions of a post. The usual move is to pay for a test. We simulate a crowd first, and then decide whether the paid test is worth buying. Our example is a café on South Congress in Austin.
+**Speaker notes:** A café on South Congress in Austin has two versions of an Instagram post. The usual move is to pay for a test. We test them on a simulated crowd first. Then the agent decides whether the real test is worth buying, and acts on that decision.
 
-## Slide 2. The problem and the sentence
+## Slide 2. The sentence is the architecture
 **On slide:**
-- Two posts. A paid test costs money and needs a lot of people.
-- Most small shops cannot reach enough people to see a small difference.
-- Track 3: data, knowledge, memory, reasoning, reliable decisions, actions
+- data, knowledge, memory, reasoning
+- reliable decisions and actions
+- One layer per word
 
-**Speaker note:** Read the track sentence. Say that the deck follows it one word at a time and ends on the action, because the action is the part owners care about.
+**Speaker notes:** Track 3 asks us to turn data, knowledge, memory and reasoning into reliable decisions and actions. We built one layer for each word. The next six slides go through them in order. Data is the federated SQL layer. Knowledge is the Census and Pew join plus labelled priors. Memory is one H-MEM per person per world. Reasoning is twin worlds, two seeds and a report agent that cites its queries. Reliable decisions is the spend decision. Actions is the approval-gated Meta Ads test.
 
 ## Slide 3. Data
 **On slide:**
-- US Census ACS 5-year (via Census Reporter), Pew Instagram use, labelled behaviour priors, a customer CSV
-- One federated SQL layer. Every query has an id.
-- Zetaris client built to the published API. Local DuckDB answered every query so far.
-- Demo customer CSV is synthetic.
+- ACS 2024 5-year (Census Reporter REST), Pew platform use, labelled behaviour priors, a synthetic customer list, Upworthy archive
+- One federated SQL layer: Zetaris client, local DuckDB fallback
+- Every persona field has a receipt (a query id)
 
-**Speaker note:** 600 simulated Instagram users in ZIP 78704, drawn from Census rows and Pew rates. Age 25-34 is oversampled to 50%. Be plain that no live Zetaris instance has been used yet. The client passes a contract test against a fake server built from Zetaris's spec. Each query records which engine answered. Proof: `src/data/federation.ts`.
+**Speaker notes:** The crowd is sampled from Census rows for ZIP 78704 and Pew Instagram rates, not invented by a model. A model writes only each person's one-line voice, after it sees the numbers. The customer list is synthetic, built with a copula, and we say so. Proof: receipts on every persona, and the queries in the run's action log. Data sources: Census ACS, Pew Research Center, Upworthy Research Archive (CC BY 4.0).
 
 ## Slide 4. Knowledge
 **On slide:**
-- Every behaviour parameter is a labelled prior (MODELED PRIOR or ASSUMED)
-- Every persona field has a receipt: query id and table cell
-- The model writes one line of voice per person and never sees gender
-- No race, ethnicity, nationality or religion anywhere
+- Census x Pew join gives the real audience size: about 27,006 Instagram users in 78704
+- Behaviour parameters are labelled priors, not measurements
+- The knowledge tells the agent how many people a test could reach
 
-**Speaker note:** Knowledge here means we can show where each number came from. The 4B model supplies voice only. Proof: `data/sources/priors_behaviour.csv`, personas.csv in the run folder.
+**Speaker notes:** Knowledge here is what we know about the place. The join tells us how many Instagram users the café can actually reach. That number matters later, because it decides whether a real test is even possible. Priors, such as how likely someone is to speak up, are labelled as priors everywhere they appear.
 
 ## Slide 5. Memory
 **On slide:**
-- Meterless H-MEM: one memory per person per world
-- Recalled before every decision
-- Interviews answer only from memory and cite the memory lines
-- Ask about something they never saw: they say so
+- One Meterless H-MEM per person per world
+- World Model: twin worlds are forks with hash-verified identical base logs
+- Markovian: one step per round, bounded carryover
+- "Ask why": answers come only from memory, with memory lines cited
 
-**Speaker note:** Demo this in the video. Pick one person, ask why they scrolled past, and show the cited lines. Proof: `src/memory/hmem.ts`.
+**Speaker notes:** A and B start from the same base log, checked by hash. Only the post differs. Each person remembers only what they saw. Asked about something they never saw, they say so. Proof: the Ask why stage in the UI, and the fairness hashes in the run.
 
 ## Slide 6. Reasoning
 **On slide:**
-- Twin worlds (Meterless World Model): same base log, verified by hash. Only the post differs.
-- Meterless Markovian: one step per round, a checkpoint carries the world forward
-- A simulated day: 12 two-hour rounds, 2 seeds
-- Competitor post injected at round 8 into both worlds
-- Report agent with SQL tools, a code critic and a model critic
+- 600 simulated Instagram users, 12 two-hour rounds, 2 seeds
+- Verdict in code: wins every seed and beats the 95% interval, else "too close to call"
+- Result: A 29.6% vs B 26.7%, inside ±5.5 points. Too close to call.
+- Tied before the competitor's "30% off" post (35.3 vs 35.6, 37.2 vs 37.2). The gap opened after it.
 
-**Speaker note:** Every report claim cites a query id and every quote is an action id. The critics reject uncited numbers and invented prices. Proof: the twin-world fairness test in `npm test`.
+**Speaker notes:** A was ahead in both seeds, but neither seed was significant on a paired test. We report no measurable difference. We describe when the gap opened, not what caused it, because we have no run without the competitor event. Also: 874 reactions were written and kept private, 439 of them on the café post. Only 68 became public comments on it. No shares in this run.
 
-## Slide 7. Reliable decisions
+## Slide 7. Reliable
 **On slide:**
-- A wins only if it wins both seeds and the gap beats the 95% interval
-- Result: A 29.6% vs B 26.7%, gap 2.9 points, ±5.5. Too close to call.
-- Tied before the competitor's post in both seeds. The gap opened after it. We do not claim a cause.
-- Fact-and-coherence guard fired on 731 of 4,146 decisions (17.6%)
-- 874 reactions written and kept private; 68 public comments on the café post
+- Twin-world hashes, 2 seeds that must agree, a 95% interval
+- Rule-based guard fired on 731 of 4,146 decisions
+- Report claims must cite query ids. A critic rejects the rest.
+- Backtest: 22.5/50 (45.0%, CI 32.1-58.7). Coin: 50%.
 
-**Speaker note:** The system is built to say "too close to call" and here it did. No shares happened in this run, so we say nothing about spread. The guard is rule-based, for example it cancels a would-visit from someone who strongly disliked the post.
+**Speaker notes:** Be direct about the backtest. On 50 held-out Upworthy headline tests, the local 4B crowd scored 22.5 of 50. Single prompts scored 24 and 25. No method beat chance on the 4B model. That is why the decisions are built on measured uncertainty and abstention, not on picking winners. The guard screened every decision before it was logged. Limits are on the last slide.
 
-## Slide 8. Why it abstains: the backtest
+## Slide 8. Decision
 **On slide:**
-- 50 held-out Upworthy headline A/B tests (2013-2015 news headlines, not small-business posts)
-- Crowd 22.5/50 = 45.0% (95% CI 32.1 to 58.7)
-- Single prompt: 48% (thinking on), 50% (off). Coin flip: 50%.
-- Exact McNemar crowd vs prompt, p = 0.83
-- At chance on the local 4B model.
+- "Don't pay to A/B test these two posts."
+- A real test needs 3,828 people per version (7,656 total, 5% two-sided, 80% power) = 28.3% of the Instagram users in 78704
+- Capped at 20% of the audience (2,700 per version), a test detects only about 3.5 points
+- Version C, drafted from the quoted objections, passed the Honesty check
 
-**Speaker note:** Say this early and directly. A 4B model does not predict which headline wins, and neither does one prompt to it. 50 tests cannot detect a difference under about 15 points. That is why the product does not pick winners. It says when it can't, and it turns that into a spend decision. Hosted Nemotron rerun is one command (`npm run backtest -- --slice scored --n 50`) and has not been run.
+**Speaker notes:** This is the centrepiece. The decision does not need the crowd to predict a winner. It needs the measured gap and the real audience size. The objection "Put off by price" appeared on both versions. A drew people on taste and ingredients, B on the discount. The agent drafted C: "Your new morning ritual: Oat Milk Honey Latte, $6.50. 20% off this week. Local wildflower honey. South Congress Coffee." Then it simulated C on the same crowd, hosted Nemotron 3.5 Lightning via Nightshift. <<C_RESULT: Version C moved intent by X points on the same crowd ... >> Then it re-decided against the 3.5-point bar.
 
-## Slide 9. Actions: the spend decision (centrepiece)
+## Slide 9. Actions and policy
 **On slide:**
-- "Don't pay to A/B test these two posts: they are too close to tell apart with the people South Congress Coffee can reach. Test a bolder version instead."
-- A real test needs 3,828 people per version (7,656 total; 5% two-sided, 80% power)
-- About 27,006 Instagram users in 78704 (Census x Pew join): that is 28.3% of them
-- At most 20% of the local audience (2,700 per version) detects only about 3.5 points
-- Auto, done: don't pay for A vs B. Auto, done: draft version C from the quoted objections (price was the top objection for both), passed the honesty check.
-- Auto, proposed: simulate C vs A on the same crowd.
-- Needs approval: run the real test A vs C, 2,700 per version, core 25-34 first.
-- Free, reversible steps run on their own. Anything that spends or publishes waits for the owner. Approving exports `launch_plan.json`. Nothing is posted or spent.
+- Free and reversible steps run on their own: cancel the test, draft C, simulate C, re-decide
+- Anything that spends or publishes waits for the owner's approval
+- Approve: one campaign, one ad set per version, same ZIP + age targeting and budget, ALL PAUSED
+- No Meta credentials: it shows the exact requests and sends nothing
 
-**Speaker note:** This is the point of the deck. The simulation is not asked to be right about who wins. It is asked whether a paid test could settle it. The audience size is an estimate (ACS adults in the ZIP times national Pew use by age). Proof: `src/report/decision.ts`, `launch_plan.json`.
+**Speaker notes:** The code refuses to create anything that is not paused. We recommend a sandbox ad account so nothing can spend. Proof: `src/actions/meta.ts` and the Decision stage, where you can download the plan.
 
-## Slide 10. Honest limits, sponsors, next
+## Slide 10. Nemotron, and what we do not claim
 **On slide:**
-- Limits: agents share one model. The backtest is news headlines. Clicks are not visits. The customer CSV is synthetic. Simulated, not predicted.
-- Ran locally on Nemotron 3 Nano 4B. Hosted Nemotron, Nightshift and live Zetaris are wired and switch on with keys (docs/SPONSOR_SETUP.md). Not used in these results.
-- Meterless H-MEM, World Model and Markovian are all in the run.
-- Data: Upworthy Research Archive (CC BY 4.0), US Census ACS, Pew Research Center.
-- Next: hosted backtest, simulate C vs A, one real test.
+- Demo run: local Nemotron 3 Nano 4B. Nothing hosted in the 600-person run.
+- Now: crowd on Nemotron 3.5 Lightning via Nightshift; reasoning on 3.5 Super; review, critic and honesty on 3 Ultra. `served_by` is logged per call.
+- Limits: agents share one model; the backtest uses 2013-2015 news headlines, not small-business posts; clicks are not visits; the customer CSV is synthetic
 
-**Speaker note:** The run took 3.3 hours and the video is a saved run. Close on the loop: the output is a decision about money, and the owner approves it.
+**Speaker notes:** Say the limits out loud. The simulated people all come from the same model family, so their disagreements are narrower than a real crowd's. The Upworthy headlines are not Instagram posts. Intent is stated, not a visit. The point of the architecture is to say "not worth paying for" when the evidence says so, then to act safely.
