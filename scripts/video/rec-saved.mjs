@@ -11,6 +11,22 @@ const stage = (s, id = RUN) => `/#/run/${id}/${s}`;
 async function settle(p) { await p.waitForLoadState('networkidle').catch(() => {}); await sleep(1800); }
 
 const CLIPS = {
+  /** Agents stage: the loop line and the three agent traits, then the flow replay */
+  async agents(r, p) {
+    await r.start(stage('pipeline')); await settle(p);
+    r.mark('start');
+    await sleep(1000);
+    await r.moveTo(p.getByText(/Build the audience/).first(), { ms: 900 }).catch(() => {});
+    await sleep(1800);
+    for (const t of ['Uses tools', 'Critiques itself', 'Asks permission']) {
+      await r.moveTo(p.locator('.pl-traits .chip', { hasText: t }).first(), { ms: 700 }).catch(() => {});
+      await sleep(1500);
+    }
+    await r.click(p.getByRole('button', { name: 'Replay flow' }), { after: 500 }).catch(() => {});
+    r.mark('replay');
+    await sleep(6000);
+    r.mark('end');
+  },
   /** the Data sources card of the run created live on camera (all five sources served by Zetaris) */
   async sources(r, p) {
     await r.start(stage('crowd', LIVE_RUN)); await settle(p);
