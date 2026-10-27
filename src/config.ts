@@ -87,7 +87,7 @@ export const config = {
     data: path.join(process.cwd(), 'data'),
     runs: env('RUNS_DIR', path.join(process.cwd(), 'runs')),
     samples: path.join(process.cwd(), 'samples'),
-    recordings: path.join(process.cwd(), 'samples', 'recordings.sqlite'),
+    recordings: env('RECORDINGS_DB', path.join(process.cwd(), 'samples', 'recordings.sqlite')),
   },
 };
 

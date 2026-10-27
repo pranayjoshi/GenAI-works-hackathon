@@ -50,7 +50,7 @@ export async function reactionCounts(st: RunState): Promise<ToolResult> {
     SELECT variant, action, COUNT(*) AS n,
            SUM(CASE WHEN feeling < 0 THEN 1 ELSE 0 END) AS negative, SUM(CASE WHEN feeling > 0 THEN 1 ELSE 0 END) AS positive,
            SUM(CASE WHEN unsaid IS NOT NULL AND unsaid <> '' THEN 1 ELSE 0 END) AS kept_private
-    FROM ${t.actions} WHERE item_kind <> 'event' GROUP BY 1, 2 ORDER BY 1, 3 DESC`;
+    FROM ${t.actions} WHERE item_kind <> 'event' GROUP BY 1, 2 ORDER BY 1, 3 DESC, 2`;
   const r = await query(sql, 'reaction_counts');
   return { tool: 'query_actions', query_id: r.query_id, engine: r.engine, args: {}, rows: r.rows };
 }

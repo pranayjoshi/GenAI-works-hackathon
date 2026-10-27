@@ -248,6 +248,8 @@ export async function chat<T = unknown>(o: ChatOpts<T>): Promise<ChatResult<T>> 
   const tag = o.tag ?? 'misc';
   const jsonSchema = o.schema ? zodToJsonSchema(o.schema, { target: 'openApi3', $refStrategy: 'none' }) : undefined;
   const key = recordKey(o as ChatOpts<unknown>);
+  // debugging replay drift: PROMPT_DUMP=<file> appends every prompt with its record key
+  if (process.env.PROMPT_DUMP) { try { fs.appendFileSync(process.env.PROMPT_DUMP, JSON.stringify({ key, tag, role: o.role, system: o.system, user: o.user }) + '\n'); } catch { /* best effort */ } }
   const t0 = Date.now();
 
   const finish = (raw: { text: string; tokens_in: number; tokens_out: number; served_by: string; model: string; provider: string }, repaired: boolean): ChatResult<T> => {
