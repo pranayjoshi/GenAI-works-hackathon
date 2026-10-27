@@ -94,8 +94,14 @@ class ZetarisDown extends Error {}
 
 async function zFetch(p: string, init: RequestInit = {}): Promise<Response> {
   let res: Response;
-  try { res = await fetch(zUrl(p), { ...init, headers: await zAuth(), signal: AbortSignal.timeout(60_000) }); }
-  catch (e) { throw e instanceof ZetarisDown ? e : new ZetarisDown(`network: ${(e as Error).message}`); }
+  const ms = Number(process.env.ZETARIS_TIMEOUT_MS ?? 30_000);
+  try { res = await fetch(zUrl(p), { ...init, headers: await zAuth(), signal: AbortSignal.timeout(ms) }); }
+  catch (e) {
+    if (e instanceof ZetarisDown) throw e;
+    // a slow query fails on its own (DuckDB answers it); only an unreachable server switches Zetaris off
+    if ((e as Error).name === 'TimeoutError') throw new Error(`timed out after ${ms / 1000}s`);
+    throw new ZetarisDown(`network: ${(e as Error).message}`);
+  }
   if (res.status === 401 || res.status === 403) throw new ZetarisDown(`HTTP ${res.status} on ${p}`);
   return res;
 }
