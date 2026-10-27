@@ -1,52 +1,59 @@
-# Ripple: demo video plan (3:00 to 3:30)
+# Ripple: demo video plan (target 3:45, hard cap 4:00)
 
-The 600-person run took 3.3 hours, so the long parts use saved runs. Say on screen, in a corner label, "saved run" whenever one is shown. Nothing is recorded as live unless it is.
+**The story in one line:** a café owner is about to pay for an A/B test of two Instagram posts. Ripple rehearses that test on a simulated neighbourhood built from real Census and Pew data, tells her the test can't find a winner, drafts a better post, checks it, and only then lines up the ads — paused, waiting for her approval.
 
-Runs to open (all under `runs/`, UI at `#/run/<id>`):
-- `20261027-south-congress-coffe-e52a`: the 600-person café run (verdict, report, signals, Ask why). Saved.
-- `20261027-south-congress-coffe-344c`: Version C vs A on hosted Lightning via Nightshift. Saved.
-- `20261027-south-congress-coffe-1787`: 24-person run with an event injected from the UI mid-run. Saved. Or start a fresh 20-person hosted run for the live beats.
-- A fresh small run (20 people, hosted) for the live crowd building and query receipts, if the pre-recording check passes. Otherwise show 1787 and say it is saved.
+One protagonist (South Congress Coffee, Austin 78704), one question ("is this test worth paying for?"), and every beat answers the next part of it: **create → simulate → analyse → ask → decide → act → proof**. Never jump between businesses.
 
-## Beats and timing
+**Nemotron is the cast, not the backdrop.** Keep a small corner badge on screen naming the Nemotron model doing the work in each beat:
 
-| Time | Beat | Screen | What to say or show |
-|---|---|---|---|
-| 0:00-0:12 | Problem | Title card with the icon, UI home | A café has two posts. Before paying for a test, can the test tell them apart? |
-| 0:12-0:30 | Create a test | New test form: business, ZIP 78704, A and B posts, Load example | Fill business, ZIP, goal, two posts. Start a small run. |
-| 0:30-0:55 | Live crowd building | Agents stage and Nemotron panel; query receipts | AudienceAgent names segments. DataAgent queries run on Zetaris: show the engine label on the query receipts. Show `served_by` in the Nemotron panel (nightshift). Say "20-person run, live". |
-| 0:55-1:15 | Twin worlds and memory | Twin worlds stage (e52a, saved) | Identical base-log hashes. Open a person: their H-MEM lines. Only the post differs. |
-| 1:15-1:30 | Mid-run event | Signals stage with the injected flag (1787 or e52a at round 8, saved) | The competitor's "30% off all lattes" reaches both worlds in the same round. A and B tied before it (35.3 vs 35.6, 37.2 vs 37.2); the gap opened after. We cannot say it caused it. |
-| 1:30-1:45 | Verdict | Verdict stage (e52a) | A 29.6%, B 26.7%, within ±5.5 points. Too close to call. |
-| 1:45-2:05 | Report and critic | Report stage; click a quote to its action; Agents stage showing ReportCritic | Every claim cites a query; every quote links to an action. The critic can request a revision. 874 reactions kept private. |
-| 2:05-2:25 | Ask why and focus group | Ask why stage | Ask one person why, show cited memory lines. Ask a question to a segment. Run the focus group and read one question and one answer. Read the actual answer on screen; do not paraphrase from memory. |
-| 2:25-2:45 | Spend decision | Decision stage | Needed vs reachable audience: 3,828 per version, 28.3% of the Instagram users in the ZIP; at 20% a test sees about 3.5 points. Don't pay for this test. |
-| 2:45-3:05 | Version C | Decision and Ask why stages, then run 344c (saved) | Version C drafted from price objections; honesty check passed. One click simulates C vs A: C 14.6% vs A 13.5%, +1.1 points, below the bar. Keep A. |
-| 3:05-3:15 | Approval-gated launch | Decision approval panel | Owner approves. Without Meta credentials: the exact requests are shown, nothing is sent. Two paused ad sets in one campaign, identical targeting, a fixed daily budget. Live launch is optional. |
-| 3:15-3:30 | Terminal beat and limits | Terminal, then closing card | See below, 15 seconds. Then the limits card. |
+| Model | Job in Ripple | Route |
+|---|---|---|
+| Nemotron 3.5 Lightning 30B | every simulated person's decision and voice (hundreds of fast calls, thinking off) | Nightshift |
+| Nemotron 3.5 Super 120B | reasoning: audience segments, report, interviews, Version C | direct NVIDIA (Nightshift excludes Super VL today) |
+| Nemotron 3 Ultra 550B | the critic: report review and the honesty check on Version C | Nightshift |
+| Nemotron 3 Nano 4B | the full 600-person run on a laptop, and the offline fallback | local Ollama |
 
-If over time, cut the focus group first, then the report beat to one sentence.
+**Live vs saved.** Live: the creation beat (20-person hosted run), the interview, the approval panel, the terminal. Saved: the 600-person run `20261027-south-congress-coffe-e52a` (it took 3.3 h on Nano 4B) and the Version C check `20261027-south-congress-coffe-344c` (11.7 min on Lightning via Nightshift). Put a "saved run" corner label on every saved-run shot.
 
-## Terminal beat (15 s)
+## Beats
+
+| Time | Act | Screen | Voiceover (read it; numbers are from the runs) | Badge |
+|---|---|---|---|---|
+| 0:00–0:20 | **Hook** | Title card with the Ripple icon, then the home screen | "This is South Congress Coffee. They have two Instagram posts for a new latte: one at full price, one at 20% off. The usual advice is: pay for an A/B test. Ripple asks a better question first: can that test even tell these two apart?" | — |
+| 0:20–0:50 | **Create** (live) | New test: business, ZIP 78704, goal, posts A and B; crowd 20; Run. Then the Agents stage and query receipts | "I type the business, the ZIP and both posts. An audience agent names who to reach. It never decides how many people exist: a data agent counts them from Census and Pew through Zetaris. Every person has a receipt, a query id." Show a receipt with engine `zetaris`, then the Nemotron panel showing `nightshift:…lightning`. | Super → Lightning |
+| 0:50–1:10 | **Simulate: the crowd** (saved 600) | Crowd stage, open one persona and its receipt | "For the full test we ran 600 people in this ZIP. Each one is sampled from real distributions — age, income, how often they use Instagram, whether they're already a customer." | Nano 4B (saved run) |
+| 1:10–1:30 | **Simulate: twin worlds** (saved) | Twin worlds: the two matching hash chips; open a person's memory lines | "Every person lives in two identical worlds. Same people, same follows, same day — verified by hash. The only difference is the post. Each person remembers what they saw on the Meterless H-MEM memory engine." | H-MEM |
+| 1:30–1:45 | **Simulate: the curveball** (saved) | Signals: the timeline with the round-8 flag | "Mid-morning, a competitor across the street posts 30% off all lattes. It reaches both worlds at the same moment. Before it, A and B were tied — 35.3 to 35.6. The gap opened after." (Do not say it caused the gap.) | Lightning/Nano |
+| 1:45–2:05 | **Analyse** (saved) | Verdict stage, then Report: click a quote → its action | "The verdict is code, not a model's opinion: A 29.6%, B 26.7%, inside ±5.5 points. Too close to call. The report cites a query for every number, and a critic on Nemotron Ultra checks it and sends it back when a number doesn't match. And 874 people reacted but said nothing in public — only 68 commented. Ripple hears the silent ones." | Ultra |
+| 2:05–2:25 | **Ask** (live on the saved run) | Ask why: pick p0176 in world A, ask "Why did you scroll past the oat milk honey latte post?" | Let the answer play (about 6 s on Super). Real answer from rehearsal: "$6.50 for a latte is just too much when I'm watching every dollar, so I kept scrolling." VO: "They answer only from their own memory of the day — no invented backstory." | Super |
+| 2:25–2:55 | **Decide** (saved) | Decision stage: needed vs reachable bar; then Version C card; then open 344c | "Here's the decision. To tell these posts apart, a real test needs 3,828 people per version — 28% of everyone on Instagram in this ZIP. A test she can afford only detects a 3.5-point gap. So: don't pay for this test. Instead, Ripple drafted Version C from the price objections, Nemotron Ultra checked it invents no new claims, and one click ran C against A on the same crowd, through Nightshift: C moved intent 1.1 points. Not enough. Keep A, save the money." | Super → Ultra → Lightning |
+| 2:55–3:15 | **Act** | Decision stage approval panel; click Approve | "Free, reversible steps already ran. Anything that spends money waits for the owner. Approve, and Ripple builds the campaign in Meta Ads: two ad sets, identical targeting, a fixed daily budget — every object created paused." If Meta is not live: "Without Meta keys it shows the exact requests and sends nothing." | — |
+| 3:15–3:35 | **Proof** | Terminal: `output_examples/hosted/example_1_live.trace.jsonl` scrolled through | "Every step is in the trace: named agents handing off, the critic asking for a revision, every Zetaris query, and the Nemotron model behind every request — Lightning and Ultra through Nightshift, Super for reasoning. Judges can run the same thing with one curl, even with no keys." | all four |
+| 3:35–3:50 | **Impact + close** | Closing card: the four-models table and the limits line | "Ripple told a café not to spend money on a test it couldn't win, showed why in its customers' own words, and set up the next step for one click. Four Nemotron models, each doing the job it's best at." Limits on the card: "Simulated people, not real customers. Customer list is synthetic. On 50 historical tests no method beat chance on the 4B model." | — |
+
+If over 4:00: cut the curveball beat to one sentence, then shorten Proof.
+
+## Terminal beat commands
+
+```bash
+python3 -c "import json;[print(r['agent_name'],'->',r.get('target_agent') or '','|',r['action'],r['status'],'|',r.get('served_by') or '') for r in map(json.loads,open('output_examples/hosted/example_1_live.trace.jsonl'))]" | head -60
+```
 
 ```bash
 curl -s -X POST http://localhost:8000/run -H "Content-Type: application/json" -d @input_examples/example_2.json | head -c 600
 ```
 
-```bash
-tail -n 12 logs/<run_id>.jsonl
-```
-
-Show named agents (Orchestrator, DataAgent, CrowdAgent, ModelRouter) and a ModelRouter line with `served_by: nightshift:...`. Use a hosted run so the lines are real. A sample-mode run shows `offline-model` and `none`, and must be called that. Do not edit the output. If `/run` takes longer than the beat, cut to a finished run's log and say it was run beforehand. A live 20-person café `/run` took 6 min 53 s on 27 Oct, so in the video show the finished trace `output_examples/hosted/example_1_live.trace.jsonl` (or the Docker sample-mode curl, which returns in about a second and must be called sample mode).
+The second command is the Docker image in sample mode (about a second, `offline-model` in its trace): call it sample mode on camera. The live trace is the first command (a 20-person café run that took 6 min 53 s).
 
 ## Pre-recording checklist
 
-- [ ] Restore `samples/recordings.sqlite` from git if a live run overwrote it (`samples/README-runs.md`).
-- [ ] Start Nightshift (127.0.0.1:8088); `npm run probe` shows `nightshift ONLINE`.
-- [ ] Zetaris up (`docker compose up -d` in the bundle), tables registered (`scripts/zetaris-register.sh`), `.env` has `ZETARIS_*`; probe reports `zetaris`.
-- [ ] Server on :8787 (`npm start`); for the curl beat, the Docker image on :8000 or `PORT` set accordingly.
-- [ ] Open saved runs e52a, 344c and 1787 in tabs, in that order of use.
-- [ ] Meta: leave `META_*` unset so the preview shows; do not attempt a live launch on camera.
-- [ ] Hide `.env`, the Nightshift Console API key and every token. Use a clean terminal with no env dump. No credentials on screen.
-- [ ] Browser zoom so the Nemotron panel is readable; corner label "saved run" ready.
-- [ ] Rehearse once with a timer.
+- [ ] Restart the UI server so it runs the current code: stop the old one on :8787, then `npm start`.
+- [ ] Nightshift running; `npm run probe` shows `nightshift ONLINE` and `served_by=nightshift:…`.
+- [ ] Zetaris up and registered; probe reports `Federated SQL engine: zetaris`. Use ZIP 78704 for the live beat (its queries are warm; a new ZIP's first Zetaris query can take a minute under emulation).
+- [ ] Dry-run the live creation beat once before recording: a 20-person hosted run builds its crowd in about a minute; the full run takes about 7 minutes, so cut away after the crowd is built.
+- [ ] Docker image on :8000 for the curl (`docker run --rm -p 8000:8000 -e SAMPLE_MODE=true oah-submission`).
+- [ ] Tabs open in order: New test, e52a (Crowd), e52a (Twin worlds, Signals, Verdict, Report, Ask why, Decision), 344c.
+- [ ] Meta: only show a live Approve if a sandbox launch succeeded today; otherwise leave `META_*` unset and narrate the preview.
+- [ ] Skip the focus group: in rehearsal three of five answers repeated each other.
+- [ ] No credentials on screen: no `.env`, no Nightshift Console or Providers tab, no terminal env dump.
+- [ ] Rehearse once with a timer; record the voiceover separately if the live waits break the rhythm.

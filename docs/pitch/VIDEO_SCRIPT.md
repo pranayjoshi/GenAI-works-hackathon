@@ -1,5 +1,7 @@
 # Ripple: demo video script (about 3:15)
 
+> The current, story-ordered plan with voiceover, timings and the Nemotron badges is [DEMO_PLAN.md](DEMO_PLAN.md). Use that one; this file is the earlier draft.
+
 Beat-by-beat plan, runs to open and the pre-recording checklist are in [DEMO_PLAN.md](DEMO_PLAN.md). This file is the voiceover. The long parts show saved runs and say so on screen. Voiceover is about 470 words.
 
 | Time | On screen | Voiceover |
