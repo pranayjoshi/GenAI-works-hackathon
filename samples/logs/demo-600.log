@@ -1,0 +1,134 @@
+[0s] audience: Audience agent is naming the segments
+[0s] sampling: Sampling people from Census and Pew rows
+[0s] voices: Writing one-line voices (numbers first, model second)
+[23s] voices: 25/600 voices
+[47s] voices: 50/600 voices
+[72s] voices: 75/600 voices
+[101s] voices: 100/600 voices
+[133s] voices: 125/600 voices
+[161s] voices: 150/600 voices
+[192s] voices: 175/600 voices
+[220s] voices: 200/600 voices
+[242s] voices: 225/600 voices
+[269s] voices: 250/600 voices
+[277s] voices: 275/600 voices
+[304s] voices: 300/600 voices
+[332s] voices: 325/600 voices
+[365s] voices: 350/600 voices
+[397s] voices: 375/600 voices
+[421s] voices: 400/600 voices
+[449s] voices: 425/600 voices
+[477s] voices: 450/600 voices
+[507s] voices: 475/600 voices
+[539s] voices: 500/600 voices
+[568s] voices: 525/600 voices
+[599s] voices: 550/600 voices
+[627s] voices: 575/600 voices
+[656s] voices: 600/600 voices
+[657s] running: Seed 1 of 2: forking twin worlds
+[659s] running: Seed 1 of 2: 12 rounds, 600 people per world
+   s1:A Day 1 07:00 deciders=17 intent=7 calls=3
+   s1:B Day 1 07:00 deciders=17 intent=7 calls=3
+   s1:A p0538 comment: "More new drinks, less my time."
+   s1:A Day 1 09:00 deciders=44 intent=18 calls=8
+   s1:B Day 1 09:00 deciders=44 intent=17 calls=8
+   s1:B Day 1 11:00 deciders=80 intent=29 calls=14
+   s1:A Day 1 11:00 deciders=80 intent=29 calls=14
+   s1:B p0377 comment: "Not this ad"
+   s1:B Day 1 13:00 deciders=145 intent=53 calls=25
+   s1:A Day 1 13:00 deciders=145 intent=50 calls=25
+   s1:B Day 1 15:00 deciders=181 intent=65 calls=31
+   s1:A Day 1 15:00 deciders=181 intent=63 calls=31
+   s1:B p0056 comment: "Latte's expensive, skip it"
+   s1:B Day 1 17:00 deciders=255 intent=89 calls=44
+   s1:A Day 1 17:00 deciders=255 intent=88 calls=44
+   s1:B Day 1 19:00 deciders=343 intent=122 calls=59
+   s1:A p0468 comment: "yes same"
+   s1:A p0536 comment: "yes, try it"
+   s1:A p0540 comment: "just another add-on"
+   s1:A Day 1 19:00 deciders=343 intent=121 calls=59
+   s1:B p0069 comment: "skip it"
+   s1:B p0087 comment: "Another 30%? Never."
+   s1:B p0173 comment: "skip it"
+   s1:B p0198 comment: "lattes are pricey"
+   s1:B p0304 comment: "why pay for noise?"
+   s1:B p0464 comment: "skip it, keep scrolling"
+   s1:B p0525 comment: "Skip it, not worth the hassle"
+   s1:B p0534 comment: "Skip it, not worth the hassle"
+   s1:B Day 1 21:00 deciders=453 intent=138 calls=131
+   s1:A p0034 comment: "just another add-on"
+   s1:A p0094 comment: "30% off saves my paycheck"
+   s1:A p0179 comment: "lattes are overpriced today"
+   s1:A p0421 comment: "Ugh, another add-on"
+   s1:A p0429 comment: "fake deal"
+   s1:A p0501 comment: "lattes cost more than my coffee habit"
+   s1:A Day 1 21:00 deciders=453 intent=145 calls=131
+   s1:A Day 1 23:00 deciders=490 intent=158 calls=143
+   s1:B p0104 comment: "skip it"
+   s1:B Day 1 23:00 deciders=490 intent=141 calls=143
+   s1:A Day 2 01:00 deciders=511 intent=163 calls=147
+   s1:B Day 2 01:00 deciders=511 intent=144 calls=147
+   s1:A Day 2 03:00 deciders=519 intent=165 calls=149
+   s1:B Day 2 03:00 deciders=519 intent=146 calls=149
+   s1:A p0071 comment: "Hype without honey, skip"
+   s1:A p0170 comment: "Local honey, love it"
+   s1:A Day 2 05:00 deciders=525 intent=167 calls=151
+   s1:B Day 2 05:00 deciders=525 intent=147 calls=151
+[6602s] running: Seed 2 of 2: forking twin worlds
+[6604s] running: Seed 2 of 2: 12 rounds, 600 people per world
+   s2:A Day 1 07:00 deciders=11 intent=5 calls=2
+   s2:B Day 1 07:00 deciders=11 intent=5 calls=2
+   s2:A Day 1 09:00 deciders=39 intent=19 calls=7
+   s2:B Day 1 09:00 deciders=39 intent=14 calls=7
+   s2:A Day 1 11:00 deciders=80 intent=33 calls=14
+   s2:B Day 1 11:00 deciders=80 intent=33 calls=14
+   s2:A Day 1 13:00 deciders=135 intent=56 calls=24
+   s2:B Day 1 13:00 deciders=135 intent=51 calls=24
+   s2:A Day 1 15:00 deciders=164 intent=64 calls=29
+   s2:B Day 1 15:00 deciders=164 intent=62 calls=29
+   s2:A p0515 comment: "Not worth it for my $6.50 latte"
+   s2:A Day 1 17:00 deciders=219 intent=85 calls=39
+   s2:B p0515 comment: "Just filtered out the hype."
+   s2:B Day 1 17:00 deciders=219 intent=84 calls=39
+   s2:A p0190 comment: "hmm lol"
+   s2:A Day 1 19:00 deciders=317 intent=118 calls=56
+   s2:B p0076 comment: "Not worth the small treat."
+   s2:B p0157 comment: "not now, sorry"
+   s2:B p0164 comment: "done"
+   s2:B p0534 comment: "no"
+   s2:B Day 1 19:00 deciders=317 intent=118 calls=56
+   s2:A p0199 comment: "lol same as usual"
+   s2:A p0284 comment: "Honey latte not."
+   s2:A p0459 comment: "lol same as usual"
+   s2:A Day 1 21:00 deciders=434 intent=125 calls=127
+   s2:B p0005 comment: "nope lattes"
+   s2:B p0195 comment: "nvm"
+   s2:B p0277 comment: "just me"
+   s2:B p0374 comment: "Not for me."
+   s2:B p0429 comment: "nvm"
+   s2:B p0589 comment: "ignore this spam"
+   s2:B Day 1 21:00 deciders=434 intent=112 calls=127
+   s2:A p0020 comment: "ugh, repeat"
+   s2:A p0141 comment: "not my cup of tea"
+   s2:A p0527 comment: "Bean There's my latte"
+   s2:A p0586 comment: "hmm lol lattes are $$"
+   s2:A Day 1 23:00 deciders=487 intent=137 calls=142
+   s2:B Day 1 23:00 deciders=487 intent=122 calls=142
+   s2:A Day 2 01:00 deciders=500 intent=141 calls=145
+   s2:B Day 2 01:00 deciders=500 intent=128 calls=145
+   s2:A Day 2 03:00 deciders=513 intent=141 calls=148
+   s2:B p0224 comment: "nvm"
+   s2:B Day 2 03:00 deciders=513 intent=130 calls=148
+   s2:A p0428 comment: "haha overpriced"
+   s2:A Day 2 05:00 deciders=519 intent=142 calls=150
+   s2:B p0441 comment: "nvm"
+   s2:B Day 2 05:00 deciders=519 intent=132 calls=150
+[11749s] analyzing: Computing verdict, segments and validity panel
+[11749s] report: Report agent is querying the action log
+[11881s] done: Too close to call on intent to visit: A 29.6% vs B 26.7% (±5.5 pts), A ahead in 2 of 2 seeds.
+
+VERDICT: Too close to call on intent to visit: A 29.6% vs B 26.7% (±5.5 pts), A ahead in 2 of 2 seeds.
+validity: {"decisions":4146,"repaired_share":0.0087,"distinct_reason_ratio":0.978,"top_reason_opener":{"text":"oat milk honey","share":0.01},"scroll_past_share":0.701,"stance_sd_by_world":[{"world":"s1:A","sd":0.291},{"world":"s1:B","sd":0.292},{"world":"s2:A","sd":0.268},{"world":"s2:B","sd":0.271}],"silenced":874,"guard":{"decisions_with_a_check":731,"by_check":{"reason:false_repeat_claim":123,"coherence:positive_action_negative_feeling":245,"text:false_repeat_claim":71,"reason:invented_price":87,"coherence:visit_with_strong_dislike":204,"reason:other_version_leak":8,"text:invented_price":22,"text:brand_voice":17,"reason:invented_percent":10,"text:other_version_leak":1,"reason:duplicate_in_batch":35,"text:copied_reason":14,"reason:identity_trope":2,"text:invented_percent":1}}}
+fairness: [{"seed":1,"fingerprint":"700010fe0bb201f874ce90b3d9807c24","base_shapes":{"s1:A":"09f40be04e67e0637e412d92957ce6f8","s1:B":"09f40be04e67e0637e412d92957ce6f8"},"identical":true},{"seed":2,"fingerprint":"47f3875cbf481bb6b564ed70ca4d18c5","base_shapes":{"s2:A":"1be720ab3c4c0879aa3bb89c0d197c33","s2:B":"1be720ab3c4c0879aa3bb89c0d197c33"},"identical":true}]
+usage: [{"tag":"20261027-south-congress-coffe-e52a","role":"reason","model":"nemotron-3-nano:4b","calls":2,"tokens_in":12354,"tokens_out":2990,"avg_ms":31863,"errors":1,"served_by":{"replay(ollama-local:nemotron-3-nano:4b)":1,"ollama-local:nemotron-3-nano:4b":1}},{"tag":"20261027-south-congress-coffe-e52a","role":"voice","model":"nemotron-3-nano:4b","calls":24,"tokens_in":36492,"tokens_out":15053,"avg_ms":78383,"errors":0,"served_by":{"ollama-local:nemotron-3-nano:4b":24}},{"tag":"20261027-south-congress-coffe-e52a","role":"crowd","model":"nemotron-3-nano:4b","calls":602,"tokens_in":987152,"tokens_out":266974,"avg_ms":55009,"errors":0,"served_by":{"ollama-local:nemotron-3-nano:4b":602}}]
+run 20261027-south-congress-coffe-e52a: 4146 decisions in 11881s
