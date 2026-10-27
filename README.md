@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Test your post on a simulated crowd before you spend a dollar.</b><br>
-  Twin-world A/B tests on simulated people sampled from real Census and Pew data, with an agent that decides whether a real test is worth paying for.
+  Twin-world A/B tests on simulated people sampled from Census, World Bank and Pew data. Ripple is the A/B test: it runs it on a simulated crowd for $0 of ad spend and tells you which version to launch.
 </p>
 
 <p align="center">
@@ -33,7 +33,7 @@
 
 ---
 
-Ripple A/B tests an ad, post or announcement on a simulated crowd sampled from the audience it targets. Two identical crowds see version A and version B. You watch both feeds fill live, then get the winner with a margin (or "too close to call"), who preferred which version and why in their own words, and a version C. The agent also decides whether a real paid test could tell the two posts apart at the audience size the business can reach. If not, it says so, and nothing is spent until the owner approves.
+Ripple A/B tests an ad, post, image or campaign on a simulated crowd sampled from the audience it targets, on Instagram, Facebook, TikTok, YouTube, X or Reddit, in any US ZIP or any country. Two identical crowds see version A and version B. You watch both feeds fill live, then get a verdict such as: "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version." A version only "wins" when the 95% interval excludes zero and every seed agrees. You also get who preferred which version and why in their own words, a version C, and a decision. A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend. Launching is one paused campaign, ad set and ad for the chosen version, approval-gated; without Meta keys Ripple shows the exact requests and sends nothing.
 
 > [!IMPORTANT]
 > Ripple is not a prediction of real customer behaviour, and on our backtest it did not beat chance (see [Results](#-results-so-far)). Its value is the uncertainty it measures and the spend decision built on it.
@@ -47,9 +47,9 @@ Built for the Open Agent Hackathon 2026, Track 3 (Reasoning Architecture) and th
     <td align="center"><h3>600</h3>simulated Instagram users in ZIP 78704</td>
     <td align="center"><h3>2 × 2</h3>seeds × twin worlds, hash-verified</td>
     <td align="center"><h3>4,146</h3>simulated reactions</td>
-    <td align="center"><h3>±5.5 pts</h3>interval: too close to call</td>
+    <td align="center"><h3>+1.4 pts</h3>A leads, 70% likely better (run 1458)</td>
     <td align="center"><h3>3,828</h3>people per version a real test needs</td>
-    <td align="center"><h3>Don't pay</h3>the agent's spend decision</td>
+    <td align="center"><h3>$0</h3>ad spend; a live test needs 29,274 people</td>
   </tr>
 </table>
 
@@ -91,6 +91,15 @@ Open http://localhost:8787 and press **Load example**. With nothing set it uses 
 curl -X POST http://localhost:8000/run -H "Content-Type: application/json" -d @input_examples/example_1.json
 ```
 
+**Platforms, version types and places.** `platform` is one of `instagram`, `facebook`, `tiktok`, `youtube`, `x`, `reddit` (default `instagram`; Pew rates are per platform; LinkedIn is not supported because we have no Pew data). Each version (`variants[]`, shapes from `src/runApi.ts`) has a `type`:
+
+- `post`: `{"type":"post","text":"..."}`
+- `image`: `{"type":"image","image":"<data URL or https URL>","caption":"..."}`. The VisionAgent (Nemotron Super VL via NVIDIA) describes the image factually, the description is cached, and the crowd reads that description. SVG text is read directly. The crowd reacts to the vision model's description, not to pixels. Image tests were checked with one vision call, not a full live run.
+- `ad`: `{"type":"ad","headline":"...","primary_text":"...","cta":"Learn more","image":"..."}`
+- `campaign`: `{"type":"campaign","posts":[{"text":"...","image":"..."}, ...]}` with 2 or 3 posts delivered across rounds.
+
+Place is `business.zip` (any 5-digit US ZIP, Census ACS) or `business.location` (a country, or "City, Country", from World Bank Open Data; country-level, the city is only a label). Outside the US, US Pew platform rates are applied as a labelled proxy and the audience is scaled by the internet-users share. Income is modeled from World Bank quintiles and education from a labelled prior. Six countries are cached and work offline: GBR, IND, DEU, CAN, AUS, MEX.
+
 ### Entry points
 
 | Entry | What |
@@ -101,7 +110,7 @@ curl -X POST http://localhost:8000/run -H "Content-Type: application/json" -d @i
 | `npm run backtest -- --slice scored --n 50` | Upworthy backtest |
 | `npm run probe` | Checks every provider, source and the federation engine |
 
-`POST /run` limits (from the input schema): `crowd` 20 to 300 (default 60), `rounds` 6 to 32 (default 8), `seeds` 1 to 3, a 5-digit `zip` (or an `address` that contains one), a run timeout of 10 minutes (`RUN_TIMEOUT_MS`).
+`POST /run` limits (from the input schema): `crowd` 20 to 300 (default 60), `rounds` 6 to 32 (default 8), `seeds` 1 to 3, a 5-digit `zip` (or an `address` that contains one) or a `location` outside the US, a run timeout of 10 minutes (`RUN_TIMEOUT_MS`).
 
 <details>
 <summary><b><code>.env</code> variables</b> (all optional; placeholders only)</summary>
@@ -191,11 +200,11 @@ flowchart LR
 4. **Twin worlds.** For each seed, one base world (people, follower graph, wake schedule, ad serving schedule) is built and then forked. World A and world B share an identical base log, verified by hash. The only event that differs is the post.
 5. **A simulated day, round by round.** People wake on a US time-of-day curve. Only people whose feed changed cost a model call. Each call is a batch of people with their persona, their recalled memories and their new feed items. Each person picks an action (scroll past, like, comment, share, save, tap through, hide), a feeling, whether they'd visit, and a private reason. Shares land in followers' feeds next round, and comments show under the post.
 6. **Loud is not lost.** Every person has a private stance and a propensity to speak. Someone may decide to comment and then keep it to themselves. The report counts vocal and silent reactions separately and shows what people "kept to themselves".
-7. **Verdict in code.** A version wins only if it wins every seed and the pooled gap is larger than the 95% confidence interval. Otherwise the answer is "too close to call".
+7. **Verdict in code.** A version "wins" only if it is ahead in every seed and the 95% interval on the gap excludes zero. Otherwise the verdict names the leader and says how likely it is to be the better version (P(better)), for example "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version."
 8. **Report agent with tools.** It queries the run's action log through SQL (segment breakdowns, timeline, reaction samples, crowd vs Census). Every claim must cite a query id, and every quote is an action id. A code critic rejects uncited numbers and invented prices. A model critic rejects overclaiming. One revision, then ship.
 9. **Ask why.** Interview any person. They answer only from their own memory and cite the memory lines they use. Asked about something they never saw, they say so. You can also ask a whole segment or run a focus group.
 10. **Version C.** A rewriter drafts a post aimed at the losing segments' objections. An honesty check rejects drafts that hide the price or offer. One click simulates C against the winner on the same crowd.
-11. **The decision and the action.** The run ends with a spend decision, not just a verdict. A power calculation on the simulated gap, against the number of Instagram users the business can actually reach (Census × Pew join), answers one question: is a real A/B test of these posts worth paying for? If not, the agent cancels it and drafts a bolder version from the quoted objections, with an honesty check. It then writes a launch plan for the test that is worth running: variants, targeting, people per version, the success metric, and the decision and stop rules. Free, reversible steps need no approval: cancelling the pointless test and drafting the new version. Simulating C against the leader on the same crowd is one click. The agent then checks the result against its own bar, the smallest gap an affordable real test could detect, and updates the decision. Anything that spends money or publishes waits for the owner's approval. Approving creates, through the Marketing API, one campaign with two ad sets (one per version, identical ZIP and age targeting, the same fixed daily budget) and one ad each, all created paused. This is two paused ad sets, not Meta's split-test study object. The code refuses any other status. Without Meta credentials Ripple shows the exact requests and sends nothing. Live launch is optional: a live attempt in our sandbox currently fails at ad creative ("Select a Facebook Page"), so the demo shows the preview ([docs/META_SETUP.md](docs/META_SETUP.md)).
+11. **The decision and the action.** Ripple is the A/B test, so the run ends with a launch decision, not a refusal. Run 1458: "Launch A: it leads by 1.4 points and is 70% likely to be the better version. A sharper Version C could widen the gap." A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend. The agent drafts Version C from the quoted objections, with an honesty check, and simulates it against the leader on the same crowd. Version C: +1.0 pt vs A on the same crowd (30.1% vs 29.0%, run 13b7), below the 3.6-point bar, so keep A. Free, reversible steps need no approval. Anything that spends money or publishes waits for the owner. Approving creates, through the Marketing API, one campaign with one ad set and one ad for the chosen version, all PAUSED; the code refuses any other status. Launching is one paused campaign, ad set and ad for the chosen version, approval-gated; without Meta keys Ripple shows the exact requests and sends nothing. A live attempt in our sandbox currently fails at ad creative ("Select a Facebook Page"), so the demo shows the preview ([docs/META_SETUP.md](docs/META_SETUP.md)).
 12. **Reality check.** The Upworthy backtest measures how often the crowd picks the real winner of real headline A/B tests, against a coin flip and against a single prompt on the same models.
 
 ### The agents
@@ -299,25 +308,27 @@ Upworthy headline-only tests, meaning the same image and lede, where the best an
 <!-- DEMO_RUN -->
 ### The demo run: South Congress Coffee, 600 people
 
-The run is saved in [runs/20261027-south-congress-coffe-e52a](runs/20261027-south-congress-coffe-e52a) and opens in the UI.
+The headline run is saved in [runs/20261027-south-congress-coffe-1458](runs/20261027-south-congress-coffe-1458) and opens in the UI (copy-only A/B, same latte, same $6.50). The detailed bullets below come from an earlier 600-person run on the local 4B model, [e52a](runs/20261027-south-congress-coffe-e52a), a different post pair (full price vs a discount) whose numbers and old wording ("too close to call", "don't pay") predate the leader/winner verdict. Treat them as context; run 1458 is the headline.
 
 > [!NOTE]
-> **The decision:** "Don't pay to A/B test these two posts: they are too close to tell apart with the people South Congress Coffee can reach. Test a bolder version instead."
+> **The verdict (run 1458):** A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version.
 >
-> **Its own check:** Version C, drafted from the quoted price objections, moved intent by +1.1 points against A on the same 600 people (hosted Lightning via Nightshift, 11.7 minutes). That is short of the bar, so the agent keeps A and does not pay for a real test of C.
+> **The decision:** "Launch A: it leads by 1.4 points and is 70% likely to be the better version. A sharper Version C could widen the gap." A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend.
+>
+> **Its own check:** Version C: +1.0 pt vs A on the same crowd (30.1% vs 29.0%, run 13b7), below the 3.6-point bar, so keep A. (hosted Lightning via Nightshift, run 13b7.)
 
 <details open>
 <summary><b>The full run, point by point</b></summary>
 
 - **The crowd.** 600 simulated Instagram users in ZIP 78704, drawn from ACS 2024 5-year Census rows and national Pew Instagram usage rates. The core group, aged 25 to 34, is deliberately oversampled to 50%. About a fifth carry habits from a synthetic customer list.
 - **The day.** One simulated day in 12 two-hour rounds, 07:00 to 07:00, run twice (2 seeds, same people). Each seed has twin worlds that start from a base log verified identical by hash. Only the post differs.
-- **The verdict: too close to call.** Intent to visit was 29.6% for A and 26.7% for B, a 2.9-point gap inside a ±5.5-point 95% interval. A was ahead in both seeds, but neither seed was significant on a paired test, and the two versions were tied until the competitor's post. We report no measurable difference between the two posts.
+- **The verdict (earlier run e52a): no clear winner by the old rule.** Intent to visit was 29.6% for A and 26.7% for B, a 2.9-point gap inside a ±5.5-point 95% interval. A was ahead in both seeds, but neither seed was significant on a paired test, and the two versions were tied until the competitor's post. Under the current rule this would read as a leader with a P(better), not a win.
 - **The competitor's post.** "30% off all lattes" was injected at round 8 of 12 into both worlds. Before it, A and B were tied in both seeds: 35.3% vs 35.6%, and 37.2% vs 37.2%. After it, stated intent fell in all four worlds, including among people who had already decided. A finished ahead of B (31.8% vs 28.0% in seed 1, 27.4% vs 25.4% in seed 2). That gap is not statistically distinguishable, it was concentrated in people who first saw the post at or after the competitor's post, and an interrupted earlier attempt gave a different split. We have no run without the competitor event, so we describe when the gap opened, not what caused it.
 - **Loud is not lost.** Across the four worlds, 874 reactions were written but kept private. The simulated person drafted a reply, and their modelled propensity to speak decided not to post it; that propensity is a labelled prior, not a measurement. 439 of those were reactions to the café's post and 435 to the competitor's. Only 68 reactions to the café's post became public comments, plus 83 under the competitor news. No one shared either post in this run.
 - **The guard.** A rule-based fact-and-coherence guard screened every decision before it was logged. It fired on 731 of 4,146 (17.6%). Most often it forced a positive action paired with a negative feeling to scroll-past (245), cancelled a would-visit from someone who strongly disliked the post (204), and withheld reasons that claimed the person had seen the post before (123, plus 71 in comments) or invented a price (87, plus 22).
 - **Quality checks.** There were 4,146 simulated reactions across four worlds: 2,088 to the café post and 2,058 to the competitor's. 0.9% came from model output that needed a repair or a default. 97.8% of the non-empty private reasons are distinct strings, and 70% of reactions were scroll-past.
-- **The decision.** Detecting a 2.9-point gap needs about 3,828 people per version, 7,656 in all, at 5% significance and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. A test capped at 20% of the local audience, 2,700 per version, can only detect a gap of about 3.5 points. The agent cancelled the A vs B test and drafted version C from the price objections, and the draft passed the honesty check. A real test of A vs C waits for the owner's approval. This decision does not rely on the crowd predicting a winner: it uses the measured uncertainty and the real audience size. See [launch_plan.json](runs/20261027-south-congress-coffe-e52a/launch_plan.json).
-- **The decision's own check.** The agent simulated C against A on the same 600 people (one click in the UI), on hosted Nemotron 3.5 Lightning through Nightshift, in 11.7 minutes ([runs/20261027-south-congress-coffe-344c](runs/20261027-south-congress-coffe-344c)). C moved intent by +1.1 points (14.6% vs 13.5%), short of the bar, so the decision is to keep A and not pay for a real test of C. The Meta launch stays available behind the owner's approval, marked not recommended. Only that C run used hosted models; the numbers above are from the local 4B model.
+- **The decision.** Detecting a 2.9-point gap needs about 3,828 people per version, 7,656 in all, at 5% significance and 80% power. That is 28.3% of the roughly 27,006 Instagram users in 78704. A test capped at 20% of the local audience, 2,700 per version, can only detect a gap of about 3.5 points. The old rule cancelled the A vs B test and drafted version C from the price objections, and the draft passed the honesty check. A real test of A vs C waits for the owner's approval. This decision does not rely on the crowd predicting a winner: it uses the measured uncertainty and the real audience size. See [launch_plan.json](runs/20261027-south-congress-coffe-e52a/launch_plan.json).
+- **The decision's own check.** The agent simulated C against A on the same 600 people (one click in the UI), on hosted Nemotron 3.5 Lightning through Nightshift, in 11.7 minutes ([runs/20261027-south-congress-coffe-344c](runs/20261027-south-congress-coffe-344c)). C moved intent by +1.1 points (14.6% vs 13.5%), short of the bar, so the decision was to keep A. The Meta launch stays available behind the owner's approval, marked not recommended. Only that C run used hosted models; the numbers above are from the local 4B model.
 - **Compute.** The whole run used Nemotron 3 Nano 4B locally through Ollama on an M1 Pro laptop: 602 crowd calls with 0.99M input tokens, or 640 calls and 1.12M input tokens including voices, report and review. The one segment-naming call was replayed from a response the same model recorded earlier. The run took 3.3 hours, and the video shows the saved run, not a live one.
 - **Offline replay.** `npm run smoke` replays a recorded 40-person café run with no model provider and checks that it reproduces the same verdict. The 600-person run's per-call recordings were damaged by concurrent writers to the shared recordings file, so that run is kept as its saved action log rather than as a call-by-call replay.
 
@@ -407,8 +418,9 @@ npx vitest run tests/conformance.test.ts
 ## 📚 Data sources and licences
 
 - **Upworthy Research Archive** (CC BY 4.0): headline A/B tests used for the backtest.
-- **US Census ACS 2024 5-year** tables via the Census Reporter API.
-- **Pew Research Center** Social Media Fact Sheet: Instagram use by age and gender.
+- **US Census ACS 2024 5-year** tables via the Census Reporter API (US ZIPs).
+- **World Bank Open Data** (country-level indicators; CC BY 4.0) for places outside the US, the 6th federated source (`worldbank.country`, registered on Zetaris as `dryrun2.*`).
+- **Pew Research Center** Social Media Fact Sheet: use by platform, age and gender (US rates; applied as a labelled proxy outside the US).
 - **Labelled assumptions:** `data/sources/priors_behaviour.csv` (each row says MODELED PRIOR or ASSUMED).
 - **Synthetic:** the demo café's customer list, `data/sources/biz_customers_cafe.csv`.
 - **Never in the prompt:** race, ethnicity, nationality or religion. Gender is a sampling attribute, not shown to the voice writer.

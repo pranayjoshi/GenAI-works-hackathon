@@ -23,13 +23,17 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
 
 ## 2. State of the project (all committed and pushed)
 
+- **The video is out of date.** Release `demo-video` was rendered BEFORE the product changes (commits 7f926cb, 034a216, 9b32d90) and still shows "too close to call" and "don't pay" wording in the Verdict and Decide scenes. Options: (a) submit it as is, or (b) re-record the Verdict + Decide scenes (dark theme, run 1458) and re-render with `bash scripts/video/make.sh` (about 30-40 minutes). `docs/pitch/VOICEOVER.md` still carries the old wording too.
+- **New since the video:** Ripple is the A/B test (leader/winner verdict with CI and P(better); one paused launch); platforms (instagram, facebook, tiktok, youtube, x, reddit); version types post/image/ad/campaign (VisionAgent); places outside the US (World Bank, 6th federated source). Details in README and `docs/SPONSOR_TECH.md`.
+- **Zetaris:** tables must be re-registered on a new machine with `scripts/zetaris-register.sh` (`ZETARIS_DB=dryrun2` or a new name). World Bank tables are `dryrun2.*`.
+
 - **Product:** Ripple (formerly Dry Run). The UI is at `npm start` → http://localhost:8787. The judge API is `POST /run` (Docker on port 8000; see README).
 - **Headline demo run:** `runs/20261027-south-congress-coffe-1458`. A copy-only A/B (same latte, same $6.50, only the wording differs).
   - 600 simulated people, 2 seeds, 12 rounds, with a competitor post at round 8.
   - Crowd on Nemotron 3.5 Lightning via Meterless Nightshift; reasoning on Nemotron Super via direct NVIDIA (Nightshift excludes Super VL); review on Ultra via Nightshift.
   - All 7 audience queries ran on Zetaris.
-  - Verdict: too close to call, A 24.8% vs B 23.4% (±5.1).
-  - Decision: a real test needs 29,274 people, 108% of the ZIP's 27,006 Instagram users, so don't pay.
+  - Verdict: "A leads on intent to visit: 24.8% vs 23.4% (+1.4 pts, 95% CI −3.7 to +6.5); A ahead in 2 of 2 seeds; 70% likely to be the better version."
+  - Decision: "Launch A: it leads by 1.4 points and is 70% likely to be the better version. A sharper Version C could widen the gap." A live split test would need 29,274 people (14,637 per version, 108% of the ZIP's 27,006 Instagram users) and paid impressions. Ripple ran it on the simulated crowd for $0 of ad spend.
 - **Version C check:** `runs/20261027-south-congress-coffe-13b7`. C 30.1% vs A 29.0%, +1.0 pt, below the bar, so keep A. The honesty check passed (Ultra via Nightshift).
 - **Claim-checked numbers** for the voiceover, deck and Q&A: `docs/pitch/DEMO_PLAN.md` (numbers sheet), `docs/pitch/JUDGE_QA.md`, `docs/pitch/DECK.md`, `docs/SPONSOR_TECH.md`, `samples/README-runs.md`.
 - **Voiceover text:** `docs/pitch/VOICEOVER.md`. The video pipeline is in `scripts/video/`.
