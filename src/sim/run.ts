@@ -286,9 +286,9 @@ export function persist(st: RunState) {
     fs.writeFileSync(path.join(dir, 'summary.json'), JSON.stringify({
       run_id: st.spec.run_id, status: st.status, error: st.error, created: st.created,
       crowd: st.personas.length, rounds: st.spec.rounds, seeds: st.spec.seeds, events: st.spec.events,
-      decisions: recs.filter((r) => r.item_kind !== 'event').length,
+      decisions: recs.length, reactions_to_post: recs.filter((r) => r.item_kind !== 'event').length, reactions_to_events: recs.filter((r) => r.item_kind === 'event').length,
       verdict: st.verdict, summaries: st.summaries, tipping: st.tipping, validity: st.validity, fairness: st.fairness,
-      usage: st.usage, timing: st.timing, report: st.report ? { summary: (st.report as any).summary, recommendation: (st.report as any).recommendation } : null,
+      usage: st.usage, timing: st.timing, report: (st.report as any)?.report ? { summary: (st.report as any).report.summary, recommendation: (st.report as any).report.recommendation, claims: (st.report as any).report.claims } : null,
     }, null, 2));
   }
 }

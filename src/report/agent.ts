@@ -105,6 +105,18 @@ ${toolText}`;
       for (const m of c.text.replace(/\d+(\.\d+)?%/g, '').match(/\b\d{2,}\b/g) ?? []) if (!ints.has(Number(m))) issues.push(`Count ${m} in "${c.text}" is not in its cited results`);
     }
     for (const th of [...rep.objections, ...rep.likes]) for (const id of th.action_ids) if (!recById.has(id)) issues.push(`Quote ${id} is not an action in this run`);
+    // direction: "A leads/has higher ... (x% vs y%)" must give x to the version it names
+    const pairs = [{ a: v.pooled.a, b: v.pooled.b }, ...Object.values(v.secondary).map((m) => ({ a: m.a, b: m.b })), ...v.segments.map((m) => ({ a: m.a, b: m.b }))];
+    for (const c of rep.claims) {
+      const m = c.text.match(/\b(A|B)\b[^()]*?\(\s*(\d+(?:\.\d+)?)%\s*vs\.?\s*(\d+(?:\.\d+)?)%\s*\)/);
+      if (!m) continue;
+      const [, who, x, y] = m;
+      const near = (p: number, q: number) => Math.abs(p * 100 - q) < 0.6;
+      const pair = pairs.find((p) => (near(p.a, +x) && near(p.b, +y)) || (near(p.a, +y) && near(p.b, +x)));
+      if (!pair) continue;
+      const named = who === va ? pair.a : pair.b;
+      if (!near(named, +x)) issues.push(`Claim gives ${x}% to ${who}, but ${who} is at ${(named * 100).toFixed(1)}%: "${c.text}"`);
+    }
     // prices and offers must exist in the posts; headline percentages must match the verdict
     const postText = st.spec.posts.map((p) => p.text).join(' ');
     for (const field of [rep.summary, rep.recommendation, rep.tipping_note, ...rep.claims.map((c) => c.text)]) {
@@ -159,6 +171,59 @@ ${toolText}`;
     report.recommendation = v.winner ? `Run version ${v.winner}, then test a version C aimed at the segments that preferred the other one.` : 'Too close to call: test a sharper version C before spending.';
   }
   for (const th of [...report.objections, ...report.likes]) th.action_ids = th.action_ids.filter((id) => recById.has(id));
+  // floor: at least 3 claims; extras are the widest segment gaps, built in code from the segment queries they cite
+  if (report.claims.length < 3) {
+    const gaps: { text: string; qid: string; gap: number }[] = [];
+    for (const t of tools.filter((x) => x.tool === 'segment_breakdown')) {
+      const bySeg = new Map<string, Record<string, { rate: number; n: number }>>();
+      for (const r of t.rows) {
+        const k = String(r.segment);
+        bySeg.set(k, { ...(bySeg.get(k) ?? {}), [String(r.variant)]: { rate: Number(r.intent_rate), n: Number(r.deciders) } });
+      }
+      for (const [seg, m] of bySeg) {
+        const a = m[va], b = m[vb];
+        if (!a || !b || a.n < 15 || b.n < 15) continue;
+        gaps.push({ qid: t.query_id, gap: Math.abs(a.rate - b.rate), text: `${t.args.by === 'customer' ? seg : `${t.args.by} ${seg}`}: intent ${(a.rate * 100).toFixed(1)}% on ${va} vs ${(b.rate * 100).toFixed(1)}% on ${vb} (${a.n} and ${b.n} decisions).` });
+      }
+    }
+    gaps.sort((x, y) => y.gap - x.gap);
+    for (const g of gaps) {
+      if (report.claims.length >= 3) break;
+      report.claims.push({ text: g.text, query_ids: [g.qid] });
+    }
+  }
+  // query aliases belong in query_ids, not in the prose
+  const noAlias = (x: string) => x.replace(/\s*\((?:Q\d+(?:,\s*)?)+\)/g, '').replace(/\s+([.,;])/g, '$1');
+  report.summary = noAlias(report.summary);
+  report.recommendation = noAlias(report.recommendation);
+  for (const c of report.claims) c.text = noAlias(c.text);
+  // no winner: the summary must say so up front, and the recommendation must be a next test, not a pick
+  if (!v.winner) {
+    if (!/too close|not a clear|within the (margin|interval)|no clear/i.test(report.summary)) {
+      const rest = report.summary.split(/(?<=[.!?])\s+(?=[A-Z])/).filter((x) => !/\b(leads?|wins?|winner|ahead|beats?|better)\b/i.test(x)).join(' ');
+      report.summary = `${v.headline} ${rest}`.trim();
+      issues.push('Summary implied a winner although the verdict is too close to call; the verdict now leads it.');
+    }
+    if (!/version c|test|re-?run|bigger|larger/i.test(report.recommendation)) {
+      report.recommendation = 'Too close to call: test a sharper version C on the same crowd before spending.';
+      issues.push('Recommendation picked a side without a winner; replaced with the next test.');
+    }
+  }
+  // floor: every version gets at least one objection and one like theme, quoted from the real reaction samples
+  const [sa, sb] = [va, vb];
+  const fill = (list: Report['objections'], kind: 'negative' | 'positive') => {
+    const kept = list.filter((t) => t.action_ids.length);
+    for (const [i, variant] of [sa, sb].entries()) {
+      if (kept.some((t) => t.variant === variant)) continue;
+      const th = themeFrom(samples[i * 2 + (kind === 'positive' ? 1 : 0)], variant, kind);
+      if (th) { kept.push(th); issues.push(`No ${kind === 'negative' ? 'objection' : 'like'} theme for ${variant}; filled from the reaction sample.`); }
+    }
+    return kept.slice(0, 3);
+  };
+  report.objections = fill(report.objections, 'negative');
+  report.likes = fill(report.likes, 'positive');
+  // the tipping note states computed facts only
+  report.tipping_note = tippingNote(st);
 
   const quotes: ReportBundle['quotes'] = {};
   for (const th of [...report.objections, ...report.likes]) for (const id of th.action_ids) {
@@ -186,4 +251,34 @@ function fallbackReport(st: RunState, tools: ToolResult[], samples: ToolResult[]
     tipping_note: 'See the tipping-point panel.',
     recommendation: v.winner ? `Run version ${v.winner}, and test a version C aimed at the losing segments.` : 'The versions are too close to call; test a sharper version C.',
   };
+}
+
+/** Keyword buckets for grouping simulated reasons into a theme when the model returns none. */
+const THEMES: { name: string; re: RegExp }[] = [
+  { name: 'price', re: /\$|\bprice|\bpric(ey|y)|expensive|cost|budget|afford|spend|cheap/i },
+  { name: 'the discount', re: /\b\d+%|discount|\boff\b|deal|sale|promo/i },
+  { name: 'trust in ads', re: /\bads?\b|advert|marketing|gimmick|sponsored|salesy|pushy/i },
+  { name: 'routine and habit', re: /routine|habit|ritual|usual|already have|every morning|my coffee/i },
+  { name: 'taste and ingredients', re: /oat|honey|sweet|taste|flavou?r|dairy|milk|local/i },
+  { name: 'distance and time', re: /far|drive|detour|commute|nearby|close to|time|busy|walk/i },
+];
+
+function themeFrom(sample: ToolResult | undefined, variant: string, kind: 'negative' | 'positive'): Report['objections'][number] | null {
+  const rows = (sample?.rows ?? []).filter((r) => String(r.reason ?? '').trim());
+  if (!rows.length) return null;
+  let best = { name: '', ids: [] as string[] };
+  for (const t of THEMES) {
+    const ids = rows.filter((r) => t.re.test(String(r.reason))).map((r) => String(r.action_id));
+    if (ids.length > best.ids.length) best = { name: t.name, ids };
+  }
+  const ids = best.ids.length >= 2 ? best.ids : rows.map((r) => String(r.action_id));
+  const label = best.ids.length >= 2 ? `${kind === 'negative' ? 'Put off by' : 'Drawn by'} ${best.name}` : `${kind === 'negative' ? 'Negative' : 'Positive'} reactions`;
+  return { theme: `${label} (${best.ids.length >= 2 ? best.ids.length : rows.length} of ${rows.length} sampled reasons)`, variant, action_ids: ids.slice(0, 2) };
+}
+
+function tippingNote(st: RunState): string {
+  const entries = Object.entries(st.tipping ?? {});
+  const hits = entries.filter(([, t]) => t);
+  if (!hits.length) return 'No one shared either version, so neither spread beyond the people it was served to.';
+  return hits.map(([w, t]) => `In world ${w}, @${t!.record.agent_id} shared it in round ${t!.record.hour + 1} and it reached ${t!.reached} more people.`).join(' ');
 }
