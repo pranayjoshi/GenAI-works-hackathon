@@ -107,6 +107,11 @@ export default {
     function intentChip(d, v) {
       const k = letterOf(v.label), r = d.verdict;
       const val = k === 'A' ? r.a : k === 'B' ? r.b : null;
+      const sim = k === 'C' ? d.actions.find((a) => a.kind === 'simulate_variant')?.result : null;
+      if (sim && sim.status === 'done' && sim.gap_pts != null) {
+        const txt = `C ${sim.gap_pts >= 0 ? '+' : ''}${sim.gap_pts.toFixed(1)} pts vs ${sim.leader} on the same crowd`;
+        return h('a.ad-intent', { href: `#/run/${encodeURIComponent(sim.run_id)}/verdict`, title: 'Open the Version C run', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), txt, h('span', ' →'));
+      }
       const text = val != null ? `${k} ${(val * 100).toFixed(1)}% simulated intent` : `${k}: drafted, not simulated yet`;
       return h('a.ad-intent', { href: `#/run/${encodeURIComponent(id)}/verdict`, title: 'Open the Verdict stage', onclick: (e) => e.stopPropagation() }, h('i', { style: { background: variantVar(k) } }), text, h('span', ' →'));
     }

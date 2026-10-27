@@ -1251,7 +1251,7 @@
       },
       {
         "id": "launch_test",
-        "title": "Create the real split test in Meta Ads: A vs C",
+        "title": "Set up a paused A vs C test in Meta Ads (two ad sets)",
         "policy": "needs_approval",
         "status": "proposed"
       }

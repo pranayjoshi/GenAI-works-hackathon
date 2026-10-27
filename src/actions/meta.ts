@@ -1,5 +1,5 @@
 /**
- * Launch action: create the real split test in Meta Ads, paused, when the owner approves (docs/META_SETUP.md).
+ * Launch action: set up a paused test in Meta Ads (one campaign, one ad set per version), when the owner approves (docs/META_SETUP.md).
  *
  * One campaign; one ad set per version with identical targeting and budget (an even split test); one creative and
  * one ad per ad set. Every object is created with status PAUSED and the code refuses anything else, so nothing
