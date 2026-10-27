@@ -25,6 +25,14 @@ function keysFor(ps, field, base, extra = []) {
   return keys;
 }
 const catOf = (p, field) => (p[field] == null ? '-' : p[field]);
+/** Short heatmap label for a copula column; the full name goes in the tooltip. */
+const SHORT = { age: 'Age', visits_per_month: 'Visits/mo', avg_ticket: 'Ticket', tenure_months: 'Tenure', income: 'Income', spend: 'Spend' };
+function shortCol(c) {
+  if (SHORT[c]) return SHORT[c];
+  const w = String(c).replace(/_per_month$/, '/mo').replace(/_months?$/, '').replace(/^avg_/, '').split('_')[0];
+  const s = w.charAt(0).toUpperCase() + w.slice(1);
+  return s.length > 10 ? `${s.slice(0, 9)}.` : s;
+}
 
 /* ------------------------------------------------------------------ layouts (shared by the 3D and SVG views) */
 function buildLayouts(ps, sample) {
@@ -39,16 +47,18 @@ function buildLayouts(ps, sample) {
     });
     place(core, 2.3); place(spill, 3.7);
     const labels = [];
-    if (core.length) labels.push({ t: 'Core', sub: `${core.length}`, p: [0, 2.7, 0], c: 'core' });
-    if (spill.length) labels.push({ t: 'Spillover', sub: `${spill.length}`, p: [0, 4.15, 0], c: 'spill' });
-    out.sphere = { pos, labels, lines: [] };
+    if (core.length) labels.push({ t: 'Core', sub: `${core.length} inner shell`, p: [0, 2.75, 0], c: 'core' });
+    if (spill.length) labels.push({ t: 'Spillover', sub: `${spill.length} outer shell`, p: [0, 4.2, 0], c: 'spill' });
+    out.sphere = { pos, labels, lines: [], floorY: -4.3, shells: true, fitK: 1 };
   }
   // columns: a 3D bar chart of stacked people, one column per band
   const columns = (field, base, extra) => {
     const keys = keysFor(ps, field, base, extra), K = keys.length, cnt = new Map(keys.map((k) => [k, 0]));
     ps.forEach((p) => cnt.set(catOf(p, field), cnt.get(catOf(p, field)) + 1));
     const maxN = Math.max(1, ...cnt.values());
-    const side = clamp(Math.ceil(Math.sqrt(maxN / 9)), 4, 8), per = side * side, sp = Math.min(0.3, 1.5 / side), lh = 0.28;
+    // towers of people: small crowds get narrow, taller stacks so the chart reads as 3D bars
+    // about ten layers for the tallest band: small crowds become single stacks of people, so heights read as shares
+    const side = clamp(Math.ceil(Math.sqrt(maxN / 10)), 1, 8), per = side * side, sp = Math.min(0.42, 1.6 / side), lh = Math.min(0.38, sp * 0.9);
     const colW = Math.min(1.75, 11 / K), layers = Math.ceil(maxN / per), y0 = -(layers * lh) / 2 - 0.2;
     const seen = new Map(keys.map((k) => [k, 0]));
     const pos = ps.map((p) => {
@@ -58,7 +68,7 @@ function buildLayouts(ps, sample) {
     });
     const labels = keys.map((k, ki) => ({ t: String(k), sub: ps.length ? `${Math.round((cnt.get(k) / ps.length) * 100)}%` : '', p: [(ki - (K - 1) / 2) * colW, y0 - 0.55, 0], c: 'col' }));
     const w = (K * colW) / 2;
-    return { pos, labels, lines: [[-w, y0 - 0.12, 0, w, y0 - 0.12, 0]] };
+    return { pos, labels, lines: [[-w, y0 - 0.12, 0, w, y0 - 0.12, 0]], floorY: y0 - 0.14, fitK: 1.04 };
   };
   out.age = columns('age_band', AGE_BANDS, Object.keys(sample?.marginals?.age || {}));
   out.income = columns('income_band', INCOME_BANDS, Object.keys(sample?.marginals?.income || {}));
@@ -79,23 +89,79 @@ function buildLayouts(ps, sample) {
       return v;
     });
     const L = 3, o = -3, lines = [
-      [o, o, o, L, o, o], [o, o, o, o, L, o], [o, o, o, o, o, L],
       [L, o, o, L, L, o], [L, o, o, L, o, L], [o, L, o, L, L, o], [o, L, o, o, L, L], [o, o, L, L, o, L], [o, o, L, o, L, L], [L, L, o, L, L, L], [L, o, L, L, L, L], [o, L, L, L, L, L],
     ];
     const labels = [
-      { t: 'Price sensitivity', sub: ranges[0].norm ? 'min to max' : '0 to 1', p: [3.6, -3.2, -3], c: 'axis' },
-      { t: 'Skepticism', sub: ranges[1].norm ? 'min to max' : '0 to 1', p: [-3.2, 3.6, -3], c: 'axis' },
-      { t: 'Susceptibility', sub: ranges[2].norm ? 'min to max' : '0 to 1', p: [-3.2, -3.4, 3.7], c: 'axis' },
+      { t: 'Price sensitivity', sub: ranges[0].norm ? 'x: min to max' : 'x: 0 to 1', p: [4.25, -3.25, -3], c: 'axis.ax-x' },
+      { t: 'Skepticism', sub: ranges[1].norm ? 'y: min to max' : 'y: 0 to 1', p: [-3, 4.3, -3], c: 'axis.ax-y' },
+      { t: 'Susceptibility', sub: ranges[2].norm ? 'z: min to max' : 'z: 0 to 1', p: [-3.2, -3.35, 4.35], c: 'axis.ax-z' },
     ];
-    out.traits = { pos, labels, lines, missing };
+    // tick labels at the middle and the end of each axis (raw value when the trait is 0..1)
+    const tk = (k, f) => (ranges[k].norm ? (f === 1 ? 'max' : 'mid') : (f === 1 ? '1' : '.5'));
+    for (const f of [0.5, 1]) {
+      const v = -3 + 6 * f;
+      labels.push({ t: tk(0, f), p: [v, -3.42, -3], c: 'tick' }, { t: tk(1, f), p: [-3.32, v, -3], c: 'tick' }, { t: tk(2, f), p: [-3.32, -3.3, v], c: 'tick' });
+    }
+    labels.push({ t: ranges[0].norm ? 'min' : '0', p: [-3.32, -3.42, -3], c: 'tick' });
+    out.traits = { pos, labels, lines, missing, floorY: -3.02, gizmo: true, fitK: 0.88 };
+  }
+  for (const L of Object.values(out)) {
+    let R = 1;
+    for (const q of [...L.pos, ...L.labels.map((l) => l.p)]) if (q) R = Math.max(R, Math.hypot(q[0], q[1], q[2]));
+    L.R = R + 0.35;
   }
   return out;
 }
 
+/** Links between people: each person to their two nearest neighbours in the same segment (the sampler's cell),
+ * plus each customer to the nearest other customer. Distances use the sphere layout so links stay short there. */
+function buildLinks(ps, pos) {
+  const segs = new Map(), out = [], seen = new Set();
+  ps.forEach((p, i) => { const k = p.segment || p.role || '-'; if (!segs.has(k)) segs.set(k, []); segs.get(k).push(i); });
+  const d2 = (a, b) => (pos[a][0] - pos[b][0]) ** 2 + (pos[a][1] - pos[b][1]) ** 2 + (pos[a][2] - pos[b][2]) ** 2;
+  const add = (a, b, kind) => { const key = a < b ? `${a}:${b}` : `${b}:${a}`; if (seen.has(key)) return; seen.add(key); out.push([a, b, kind]); };
+  const near = (i, group, k, kind) => group.filter((j) => j !== i).sort((a, b) => d2(i, a) - d2(i, b)).slice(0, k).forEach((j) => add(i, j, kind));
+  const cap = Math.min(ps.length, 400);   // keep the O(n^2) neighbour search and the line count small
+  for (const group of segs.values()) for (const i of group.slice(0, cap)) near(i, group.slice(0, cap), 2, 0);
+  const cust = ps.map((p, i) => (p.customer ? i : -1)).filter((i) => i >= 0).slice(0, cap);
+  for (const i of cust) near(i, cust, 1, 1);
+  return out;
+}
+
+/* ------------------------------------------------------------------ 3D line shader (per-vertex colour + alpha, depth fog) */
+const LVERT = `attribute vec3 aColor; attribute float aAlpha; uniform float uFogNear; uniform float uFogFar; varying vec3 vC; varying float vA;
+void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; vC = aColor; vA = aAlpha * (1.0 - 0.7 * smoothstep(uFogNear, uFogFar, -mv.z)); }`;
+const LFRAG = `uniform float uOpacity; varying vec3 vC; varying float vA;
+void main() {
+  float a = vA * uOpacity; if (a < 0.003) discard;
+  gl_FragColor = vec4(vC, a);
+  #include <colorspace_fragment>
+}`;
+function makeLines(THREE, nSeg, fog) {
+  const geo = new THREE.BufferGeometry();
+  const a = { pos: new Float32Array(nSeg * 6), col: new Float32Array(nSeg * 6), alpha: new Float32Array(nSeg * 2) };
+  geo.setAttribute('position', new THREE.BufferAttribute(a.pos, 3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('aColor', new THREE.BufferAttribute(a.col, 3));
+  geo.setAttribute('aAlpha', new THREE.BufferAttribute(a.alpha, 1).setUsage(THREE.DynamicDrawUsage));
+  const mat = new THREE.ShaderMaterial({ vertexShader: LVERT, fragmentShader: LFRAG, transparent: true, depthWrite: false, uniforms: { uOpacity: { value: 0 }, uFogNear: fog.near, uFogFar: fog.far } });
+  const obj = new THREE.LineSegments(geo, mat); obj.frustumCulled = false;
+  let n = 0;
+  return {
+    obj, geo, mat, ...a,
+    /** append one segment; c = THREE.Color, al = alpha at each end */
+    seg(p, q, c, al, al2 = al) { if (n >= nSeg) return; a.pos.set([...p, ...q], n * 6); a.col.set([c.r, c.g, c.b, c.r, c.g, c.b], n * 6); a.alpha[n * 2] = al; a.alpha[n * 2 + 1] = al2; n++; },
+    done() { geo.setDrawRange(0, n * 2); geo.attributes.position.needsUpdate = true; geo.attributes.aColor.needsUpdate = true; geo.attributes.aAlpha.needsUpdate = true; },
+    recolor(c) { for (let i = 0; i < n * 2; i++) a.col.set([c.r, c.g, c.b], i * 3); geo.attributes.aColor.needsUpdate = true; },
+    reset() { n = 0; },
+    get count() { return n; },
+  };
+}
+const circlePts = (fn, segs = 64) => Array.from({ length: segs + 1 }, (_, k) => fn((k / segs) * Math.PI * 2));
+
 /* ------------------------------------------------------------------ 3D point shader */
 const VERT = `attribute float aSize; attribute float aRing; attribute float aAlpha; attribute vec3 aColor;
-uniform float uScale; varying vec3 vC; varying float vR; varying float vA;
-void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(2.0, aSize * uScale / -mv.z); gl_Position = projectionMatrix * mv; vC = aColor; vR = aRing; vA = aAlpha; }`;
+uniform float uScale; uniform float uFogNear; uniform float uFogFar; varying vec3 vC; varying float vR; varying float vA;
+void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(2.0, aSize * uScale / -mv.z); gl_Position = projectionMatrix * mv; vC = aColor; vR = aRing; vA = aAlpha * (1.0 - 0.55 * smoothstep(uFogNear, uFogFar, -mv.z)); }`;
 const FRAG = `uniform vec3 uRing; varying vec3 vC; varying float vR; varying float vA;
 void main() {
   float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard;
@@ -106,7 +172,7 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-function makeCloud(THREE, n, ringCol) {
+function makeCloud(THREE, n, ringCol, fog) {
   const geo = new THREE.BufferGeometry();
   const a = { pos: new Float32Array(n * 3), size: new Float32Array(n), ring: new Float32Array(n), alpha: new Float32Array(n).fill(1), col: new Float32Array(n * 3) };
   geo.setAttribute('position', new THREE.BufferAttribute(a.pos, 3).setUsage(THREE.DynamicDrawUsage));
@@ -114,7 +180,7 @@ function makeCloud(THREE, n, ringCol) {
   geo.setAttribute('aRing', new THREE.BufferAttribute(a.ring, 1));
   geo.setAttribute('aAlpha', new THREE.BufferAttribute(a.alpha, 1).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('aColor', new THREE.BufferAttribute(a.col, 3));
-  const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, uniforms: { uScale: { value: 600 }, uRing: { value: new THREE.Color(ringCol) } } });
+  const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, uniforms: { uScale: { value: 600 }, uRing: { value: new THREE.Color(ringCol) }, uFogNear: fog.near, uFogFar: fog.far } });
   const pts = new THREE.Points(geo, mat); pts.frustumCulled = false;
   return { pts, geo, mat, ...a };
 }
@@ -134,9 +200,82 @@ async function createThreeView(host, cb) {
   const { THREE, camera, canvas, scene } = st;
   let cloud = null, ghost = null, data = null, colors = null;
   let from = null, to = null, delay = null, dur = 1.3, swirl = null, pending = false, t0 = 0, enter = false, anim = false, baseSize = [], hoverI = -1;
-  let guide = null, guideTarget = 0;
+  let guide = null, guideTarget = 0, curKey = 'sphere', camGoal = null, layR = 4.4, layK = 0.92, linkDirty = false;
   const filterTarget = [];
   const tmp = new THREE.Vector3();
+  const fog = { near: { value: 1e4 }, far: { value: 1e4 + 1 } };
+  const spin = () => !reduced();
+  const C = (css, fb) => toColor(THREE, css, fb);
+
+  // floor: a polar grid that fades out with radius and turns slowly; it sits under whichever layout is shown
+  const floor = makeLines(THREE, 8 * 64 + 24 * 8, fog);
+  let floorY = -4.3;
+  function buildFloor(col) {
+    const R = 8.5, fall = (r) => 0.55 * Math.pow(Math.max(0, 1 - r / R), 1.3);
+    for (let r = 1; r <= 8; r++) { const pts = circlePts((a) => [Math.cos(a) * r, 0, Math.sin(a) * r]); for (let k = 0; k < 64; k++) floor.seg(pts[k], pts[k + 1], col, fall(r) * (r % 2 ? 0.7 : 1)); }
+    for (let s = 0; s < 24; s++) { const a = (s / 24) * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a); for (let k = 0; k < 8; k++) { const r0 = 0.5 + k, r1 = r0 + 1; floor.seg([c * r0, 0, sn * r0], [c * r1, 0, sn * r1], col, fall(r0) * 0.7, fall(r1) * 0.7); } }
+    floor.done();
+  }
+  buildFloor(C(cssVar('--faint'), '#8890aa'));
+  floor.obj.position.y = floorY; floor.mat.uniforms.uOpacity.value = 1; scene.add(floor.obj);
+
+  // shells: wireframe globes at the core (inner) and spillover (outer) radii of the sphere layout
+  const shells = makeLines(THREE, 2 * 8 * 48, fog);
+  function buildShells(cols) {
+    const sh = [[2.3, C(cols.core, '#8f7bff'), 0.3], [3.7, C(cols.spill, '#9196ab'), 0.17]];
+    for (const [R, col, al] of sh) {
+      for (const lat of [-55, -28, 0, 28, 55]) { const y = Math.sin((lat * Math.PI) / 180) * R, r = Math.cos((lat * Math.PI) / 180) * R, pts = circlePts((a) => [Math.cos(a) * r, y, Math.sin(a) * r], 48); for (let k = 0; k < 48; k++) shells.seg(pts[k], pts[k + 1], col, al * (lat === 0 ? 1.6 : 0.8)); }
+      for (const lon of [0, 60, 120]) { const L = (lon * Math.PI) / 180, pts = circlePts((a) => [Math.cos(a) * Math.cos(L) * R, Math.sin(a) * R, Math.cos(a) * Math.sin(L) * R], 48); for (let k = 0; k < 48; k++) shells.seg(pts[k], pts[k + 1], col, al * 0.6); }
+    }
+    shells.done();
+  }
+  scene.add(shells.obj);
+
+  // traits gizmo: coloured x/y/z axes with arrowheads and ticks, from the cube's origin corner
+  const gizmo = new THREE.Group(), gizmoLines = makeLines(THREE, 3 + 3 * 2 * 2, fog), cones = [];
+  gizmo.add(gizmoLines.obj);
+  const AX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  function buildGizmo(cols) {
+    const o = [-3, -3, -3], cs = [C(cols.core, '#8f7bff'), C(cols.cust, '#4fe3c1'), C(cols.warn, '#ffc84d')];
+    AX.forEach((d, k) => {
+      const end = o.map((v, a) => v + d[a] * 6.6);
+      gizmoLines.seg(o, end, cs[k], 0.9);
+      for (const f of [0.5, 1]) { // ticks perpendicular to the axis
+        const at = o.map((v, a) => v + d[a] * 6 * f), pp = AX[(k + 1) % 3], pq = AX[(k + 2) % 3];
+        gizmoLines.seg(at.map((v, a) => v - pp[a] * 0.12), at.map((v, a) => v + pp[a] * 0.12), cs[k], 0.8);
+        gizmoLines.seg(at.map((v, a) => v - pq[a] * 0.12), at.map((v, a) => v + pq[a] * 0.12), cs[k], 0.8);
+      }
+      if (cones[k]) { cones[k].material.color.copy(cs[k]); return; }
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.34, 14), new THREE.MeshBasicMaterial({ color: cs[k], transparent: true, opacity: 0, depthWrite: false }));
+      cone.position.set(...o.map((v, a) => v + d[a] * 6.75));
+      if (k === 0) cone.rotation.z = -Math.PI / 2; else if (k === 2) cone.rotation.x = Math.PI / 2;
+      gizmo.add(cone); cones.push(cone);
+    });
+    gizmoLines.done();
+  }
+  scene.add(gizmo);
+
+  // links between people (same segment, or both customers); positions follow the points as they morph
+  let links = null, pairs = [], linkTarget = 0;
+  function buildLinkObj(ps, layouts, cols) {
+    if (links) { scene.remove(links.obj); links.geo.dispose(); links.mat.dispose(); }
+    pairs = buildLinks(ps, layouts.sphere.pos);
+    links = makeLines(THREE, Math.max(1, pairs.length), fog);
+    const core = C(cols.core, '#8f7bff'), sp = C(cols.spill, '#9196ab'), cu = C(cols.cust, '#4fe3c1');
+    for (const [a, b, kind] of pairs) links.seg([0, 0, 0], [0, 0, 0], kind ? cu : ps[a].role === 'core' ? core : sp, 1);
+    links.done(); links.mat.uniforms.uOpacity.value = 0; scene.add(links.obj);
+    linkDirty = true;
+  }
+  function syncLinks() {
+    if (!links || !cloud) return;
+    pairs.forEach(([a, b, kind], n) => {
+      for (let k = 0; k < 3; k++) { links.pos[n * 6 + k] = cloud.pos[a * 3 + k]; links.pos[n * 6 + 3 + k] = cloud.pos[b * 3 + k]; }
+      const hv = hoverI >= 0 && (a === hoverI || b === hoverI), al = (kind ? 0.42 : 0.2) * Math.min(cloud.alpha[a], cloud.alpha[b]) * (hv ? 3 : 1);
+      links.alpha[n * 2] = al; links.alpha[n * 2 + 1] = al;
+    });
+    links.geo.attributes.position.needsUpdate = true; links.geo.attributes.aAlpha.needsUpdate = true;
+  }
+  const targets = (key) => ({ shells: key === 'sphere' ? 1 : 0, gizmo: key === 'traits' ? 1 : 0, links: key === 'sphere' ? 1 : key === 'traits' ? 0.55 : 0 });
 
   // guide lines (axes, box, floor) swapped per layout
   {
@@ -153,7 +292,7 @@ async function createThreeView(host, cb) {
   // ghost "sampling" cloud: a Census-like grid that condenses into a sphere and relaxes again
   const ghostGrid = [], ghostSph = [];
   function makeGhost() {
-    const n = 420; ghost = makeCloud(THREE, n, '#4fe3c1');
+    const n = 420; ghost = makeCloud(THREE, n, '#4fe3c1', fog);
     const c = toColor(THREE, cssVar('--accent'), '#8f7bff');
     for (let i = 0; i < n; i++) {
       const gc = i % 28, gr = Math.floor(i / 28);
@@ -164,7 +303,10 @@ async function createThreeView(host, cb) {
     }
     scene.add(ghost.pts);
   }
+  let idleShells = false;   // no crowd and not sampling (the run stopped): show the empty shells, dimmed
   function setSampling(on) {
+    idleShells = !on && !cloud;
+    if (idleShells && !shells.count) buildShells({ core: cssVar('--accent'), spill: cssVar('--muted') });
     if (on && !ghost && !cloud) makeGhost();
     if (!on && ghost) { const g = ghost; ghost = null; g.fading = 1; fading.push(g); }
   }
@@ -174,7 +316,7 @@ async function createThreeView(host, cb) {
   function setData(ps, layouts, cols, layoutKey, animate) {
     data = { ps, layouts }; colors = cols;
     if (cloud) { scene.remove(cloud.pts); cloud.geo.dispose(); cloud.mat.dispose(); }
-    cloud = makeCloud(THREE, ps.length, cols.cust);
+    cloud = makeCloud(THREE, ps.length, cols.cust, fog);
     baseSize = baseSizes(ps);
     paintColors();
     const L = layouts[layoutKey];
@@ -186,7 +328,10 @@ async function createThreeView(host, cb) {
     cloud.pts.visible = true; scene.add(cloud.pts);
     pending = true; anim = enter; if (!enter) cloud.pos.set(to);
     setGuide(L.lines);
-    fit();
+    buildLinkObj(ps, layouts, cols);
+    shells.reset(); buildShells(cols); gizmoLines.reset(); buildGizmo(cols);
+    curKey = layoutKey; floorY = L.floorY ?? floorY; layR = L.R || layR; layK = L.fitK || 0.92;
+    fit(true);
   }
   function paintColors() {
     if (!cloud || !data) return;
@@ -195,6 +340,9 @@ async function createThreeView(host, cb) {
     cloud.geo.attributes.aColor.needsUpdate = true; cloud.geo.attributes.aRing.needsUpdate = true;
     cloud.mat.uniforms.uRing.value = toColor(THREE, colors.cust, '#4fe3c1');
     guide.material.color = toColor(THREE, colors.line, '#8890aa');
+    floor.recolor(C(colors.line, '#8890aa'));
+    shells.reset(); buildShells(colors); gizmoLines.reset(); buildGizmo(colors);
+    if (links) { const core = C(colors.core, '#8f7bff'), sp = C(colors.spill, '#9196ab'), cu = C(colors.cust, '#4fe3c1'); pairs.forEach(([a, , kind], n) => { const c = kind ? cu : data.ps[a]?.role === 'core' ? core : sp; links.col.set([c.r, c.g, c.b, c.r, c.g, c.b], n * 6); }); links.geo.attributes.aColor.needsUpdate = true; }
   }
   function setLayout(key, animate = true) {
     if (!cloud || !data) return;
@@ -203,15 +351,20 @@ async function createThreeView(host, cb) {
     if (enter) { baseSize.forEach((b, i) => { cloud.size[i] = b; }); cloud.geo.attributes.aSize.needsUpdate = true; }
     enter = false; dur = animate && !reduced() ? 1.25 : 0.01; pending = true; anim = true;
     setGuide(L.lines);
+    curKey = key; floorY = L.floorY ?? floorY; layR = L.R || layR; layK = L.fitK || 0.92;
+    fit(!animate || reduced());
   }
   function setFilter(pred) {
     if (!data) return;
     data.ps.forEach((p, i) => { filterTarget[i] = !pred || pred(p) ? 1 : 0.1; });
     if (reduced()) { filterTarget.forEach((v, i) => { cloud.alpha[i] = v; }); cloud.geo.attributes.aAlpha.needsUpdate = true; }
   }
-  function fit() {
-    const aspect = camera.aspect || 1.4, d = 13 / clamp(aspect / 1.25, 0.55, 1.2);
-    camera.position.setLength(Math.hypot(0, 2.2, d));
+  /** camera distance so the layout's bounding sphere fills the narrower field of view */
+  function fit(now) {
+    const aspect = camera.aspect || 1.4, vh = (camera.fov * Math.PI) / 360, hh = Math.atan(Math.tan(vh) * aspect);
+    const d = clamp((layR / Math.sin(Math.min(vh, hh))) * layK, 6, 40);
+    if (st.controls) st.controls.maxDistance = Math.max(26, d * 1.6);
+    if (now) { camera.position.setLength(d); camGoal = null; } else camGoal = d;
   }
 
   // per-frame: morph, filter fade, ghost, uniforms
@@ -219,6 +372,17 @@ async function createThreeView(host, cb) {
     const sc = canvas.height / (2 * Math.tan((camera.fov * Math.PI) / 360));
     if (cloud) cloud.mat.uniforms.uScale.value = sc;
     if (ghost) ghost.mat.uniforms.uScale.value = sc;
+    const k3 = Math.min(1, dt * 3);
+    if (camGoal != null) { const l = camera.position.length(), nl = l + (camGoal - l) * k3; camera.position.setLength(nl); if (Math.abs(camGoal - nl) < 0.02) camGoal = null; }
+    const cd = camera.position.length(); fog.near.value = cd - layR * 0.5; fog.far.value = cd + layR * 1.1;
+    floor.obj.position.y += (floorY - floor.obj.position.y) * k3;
+    if (spin()) floor.obj.rotation.y += dt * 0.035;
+    const tg = cloud ? targets(curKey) : { shells: idleShells ? 0.5 : 0, gizmo: 0, links: 0 };
+    shells.mat.uniforms.uOpacity.value += (tg.shells - shells.mat.uniforms.uOpacity.value) * k3;
+    gizmoLines.mat.uniforms.uOpacity.value += (tg.gizmo - gizmoLines.mat.uniforms.uOpacity.value) * k3;
+    cones.forEach((c) => { c.material.opacity = gizmoLines.mat.uniforms.uOpacity.value * 0.9; });
+    gizmo.visible = gizmoLines.mat.uniforms.uOpacity.value > 0.01; shells.obj.visible = shells.mat.uniforms.uOpacity.value > 0.01;
+    if (links) { links.mat.uniforms.uOpacity.value += (tg.links - links.mat.uniforms.uOpacity.value) * k3; links.obj.visible = links.mat.uniforms.uOpacity.value > 0.01; }
     if (cloud && anim) {
       if (pending) { t0 = t; pending = false; }
       const el = t - t0; let done = true;
@@ -235,6 +399,7 @@ async function createThreeView(host, cb) {
       let ch = false;
       for (let i = 0; i < filterTarget.length; i++) { const d = filterTarget[i] - cloud.alpha[i]; if (Math.abs(d) > 0.004) { cloud.alpha[i] += d * Math.min(1, dt * 9); ch = true; } }
       if (ch) cloud.geo.attributes.aAlpha.needsUpdate = true;
+      if (ch || anim || linkDirty) { syncLinks(); linkDirty = false; }
     }
     guide.material.opacity += (guideTarget - guide.material.opacity) * Math.min(1, dt * 2.5);
     if (ghost) {
@@ -269,6 +434,7 @@ async function createThreeView(host, cb) {
       if (i >= 0) cloud.size[i] = baseSize[i] * 1.5;
       cloud.geo.attributes.aSize.needsUpdate = true;
     }
+    if (i !== hoverI) linkDirty = true;
     hoverI = i; canvas.style.cursor = i >= 0 ? 'pointer' : 'grab';
     cb.hover(i, x, y);
   };
@@ -278,7 +444,7 @@ async function createThreeView(host, cb) {
     raf = requestAnimationFrame(() => { raf = 0; setHover(nearest(lastEv.clientX, lastEv.clientY), lastEv.clientX, lastEv.clientY); });
   };
   const onLeave = () => setHover(-1);
-  const onDown = (e) => { down = { x: e.clientX, y: e.clientY }; setHover(-1); if (st.controls) st.controls.autoRotate = false; };
+  const onDown = (e) => { down = { x: e.clientX, y: e.clientY }; setHover(-1); camGoal = null; if (st.controls) st.controls.autoRotate = false; };
   const onUp = (e) => {
     if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) { const i = nearest(e.clientX, e.clientY); if (i >= 0) cb.pick(i); }
     down = null; resumeSpin();
@@ -287,17 +453,18 @@ async function createThreeView(host, cb) {
   const resumeSpin = () => { clearTimeout(spinT); spinT = setTimeout(() => { if (st.controls && !reduced()) st.controls.autoRotate = true; }, 4000); };
   canvas.addEventListener('pointermove', onMove); canvas.addEventListener('pointerleave', onLeave);
   canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointerup', onUp);
-  canvas.addEventListener('wheel', () => { if (st.controls) st.controls.autoRotate = false; resumeSpin(); }, { passive: true });
+  const onWheel = () => { camGoal = null; if (st.controls) st.controls.autoRotate = false; resumeSpin(); };
+  canvas.addEventListener('wheel', onWheel, { passive: true });
   canvas.style.cursor = 'grab'; canvas.style.touchAction = 'none';
 
   return {
-    kind: '3d', setData, setLayout, setFilter, setSampling, repaint(cols) { colors = cols; paintColors(); },
+    kind: '3d', setData, setLayout, setFilter, setSampling, repaint(cols) { if (!cols) return; colors = cols; paintColors(); },
     project(p) { tmp.set(p[0], p[1], p[2]).project(camera); return { x: (tmp.x * 0.5 + 0.5) * canvas.clientWidth, y: (-tmp.y * 0.5 + 0.5) * canvas.clientHeight, front: tmp.z < 1 }; },
-    resize() { st.resize(); fit(); },
+    resize() { st.resize(); fit(true); },
     dispose() {
       clearTimeout(spinT); cancelAnimationFrame(raf); off();
       canvas.removeEventListener('pointermove', onMove); canvas.removeEventListener('pointerleave', onLeave);
-      canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointerup', onUp);
+      canvas.removeEventListener('pointerdown', onDown); canvas.removeEventListener('pointerup', onUp); canvas.removeEventListener('wheel', onWheel);
       st.dispose();
     },
   };
@@ -353,7 +520,7 @@ export default {
     const { S, bus } = ctx;
     let destroyed = false, visible = false, view = null, viewSig = '', panelSig = '', layoutKey = 'sphere', focus = null, hl = null, hoverIdx = -1;
     const offs = [];
-    const colors = () => ({ core: cssVar('--accent'), spill: cssVar('--muted'), cust: cssVar('--accent-2'), line: cssVar('--faint') });
+    const colors = () => ({ core: cssVar('--accent'), spill: cssVar('--muted'), cust: cssVar('--accent-2'), line: cssVar('--faint'), warn: cssVar('--warn') });
 
     /* ---- hero DOM */
     const seg = h('div.cw-seg', { role: 'group', 'aria-label': 'Layout' });
@@ -487,7 +654,9 @@ export default {
       mount(legend, ps.length ? [chip('core', 'Core', core, 'var(--accent)'), chip('spill', 'Spillover', ps.length - core, 'var(--muted)'), chip('cust', 'Customers', cust, 'var(--accent-2)')] : null);
     }
     function updateHint() {
-      const L = viewLayouts?.[layoutKey], base = 'Size = influence. Drag to orbit, scroll to zoom, click a point to open the person.';
+      const L = viewLayouts?.[layoutKey];
+      const what = view?.kind === '3d' && (layoutKey === 'sphere' || layoutKey === 'traits') ? 'Size = influence, ring = customer, lines = same segment (teal: customers). ' : 'Size = influence, ring = customer. ';
+      const base = `${what}Drag to orbit, scroll to zoom, click a point to open the person.`;
       hint.textContent = layoutKey === 'traits' && L?.missing ? `${base} ${L.missing} people lack a trait value and sit on the axes' origin.` : base;
     }
 
@@ -497,6 +666,7 @@ export default {
       const ps = S.personas || [];
       const has = ps.length > 0;
       sampling.classList.toggle('on', !has); host.classList.toggle('samp', !has);
+      seg.classList.toggle('off', !has); segBtns.forEach((b) => { b.disabled = !has; });
       sampling.classList.toggle('still', S.status === 'error' && !has);
       if (!has) {
         const err = S.status === 'error';
@@ -522,8 +692,8 @@ export default {
       if (!v) { host.classList.add('fb'); v = createSvgView(host, cb); }
       if (destroyed) { v.dispose(); return; }
       view = v; host.dataset.view = v.kind;
-      if (!(S.personas || []).length) { v.setSampling(true); return; }
-      v.setData(S.personas, viewLayouts, colors(), layoutKey, true); applyFilter(); placeLabels();
+      if (!(S.personas || []).length) { v.setSampling(S.status !== 'error'); return; }
+      v.setData(S.personas, viewLayouts, colors(), layoutKey, true); applyFilter(); placeLabels(); updateHint();
     }
 
     /* ---- panels render */
@@ -540,7 +710,7 @@ export default {
         h('div.cw-stats',
           h('div.cw-stat', h('span.l', 'People'), val(ps.length, (x) => fmtInt(Math.round(x))), h('small', fin(S.spec?.crowdSize) != null ? `requested ${fmtInt(S.spec.crowdSize)}` : '')),
           h('div.cw-stat', h('span.l', 'Core / spillover'), val(core, (x) => `${Math.round(x)} / ${Math.round(ps.length - x)}`), h('small', `${pct(share, 0)} core`)),
-          h('div.cw-stat', h('span.l', 'Existing customers'), val(cust, (x) => fmtInt(Math.round(x))), h('small', cust ? 'from the synthetic demo list' : 'none in this crowd')),
+          h('div.cw-stat', h('span.l', { title: 'Existing customers' }, 'Customers'), val(cust, (x) => fmtInt(Math.round(x))), h('small', cust ? 'existing, from the synthetic demo list' : 'none in this crowd')),
           h('div.cw-stat', h('span.l', 'Voice fallbacks'), fin(sr.voice_fallbacks) == null ? h('b', '-') : val(+sr.voice_fallbacks, (x) => fmtInt(Math.round(x))), h('small', fin(sr.voice_rejected) == null ? 'rejected: -' : `${fmtInt(sr.voice_rejected)} rejected`))),
         h('div.cw-core', h('div.row.spread', h('small', 'Core share of the crowd'), h('small.mono', `${pct(share, 0)}${fin(sr.target_core_share) != null ? ` | target ${pct(sr.target_core_share, 0)}` : ''}${fin(sr.natural_core_share) != null ? ` | natural ${pct(sr.natural_core_share, 0)}` : ''}`)), split,
           h('div.cw-detail.expl', 'Fill: share of core people in the sample. Ticks: the target share and the natural share in the data (when the run reports them).')),
@@ -548,7 +718,7 @@ export default {
     }
     function renderDist(id, title, ps, keys, field, nat) {
       const p = panels[id], hasNat = nat && typeof nat === 'object' && Object.keys(nat).length > 0;
-      if (!ps.length) { mount(p.body, dashBody('Shares appear once the crowd is sampled.')); p.subEl.textContent = ''; return; }
+      if (!ps.length) { mount(p.body, dashBody(S.status === 'error' ? 'No crowd was sampled, so there are no shares.' : 'Shares appear once the crowd is sampled.')); p.subEl.textContent = ''; return; }
       const cnt = keys.map((k) => ps.filter((q) => catOf(q, field) === k).length), shares = cnt.map((c) => c / ps.length);
       const natV = keys.map((k) => (hasNat ? fin(nat[k]) : null));
       const sc = 0.94 / Math.max(0.01, ...shares, ...natV.filter((x) => x != null));
@@ -580,32 +750,43 @@ export default {
     function renderCopula(ps, sr) {
       const p = panels.copula, cop = sr.copula;
       if (!cop || !Array.isArray(cop.corr) || !Array.isArray(cop.columns)) {
-        p.subEl.textContent = ''; mount(p.body, ps.length ? h('div.empty.cw-empty', 'No customer copula in this run (no customer list was joined).') : dashBody('The correlation matrix appears once customers are modelled.')); return;
+        p.subEl.textContent = ''; mount(p.body, ps.length ? h('div.empty.cw-empty', 'No customer copula in this run (no customer list was joined).') : dashBody(S.status === 'error' ? 'The run stopped before customers were modelled.' : 'The correlation matrix appears once customers are modelled.')); return;
       }
-      p.subEl.textContent = `n = ${fmtInt(cop.n)}`;
-      const n = cop.columns.length, cells = [], cap = h('div.cw-cap', 'Hover a cell for the pair. Violet = positive, orange = negative.');
-      const dflt = `${cop.columns.join(' | ')}`; cap.title = dflt;
-      const grid = h('div.cw-corr', { style: { '--n': n }, onpointerleave: () => { cells.flat().forEach((c) => c.classList.remove('hl', 'hx')); cap.textContent = 'Hover a cell for the pair. Violet = positive, orange = negative.'; } });
+      p.subEl.textContent = `Rank-based correlations in the customer list, n = ${fmtInt(cop.n)}`;
+      const n = cop.columns.length, cells = [], heads = [], rheads = [];
+      const dflt = 'Hover a cell for the pair. Hover a label for its full name.';
+      const cap = h('div.cw-cap', dflt);
+      const reset = () => { cells.flat().forEach((c) => c.classList.remove('hl', 'hx')); [...heads, ...rheads].forEach((x) => x.classList.remove('hl')); cap.textContent = dflt; };
+      const grid = h('div.cw-corr', { style: { '--n': n }, onpointerleave: reset });
       grid.append(h('i.cw-corner'));
-      cop.columns.forEach((c) => grid.append(h('span.cw-ch', { title: c }, c)));
+      cop.columns.forEach((c, i) => { const e = h('span.cw-ch', { title: c, onpointerenter: () => { cap.textContent = c; } }, shortCol(c)); heads[i] = e; grid.append(e); });
       cop.corr.forEach((row, r) => {
-        grid.append(h('span.cw-rh', { title: cop.columns[r] }, cop.columns[r]));
+        const rh = h('span.cw-rh', { title: cop.columns[r], onpointerenter: () => { cap.textContent = cop.columns[r]; } }, shortCol(cop.columns[r])); rheads[r] = rh; grid.append(rh);
         cells[r] = row.map((v, c) => {
           const num = fin(v);
-          const cell = h('div.cw-cell', { style: { background: num == null ? 'var(--panel-2)' : `color-mix(in srgb, ${num >= 0 ? 'var(--accent)' : 'var(--b)'} ${Math.round(Math.min(1, Math.abs(num)) * 78)}%, var(--panel-2))` }, onpointerenter: () => {
+          const cell = h('div.cw-cell', { title: `${cop.columns[r]} x ${cop.columns[c]}`, style: { background: num == null ? 'var(--panel-2)' : `color-mix(in srgb, ${num >= 0 ? 'var(--accent)' : 'var(--b)'} ${Math.round(Math.min(1, Math.abs(num)) * 78)}%, var(--panel-2))` }, onpointerenter: () => {
             cells.forEach((rr, ri) => rr.forEach((cc, ci) => { cc.classList.toggle('hl', ri === r && ci === c); cc.classList.toggle('hx', (ri === r || ci === c) && !(ri === r && ci === c)); }));
+            heads.forEach((x, i) => x.classList.toggle('hl', i === c)); rheads.forEach((x, i) => x.classList.toggle('hl', i === r));
             cap.textContent = `${cop.columns[r]} x ${cop.columns[c]}: ${num == null ? '-' : num.toFixed(2)}`;
           } }, num == null ? '-' : num.toFixed(2));
-          if (!reduced()) cell.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: 520, delay: 150 + (r + c) * 45, easing: EASE.expo, fill: 'backwards' });
+          if (!reduced()) cell.animate([{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 80 + (r + c) * 30, easing: EASE.expo, fill: 'backwards' });
           grid.append(cell); return cell;
         });
       });
-      mount(p.body, grid, cap);
+      const key = h('div.cw-key', { 'aria-label': 'Colour key: orange is negative, violet is positive' }, h('span', '-1'), h('i'), h('span', '+1'));
+      mount(p.body, grid, key, cap);
     }
     function renderQueries(ps, sr) {
       const qs = Array.isArray(sr.queries) ? sr.queries : [];
-      mount(panels.queries.body, qs.length ? h('div.chips', qs.map((q, i) => { const c = h('button.chip.qid', { type: 'button', title: `${q.label || q.query_id} (${q.engine || '?'}) - ${q.query_id}`, onclick: () => openQuery(q.query_id) }, q.label || q.query_id); if (!reduced()) c.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 200 + i * 50, easing: EASE.expo, fill: 'backwards' }); return c; }))
-        : h('small.muted', ps.length ? 'No queries were recorded for this crowd.' : 'Queries appear once the crowd is sampled.'));
+      const engines = [...new Set(qs.map((q) => q.engine).filter(Boolean))], oneEngine = engines.length <= 1;
+      panels.queries.subEl.textContent = qs.length ? `${qs.length} queries${oneEngine && engines[0] ? ` on ${engines[0]}` : ''}. Click one for the SQL and rows.` : '';
+      mount(panels.queries.body, qs.length ? h('div.cw-qs', qs.map((q, i) => {
+        const c = h('button.cw-q', { type: 'button', title: `${q.label || q.query_id} (${q.engine || '?'}) - ${q.query_id}`, onclick: () => openQuery(q.query_id) },
+          h('span.n', String(i + 1).padStart(2, '0')), h('span.t', q.label || q.query_id), oneEngine ? h('span.e', '') : h('span.e', q.engine || ''));
+        if (!reduced()) c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 400, delay: 120 + i * 40, easing: EASE.expo, fill: 'backwards' });
+        return c;
+      }))
+        : ps.length ? h('small.muted', 'No queries were recorded for this crowd.') : dashBody(S.status === 'error' ? 'No sampling queries were recorded before the run stopped.' : 'Queries appear once the crowd is sampled.'));
     }
     function syncPanels() {
       const ps = S.personas || [], sr = S.sample || {};

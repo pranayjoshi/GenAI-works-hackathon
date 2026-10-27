@@ -1,0 +1,46 @@
+{
+  "run_id": "bt-261027045944-08-1f0000",
+  "crowd_seed": "2799d8ef23f2",
+  "business": "Upworthy",
+  "handle": "Upworthy",
+  "place": "the United States",
+  "zip": "US",
+  "geoId": "01000US",
+  "goal": "Get the click",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "When Dave was 22, his dad came out to him. Here's how that story helped others tell their own.",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    },
+    {
+      "variant": "B",
+      "text": "Every family has a story. And these unique, everyday, beautiful stories can now be told with an app.",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    }
+  ],
+  "crowdSize": 40,
+  "rounds": 4,
+  "startHour": 7,
+  "hourStep": 3,
+  "seeds": [
+    1
+  ],
+  "batchSize": 6,
+  "coreAgeBands": [
+    "18-24",
+    "25-34",
+    "35-44",
+    "45-54",
+    "55-64",
+    "65+"
+  ],
+  "coreShare": 1,
+  "useCustomers": false,
+  "events": [],
+  "mode": "backtest",
+  "platform": "facebook",
+  "parent_run": "bt-261027045944-crowd"
+}

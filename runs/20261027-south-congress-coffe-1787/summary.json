@@ -1,0 +1,776 @@
+{
+  "run_id": "20261027-south-congress-coffe-1787",
+  "status": "done",
+  "created": "2026-10-27T04:40:48.149Z",
+  "crowd": 24,
+  "rounds": 8,
+  "seeds": [
+    1
+  ],
+  "events": [
+    {
+      "id": "ev_1",
+      "round": 3,
+      "text": "Bean There, the cafe across the street, just posted 30% off all lattes today only",
+      "target": "all",
+      "author": "user"
+    }
+  ],
+  "decisions": 86,
+  "reactions_to_post": 44,
+  "reactions_to_events": 42,
+  "verdict": {
+    "metric": "intent_rate",
+    "variants": [
+      "A",
+      "B"
+    ],
+    "per_seed": [
+      {
+        "seed": 1,
+        "a": 0.4545,
+        "b": 0.4091,
+        "na": 22,
+        "nb": 22,
+        "leader": "A"
+      }
+    ],
+    "pooled": {
+      "a": 0.4545,
+      "b": 0.4091,
+      "na": 22,
+      "nb": 22,
+      "diff": 0.0454,
+      "ci_half": 0.2924,
+      "moe_a": 0.2081,
+      "moe_b": 0.2055
+    },
+    "seeds_agree": 1,
+    "winner": null,
+    "call": "too close to call",
+    "headline": "Too close to call on intent to visit: A 45.5% vs B 40.9% (±29.2 pts), A ahead in 1 of 1 seed.",
+    "segments": [
+      {
+        "key": "age:18-24",
+        "a": 0.5,
+        "b": 0.25,
+        "na": 4,
+        "nb": 4,
+        "prefers": "A",
+        "clear": false
+      },
+      {
+        "key": "age:25-34",
+        "a": 0.4444,
+        "b": 0.5556,
+        "na": 9,
+        "nb": 9,
+        "prefers": "B",
+        "clear": false
+      },
+      {
+        "key": "age:35-44",
+        "a": 0.5,
+        "b": 0.3333,
+        "na": 6,
+        "nb": 6,
+        "prefers": "A",
+        "clear": false
+      },
+      {
+        "key": "age:45-54",
+        "a": 0,
+        "b": 0,
+        "na": 2,
+        "nb": 2,
+        "prefers": null,
+        "clear": false
+      },
+      {
+        "key": "age:65+",
+        "a": 1,
+        "b": 1,
+        "na": 1,
+        "nb": 1,
+        "prefers": null,
+        "clear": false
+      },
+      {
+        "key": "customer:no",
+        "a": 0.4667,
+        "b": 0.2667,
+        "na": 15,
+        "nb": 15,
+        "prefers": "A",
+        "clear": false
+      },
+      {
+        "key": "customer:yes",
+        "a": 0.4286,
+        "b": 0.7143,
+        "na": 7,
+        "nb": 7,
+        "prefers": "B",
+        "clear": false
+      },
+      {
+        "key": "income:$100-150k",
+        "a": 0,
+        "b": 0,
+        "na": 2,
+        "nb": 2,
+        "prefers": null,
+        "clear": false
+      },
+      {
+        "key": "income:$150k+",
+        "a": 0.4286,
+        "b": 0.5714,
+        "na": 7,
+        "nb": 7,
+        "prefers": "B",
+        "clear": false
+      },
+      {
+        "key": "income:$25-50k",
+        "a": 1,
+        "b": 1,
+        "na": 1,
+        "nb": 1,
+        "prefers": null,
+        "clear": false
+      },
+      {
+        "key": "income:$50-75k",
+        "a": 0.5714,
+        "b": 0.4286,
+        "na": 7,
+        "nb": 7,
+        "prefers": "A",
+        "clear": false
+      },
+      {
+        "key": "income:$75-100k",
+        "a": 0,
+        "b": 0,
+        "na": 1,
+        "nb": 1,
+        "prefers": null,
+        "clear": false
+      },
+      {
+        "key": "income:<$25k",
+        "a": 0.5,
+        "b": 0.25,
+        "na": 4,
+        "nb": 4,
+        "prefers": "A",
+        "clear": false
+      },
+      {
+        "key": "role:core",
+        "a": 0.4667,
+        "b": 0.4667,
+        "na": 15,
+        "nb": 15,
+        "prefers": null,
+        "clear": false
+      },
+      {
+        "key": "role:spillover",
+        "a": 0.4286,
+        "b": 0.2857,
+        "na": 7,
+        "nb": 7,
+        "prefers": "A",
+        "clear": false
+      }
+    ],
+    "secondary": {
+      "engagement_rate": {
+        "a": 0.4545,
+        "b": 0.4091
+      },
+      "mean_stance": {
+        "a": -0.081,
+        "b": -0.042
+      },
+      "vocal_share": {
+        "a": 0,
+        "b": 0
+      },
+      "silent_negative_share": {
+        "a": 0.4091,
+        "b": 0.2273
+      },
+      "hide_rate": {
+        "a": 0,
+        "b": 0
+      },
+      "tap_rate": {
+        "a": 0.3182,
+        "b": 0.3636
+      }
+    }
+  },
+  "summaries": [
+    {
+      "world_id": "s1:A",
+      "variant": "A",
+      "seed": 1,
+      "overall": {
+        "n": 22,
+        "intent": 10,
+        "intent_rate": 0.4545,
+        "tap_rate": 0.3182,
+        "engagement_rate": 0.4545,
+        "mean_stance": -0.081,
+        "stance_sd": 0.361,
+        "vocal_share": 0,
+        "silent_negative_share": 0.4091,
+        "hide_rate": 0,
+        "exposures": 22
+      },
+      "segments": {
+        "age:18-24": {
+          "n": 4,
+          "intent": 2,
+          "intent_rate": 0.5,
+          "tap_rate": 0,
+          "engagement_rate": 0.25,
+          "mean_stance": -0.201,
+          "stance_sd": 0.303,
+          "vocal_share": 0,
+          "silent_negative_share": 0.5,
+          "hide_rate": 0,
+          "exposures": 4
+        },
+        "age:25-34": {
+          "n": 9,
+          "intent": 4,
+          "intent_rate": 0.4444,
+          "tap_rate": 0.6667,
+          "engagement_rate": 0.6667,
+          "mean_stance": 0.005,
+          "stance_sd": 0.455,
+          "vocal_share": 0,
+          "silent_negative_share": 0.4444,
+          "hide_rate": 0,
+          "exposures": 9
+        },
+        "age:35-44": {
+          "n": 6,
+          "intent": 3,
+          "intent_rate": 0.5,
+          "tap_rate": 0.1667,
+          "engagement_rate": 0.3333,
+          "mean_stance": -0.06,
+          "stance_sd": 0.163,
+          "vocal_share": 0,
+          "silent_negative_share": 0.3333,
+          "hide_rate": 0,
+          "exposures": 6
+        },
+        "age:45-54": {
+          "n": 2,
+          "intent": 0,
+          "intent_rate": 0,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": -0.332,
+          "stance_sd": 0.332,
+          "vocal_share": 0,
+          "silent_negative_share": 0.5,
+          "hide_rate": 0,
+          "exposures": 2
+        },
+        "age:65+": {
+          "n": 1,
+          "intent": 1,
+          "intent_rate": 1,
+          "tap_rate": 0,
+          "engagement_rate": 1,
+          "mean_stance": 0,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 1
+        },
+        "customer:no": {
+          "n": 15,
+          "intent": 7,
+          "intent_rate": 0.4667,
+          "tap_rate": 0.3333,
+          "engagement_rate": 0.5333,
+          "mean_stance": -0.121,
+          "stance_sd": 0.281,
+          "vocal_share": 0,
+          "silent_negative_share": 0.4,
+          "hide_rate": 0,
+          "exposures": 15
+        },
+        "customer:yes": {
+          "n": 7,
+          "intent": 3,
+          "intent_rate": 0.4286,
+          "tap_rate": 0.2857,
+          "engagement_rate": 0.2857,
+          "mean_stance": 0.004,
+          "stance_sd": 0.48,
+          "vocal_share": 0,
+          "silent_negative_share": 0.4286,
+          "hide_rate": 0,
+          "exposures": 7
+        },
+        "income:$100-150k": {
+          "n": 2,
+          "intent": 0,
+          "intent_rate": 0,
+          "tap_rate": 0.5,
+          "engagement_rate": 0.5,
+          "mean_stance": 0,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 2
+        },
+        "income:$150k+": {
+          "n": 7,
+          "intent": 3,
+          "intent_rate": 0.4286,
+          "tap_rate": 0.2857,
+          "engagement_rate": 0.4286,
+          "mean_stance": -0.07,
+          "stance_sd": 0.339,
+          "vocal_share": 0,
+          "silent_negative_share": 0.2857,
+          "hide_rate": 0,
+          "exposures": 7
+        },
+        "income:$25-50k": {
+          "n": 1,
+          "intent": 1,
+          "intent_rate": 1,
+          "tap_rate": 0,
+          "engagement_rate": 1,
+          "mean_stance": 0,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 1
+        },
+        "income:$50-75k": {
+          "n": 7,
+          "intent": 4,
+          "intent_rate": 0.5714,
+          "tap_rate": 0.5714,
+          "engagement_rate": 0.5714,
+          "mean_stance": 0.021,
+          "stance_sd": 0.417,
+          "vocal_share": 0,
+          "silent_negative_share": 0.5714,
+          "hide_rate": 0,
+          "exposures": 7
+        },
+        "income:$75-100k": {
+          "n": 1,
+          "intent": 0,
+          "intent_rate": 0,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": -0.302,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 1,
+          "hide_rate": 0,
+          "exposures": 1
+        },
+        "income:<$25k": {
+          "n": 4,
+          "intent": 2,
+          "intent_rate": 0.5,
+          "tap_rate": 0,
+          "engagement_rate": 0.25,
+          "mean_stance": -0.285,
+          "stance_sd": 0.366,
+          "vocal_share": 0,
+          "silent_negative_share": 0.5,
+          "hide_rate": 0,
+          "exposures": 4
+        },
+        "role:core": {
+          "n": 15,
+          "intent": 7,
+          "intent_rate": 0.4667,
+          "tap_rate": 0.4667,
+          "engagement_rate": 0.5333,
+          "mean_stance": -0.021,
+          "stance_sd": 0.368,
+          "vocal_share": 0,
+          "silent_negative_share": 0.4,
+          "hide_rate": 0,
+          "exposures": 15
+        },
+        "role:spillover": {
+          "n": 7,
+          "intent": 3,
+          "intent_rate": 0.4286,
+          "tap_rate": 0,
+          "engagement_rate": 0.2857,
+          "mean_stance": -0.21,
+          "stance_sd": 0.307,
+          "vocal_share": 0,
+          "silent_negative_share": 0.4286,
+          "hide_rate": 0,
+          "exposures": 7
+        }
+      }
+    },
+    {
+      "world_id": "s1:B",
+      "variant": "B",
+      "seed": 1,
+      "overall": {
+        "n": 22,
+        "intent": 9,
+        "intent_rate": 0.4091,
+        "tap_rate": 0.3636,
+        "engagement_rate": 0.4091,
+        "mean_stance": -0.042,
+        "stance_sd": 0.281,
+        "vocal_share": 0,
+        "silent_negative_share": 0.2273,
+        "hide_rate": 0,
+        "exposures": 22
+      },
+      "segments": {
+        "age:18-24": {
+          "n": 4,
+          "intent": 1,
+          "intent_rate": 0.25,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": -0.356,
+          "stance_sd": 0.31,
+          "vocal_share": 0,
+          "silent_negative_share": 0.75,
+          "hide_rate": 0,
+          "exposures": 4
+        },
+        "age:25-34": {
+          "n": 9,
+          "intent": 5,
+          "intent_rate": 0.5556,
+          "tap_rate": 0.6667,
+          "engagement_rate": 0.7778,
+          "mean_stance": 0.121,
+          "stance_sd": 0.25,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 9
+        },
+        "age:35-44": {
+          "n": 6,
+          "intent": 2,
+          "intent_rate": 0.3333,
+          "tap_rate": 0.3333,
+          "engagement_rate": 0.3333,
+          "mean_stance": -0.097,
+          "stance_sd": 0.147,
+          "vocal_share": 0,
+          "silent_negative_share": 0.3333,
+          "hide_rate": 0,
+          "exposures": 6
+        },
+        "age:45-54": {
+          "n": 2,
+          "intent": 0,
+          "intent_rate": 0,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": 0,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 2
+        },
+        "age:65+": {
+          "n": 1,
+          "intent": 1,
+          "intent_rate": 1,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": 0,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 1
+        },
+        "customer:no": {
+          "n": 15,
+          "intent": 4,
+          "intent_rate": 0.2667,
+          "tap_rate": 0.2,
+          "engagement_rate": 0.2667,
+          "mean_stance": -0.105,
+          "stance_sd": 0.261,
+          "vocal_share": 0,
+          "silent_negative_share": 0.2667,
+          "hide_rate": 0,
+          "exposures": 15
+        },
+        "customer:yes": {
+          "n": 7,
+          "intent": 5,
+          "intent_rate": 0.7143,
+          "tap_rate": 0.7143,
+          "engagement_rate": 0.7143,
+          "mean_stance": 0.094,
+          "stance_sd": 0.274,
+          "vocal_share": 0,
+          "silent_negative_share": 0.1429,
+          "hide_rate": 0,
+          "exposures": 7
+        },
+        "income:$100-150k": {
+          "n": 2,
+          "intent": 0,
+          "intent_rate": 0,
+          "tap_rate": 0.5,
+          "engagement_rate": 0.5,
+          "mean_stance": -0.071,
+          "stance_sd": 0.006,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 2
+        },
+        "income:$150k+": {
+          "n": 7,
+          "intent": 4,
+          "intent_rate": 0.5714,
+          "tap_rate": 0.5714,
+          "engagement_rate": 0.5714,
+          "mean_stance": 0.024,
+          "stance_sd": 0.168,
+          "vocal_share": 0,
+          "silent_negative_share": 0.1429,
+          "hide_rate": 0,
+          "exposures": 7
+        },
+        "income:$25-50k": {
+          "n": 1,
+          "intent": 1,
+          "intent_rate": 1,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": 0,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 0,
+          "hide_rate": 0,
+          "exposures": 1
+        },
+        "income:$50-75k": {
+          "n": 7,
+          "intent": 3,
+          "intent_rate": 0.4286,
+          "tap_rate": 0.4286,
+          "engagement_rate": 0.5714,
+          "mean_stance": 0.069,
+          "stance_sd": 0.301,
+          "vocal_share": 0,
+          "silent_negative_share": 0.1429,
+          "hide_rate": 0,
+          "exposures": 7
+        },
+        "income:$75-100k": {
+          "n": 1,
+          "intent": 0,
+          "intent_rate": 0,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": -0.331,
+          "stance_sd": 0,
+          "vocal_share": 0,
+          "silent_negative_share": 1,
+          "hide_rate": 0,
+          "exposures": 1
+        },
+        "income:<$25k": {
+          "n": 4,
+          "intent": 1,
+          "intent_rate": 0.25,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": -0.273,
+          "stance_sd": 0.348,
+          "vocal_share": 0,
+          "silent_negative_share": 0.5,
+          "hide_rate": 0,
+          "exposures": 4
+        },
+        "role:core": {
+          "n": 15,
+          "intent": 7,
+          "intent_rate": 0.4667,
+          "tap_rate": 0.5333,
+          "engagement_rate": 0.6,
+          "mean_stance": 0.034,
+          "stance_sd": 0.24,
+          "vocal_share": 0,
+          "silent_negative_share": 0.1333,
+          "hide_rate": 0,
+          "exposures": 15
+        },
+        "role:spillover": {
+          "n": 7,
+          "intent": 2,
+          "intent_rate": 0.2857,
+          "tap_rate": 0,
+          "engagement_rate": 0,
+          "mean_stance": -0.203,
+          "stance_sd": 0.293,
+          "vocal_share": 0,
+          "silent_negative_share": 0.4286,
+          "hide_rate": 0,
+          "exposures": 7
+        }
+      }
+    }
+  ],
+  "tipping": {
+    "s1:A": null,
+    "s1:B": null
+  },
+  "validity": {
+    "decisions": 86,
+    "repaired_share": 0,
+    "distinct_reason_ratio": 1,
+    "top_reason_opener": {
+      "text": "local honey feels",
+      "share": 0.026
+    },
+    "scroll_past_share": 0.686,
+    "stance_sd_by_world": [
+      {
+        "world": "s1:A",
+        "sd": 0.361
+      },
+      {
+        "world": "s1:B",
+        "sd": 0.281
+      }
+    ],
+    "silenced": 0,
+    "guard": {
+      "decisions_with_a_check": 18,
+      "by_check": {
+        "reason:false_repeat_claim": 4,
+        "text:false_repeat_claim": 1,
+        "reason:identity_trope": 1,
+        "text:invented_price": 1,
+        "coherence:visit_with_strong_dislike": 6,
+        "coherence:positive_action_negative_feeling": 3,
+        "reason:invented_price": 3,
+        "text:brand_voice": 2
+      }
+    }
+  },
+  "fairness": [
+    {
+      "seed": 1,
+      "fingerprint": "30fe59efaabda2e3098d02e77438b3a9",
+      "base_shapes": {
+        "s1:A": "5706b90289c7709642ce8aa030e9e3a7",
+        "s1:B": "5706b90289c7709642ce8aa030e9e3a7"
+      },
+      "identical": true
+    }
+  ],
+  "usage": [
+    {
+      "tag": "20261027-south-congress-coffe-1787",
+      "role": "reason",
+      "model": "nemotron-3-nano:4b",
+      "calls": 3,
+      "tokens_in": 7643,
+      "tokens_out": 1058,
+      "avg_ms": 21939,
+      "errors": 0,
+      "served_by": {
+        "ollama-local:nemotron-3-nano:4b": 3
+      }
+    },
+    {
+      "tag": "20261027-south-congress-coffe-1787",
+      "role": "voice",
+      "model": "nemotron-3-nano:4b",
+      "calls": 1,
+      "tokens_in": 1485,
+      "tokens_out": 548,
+      "avg_ms": 23962,
+      "errors": 0,
+      "served_by": {
+        "ollama-local:nemotron-3-nano:4b": 1
+      }
+    },
+    {
+      "tag": "20261027-south-congress-coffe-1787",
+      "role": "crowd",
+      "model": "nemotron-3-nano:4b",
+      "calls": 20,
+      "tokens_in": 23359,
+      "tokens_out": 5211,
+      "avg_ms": 36441,
+      "errors": 0,
+      "served_by": {
+        "ollama-local:nemotron-3-nano:4b": 20
+      }
+    },
+    {
+      "tag": "20261027-south-congress-coffe-1787",
+      "role": "review",
+      "model": "nemotron-3-nano:4b",
+      "calls": 1,
+      "tokens_in": 3407,
+      "tokens_out": 32,
+      "avg_ms": 16819,
+      "errors": 0,
+      "served_by": {
+        "ollama-local:nemotron-3-nano:4b": 1
+      }
+    }
+  ],
+  "timing": {
+    "crowd_ms": 32072,
+    "sim_ms": 234607,
+    "report_ms": 75226
+  },
+  "report": {
+    "summary": "A leads B in intent rate (45.5% vs 40.9%) but B has higher tap-through (36.4% vs 26.3%) and fewer negative shares (22.7% vs 40.9%).",
+    "recommendation": "A has higher intent to visit, B has higher engagement.",
+    "claims": [
+      {
+        "text": "A leads B in intent rate (45.5% vs 40.9%)",
+        "query_ids": [
+          "q_36b93477_1m",
+          "q_4d9077ce_1p"
+        ]
+      },
+      {
+        "text": "A has fewer negative shares (22.7% vs 40.9%)",
+        "query_ids": [
+          "q_8176148d_1v",
+          "q_af8288b6_1w"
+        ]
+      }
+    ]
+  }
+}

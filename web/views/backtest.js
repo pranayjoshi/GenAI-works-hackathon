@@ -59,22 +59,22 @@ function forestPlot(rows) {
   rows.forEach((x, i) => {
     const bar = h('i.lib-ci', { style: { left: `${x.ci[0] * 100}%`, width: `${Math.max(0.6, (x.ci[1] - x.ci[0]) * 100)}%`, transformOrigin: `${((x.rt - x.ci[0]) / Math.max(1e-6, x.ci[1] - x.ci[0])) * 100}% 50%` } });
     const dot = h('b.lib-pt', { style: { left: `${x.rt * 100}%` } });
-    const val = h('b.lib-val'); countUp(val, x.rt * 100, (v) => `${Math.round(v)}%`, 1000);
+    const val = h('b.lib-val'); countUp(val, x.rt * 100, (v) => `${Math.round(v)}%`, 700);
     const verdict = x.chance ? 'by definition' : spans(x.ci) ? 'spans chance' : x.ci[0] > 0.5 ? 'above chance' : 'below chance';
     plot.append(h('div.lib-frow' + (x.hero ? '.hero' : '') + (x.chance ? '.chance' : ''),
       h('div.lib-fname', x.name, h('small', x.chance ? 'reference line' : `n = ${x.n}${x.correct != null ? `, ${x.correct} correct` : ''}`)),
       h('div.lib-ftrack', ticks.map((t) => h('u.lib-grid-line' + (t === 50 ? '.mid' : ''), { style: { left: `${t}%` } })), bar, dot),
-      h('div.lib-fval', val, h('small', `95% CI ${pct(x.ci[0], 0)} to ${pct(x.ci[1], 0)}`), h('span.chip.' + (x.chance ? '' : spans(x.ci) ? 'warn' : x.ci[0] > 0.5 ? 'good' : 'bad'), verdict))));
+      h('div.lib-fval', val, h(x.chance ? 'span.chip' : 'span.chip.' + (spans(x.ci) ? 'warn' : x.ci[0] > 0.5 ? 'good' : 'bad'), verdict), h('small', `95% CI ${pct(x.ci[0], 0)} to ${pct(x.ci[1], 0)}`))));
     if (!reduced()) {
       anims.push(() => {
-        bar.animate([{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1)', opacity: 1 }], { duration: 900, delay: 250 + i * 140, easing: EASE.expo, fill: 'backwards' });
-        dot.animate([{ transform: 'translate(-50%, -50%) scale(0)' }, { transform: 'translate(-50%, -50%) scale(1.25)', offset: 0.7 }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 600, delay: 150 + i * 140, easing: EASE.out, fill: 'backwards' });
+        bar.animate([{ transform: 'scaleX(0)', opacity: 0 }, { transform: 'scaleX(1)', opacity: 1 }], { duration: 620, delay: 120 + i * 80, easing: EASE.expo, fill: 'backwards' });
+        dot.animate([{ transform: 'translate(-50%, -50%) scale(0)' }, { transform: 'translate(-50%, -50%) scale(1.25)', offset: 0.7 }, { transform: 'translate(-50%, -50%) scale(1)' }], { duration: 480, delay: 80 + i * 80, easing: EASE.out, fill: 'backwards' });
       });
     }
   });
   const mid = h('u.lib-chance-line', { style: { left: 'calc(var(--lib-label) + (100% - var(--lib-label) - var(--lib-value)) * .5)' } });
   plot.append(mid);
-  if (!reduced()) anims.push(() => mid.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 800, easing: EASE.expo, fill: 'backwards' }));
+  if (!reduced()) anims.push(() => mid.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 560, easing: EASE.expo, fill: 'backwards' }));
   requestAnimationFrame(() => anims.forEach((f) => f()));
   return plot;
 }
@@ -135,7 +135,7 @@ export default function view(el) {
       moveInk();
       prev.hidden = true; next.hidden = false;
       if (name === 'map') ensureMap();
-      if (!reduced()) next.animate([{ opacity: 0, transform: `translateX(${dir * 28}px)`, filter: 'blur(4px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }], { duration: 480, easing: EASE.expo });
+      if (!reduced()) next.animate([{ opacity: 0, transform: `translateX(${dir * 28}px)`, filter: 'blur(4px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }], { duration: 380, easing: EASE.expo });
       after?.();
     }
     function moveInk() {
@@ -164,8 +164,8 @@ export default function view(el) {
       const colorSeg = h('div.lib-seg', { role: 'group', 'aria-label': 'Colour bars by' }, METHODS.map(([k, l]) => h('button.lib-seg-btn', { type: 'button', 'aria-pressed': String(k === ui.mapColor), onclick: (e) => { ui.mapColor = k; colorSeg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === e.currentTarget))); ui.recolor?.(); } }, l.replace('Single prompt ', 'Single '))));
       const map = h('section.lib-panel', { role: 'tabpanel', hidden: true },
         h('div.card.lib-map-card', h('div.card-head', h('h2', 'Every test, in space'), colorSeg),
-          h('p.muted', { style: { fontSize: '13px' } }, 'One bar per test. Height is the real click-through gap between the two headlines. Green means right, red wrong, amber a tie. Drag to orbit; click a bar to open its test.'),
-          h('div.lib-map-stage', ui.mapHost, ui.tip), ui.legend));
+          h('p.muted.lib-map-copy', 'One bar per test, laid out in test order (each row is labelled with its test numbers). Height is the real click-through gap between the two headlines, so tall bars were easy calls in real life. Colour shows whether the selected method picked the real winner.'),
+          h('div.lib-map-stage', ui.mapHost, h('div.lib-map-hint', 'Drag to orbit · click a bar to open its test'), ui.legend, ui.tip)));
       ui.list = h('div.lib-tests');
       ui.filter = 'all';
       const counts = { all: tests.length, right: 0, wrong: 0, disagree: 0 };
@@ -184,7 +184,7 @@ export default function view(el) {
       requestAnimationFrame(moveInk);
       if (tab === 'map') ensureMap();
       renderList(false);
-      stagger([...overview.children], { y: 20, gap: 90 });
+      stagger([...overview.children], { y: 16, gap: 70, ms: 520 });
     }
 
     const isDisagree = (t) => { const c = outcome(t.crowd, t); return ['single_reason', 'single_crowd'].some((k) => t[k] && outcome(t[k], t) !== c); };
@@ -253,14 +253,21 @@ export default function view(el) {
       const gaps = tests.map((t) => Math.abs((t.a?.ctr ?? 0) - (t.b?.ctr ?? 0)));
       const colorKey = () => ui.mapColor;
       const toneOf = (t) => outcome(t[colorKey()], t);
-      const legend = () => mount(ui.legend, [['right', 'right'], ['wrong', 'wrong'], ['tie', 'tie / no answer']].map(([k, l]) => h('span.lib-lg', h('i.' + TONE[k]), l)),
-        h('span.muted', 'Bar height = |CTR A - CTR B|'));
+      const legend = () => mount(ui.legend, [['right', 'picked the real winner'], ['wrong', 'picked the loser'], ['tie', 'tie'], ['none', 'no answer']].map(([k, l]) => h('span.lib-lg', h('i.' + (TONE[k] || 'none')), l)),
+        h('span.lib-lg.muted', h('i.h'), 'height = |CTR A − CTR B|'));
       legend();
+      const placeTip = (cx, cy) => {
+        const r2 = ui.mapHost.getBoundingClientRect(), tw = ui.tip.offsetWidth, th = ui.tip.offsetHeight;
+        let x = cx - r2.left + 14, y = cy - r2.top + 14;
+        if (x + tw > r2.width - 8) x = cx - r2.left - tw - 14;
+        if (y + th > r2.height - 8) y = cy - r2.top - th - 14;
+        ui.tip.style.left = `${Math.max(8, Math.min(r2.width - tw - 8, x))}px`; ui.tip.style.top = `${Math.max(8, Math.min(r2.height - th - 8, y))}px`;
+      };
       const tipFor = (t, i) => { ui.tip.hidden = false; mount(ui.tip, h('b', `Test ${String(i + 1).padStart(2, '0')}`), h('div.a', `A (${pct(t.a?.ctr, 2)}): ${t.a?.headline}`), h('div.b', `B (${pct(t.b?.ctr, 2)}): ${t.b?.headline}`), h('small', `Real winner ${t.real_winner}. Crowd ${outcome(t.crowd, t)}.`)); };
       let local;
-      try { local = await createStage(host, { camera: { fov: 42, x: 0, y: 9, z: 13 }, controls: { minDistance: 6, maxDistance: 26, autoRotate: !reduced(), autoRotateSpeed: 0.5 } }); } catch (e) { console.warn('[backtest] 3D unavailable', e); local = null; }
+      try { local = await createStage(host, { camera: { fov: 40, x: 9.5, y: 8.5, z: 12.5 }, controls: { minDistance: 8, maxDistance: 30, autoRotate: !reduced(), autoRotateSpeed: 0.5 } }); } catch (e) { console.warn('[backtest] 3D unavailable', e); local = null; }
       if (dead || !ui.mapHost.isConnected || host !== ui.mapHost) { local?.dispose(); return; }
-      if (!local) return fallback2d(host, tests, gaps, toneOf, tipFor, showTest);
+      if (!local) return fallback2d(host, tests, gaps, toneOf, tipFor, showTest, placeTip);
       stage = local;
       const { THREE, scene } = stage;
       const colors = () => ({ right: new THREE.Color(cssVar('--good') || '#4fe3a0'), wrong: new THREE.Color(cssVar('--bad') || '#ff5f6d'), tie: new THREE.Color(cssVar('--warn') || '#ffc84d'), none: new THREE.Color(cssVar('--faint') || '#5d6278') });
@@ -276,10 +283,48 @@ export default function view(el) {
         m.scale.set(0.9, m.userData.cur, 0.9);
         group.add(m); return m;
       });
-      const span = cols * gap + 2;
-      const grid = new THREE.GridHelper(span, cols + 2, 0x8f7bff, 0x8f7bff); grid.material.transparent = true; grid.material.opacity = 0.18; scene.add(grid);
+      const rowsN = Math.ceil(tests.length / cols), span = Math.max(cols, rowsN) * gap + 2;
+      const grid = new THREE.GridHelper(span, Math.max(cols, rowsN) + 2, 0x8f7bff, 0x8f7bff); grid.material.transparent = true; grid.material.opacity = 0.2; grid.position.y = -0.01; scene.add(grid);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(span, span), new THREE.MeshBasicMaterial({ color: new THREE.Color(cssVar('--accent') || '#8f7bff'), transparent: true, opacity: 0.05, depthWrite: false }));
+      floor.rotation.x = -Math.PI / 2; floor.position.y = -0.02; scene.add(floor);
+      // axes: height (real CTR gap, in percentage points) on the back-left corner, test numbers along the left edge
+      const ink = cssVar('--muted') || '#9196ab', inkStrong = cssVar('--text') || '#eef0f7';
+      const label = (text, { size: size0 = 0.42, color = ink, weight = 500, align = 'center' } = {}) => {
+        const size = size0 * lk, c = document.createElement('canvas'), g = c.getContext('2d'), fs = 48, font = `${weight} ${fs}px Instrument Sans, system-ui, sans-serif`;
+        g.font = font; const w = Math.ceil(g.measureText(text).width) + 16; c.width = w; c.height = fs + 16;
+        g.font = font; g.fillStyle = color; g.textBaseline = 'middle'; g.textAlign = align === 'left' ? 'left' : align === 'right' ? 'right' : 'center';
+        g.fillText(text, align === 'left' ? 8 : align === 'right' ? w - 8 : w / 2, c.height / 2);
+        const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false }));
+        sp.renderOrder = 10;
+        sp.scale.set(size * (c.width / c.height), size, 1);
+        sp.center.set(align === 'left' ? 0 : align === 'right' ? 1 : 0.5, 0.5);
+        return sp;
+      };
+      const asp = host.clientWidth / Math.max(1, host.clientHeight), lk = asp < 0.9 ? 2 : 1, narrow = asp < 0.9;
+      const half = span / 2, x0 = -half + 0.2, z0 = half - 0.2, xr = ((cols - 1) / 2) * gap + 0.75;
+      const axisMat = new THREE.LineBasicMaterial({ color: new THREE.Color(ink), transparent: true, opacity: 0.6 });
+      const seg = (pts) => new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts.map(([x, y, z]) => new THREE.Vector3(x, y, z))), axisMat);
+      scene.add(seg([[x0, 0, z0], [x0, maxH + 0.4, z0]]));
+      [0, 0.5, 1].forEach((f) => {
+        const y = f * maxH;
+        scene.add(seg([[x0, y, z0], [x0 + 0.35, y, z0]]));
+        const tl = label(`${(f * maxGap * 100).toFixed(2)} pts`, { size: 0.34, align: narrow ? 'left' : 'right' }); tl.position.set(narrow ? x0 + 0.5 : x0 - 0.2, y, z0 + 0.2); scene.add(tl);
+      });
+      const yl = label('real CTR gap', { size: 0.4, color: inkStrong, weight: 600, align: narrow ? 'left' : 'center' }); yl.position.set(x0, maxH + 0.7, z0); scene.add(yl);
+      for (let rI = 0; rI < rowsN; rI++) {
+        const first = rI * cols + 1, last = Math.min(tests.length, first + cols - 1);
+        const z = (rI - (rowsN - 1) / 2) * gap;
+        const rl = label(`${String(first).padStart(2, '0')}–${String(last).padStart(2, '0')}`, { size: 0.32, align: 'left' });
+        rl.position.set(xr, 0.05, z); scene.add(rl);
+      }
+      const xl = label('test #', { size: 0.36, color: inkStrong, weight: 600, align: 'left' }); xl.position.set(xr, 0.05, -((rowsN - 1) / 2) * gap - 1.1); scene.add(xl);
       scene.add(new THREE.AmbientLight(0xffffff, 0.75));
       const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(6, 12, 8); scene.add(sun);
+      const camK = narrow ? 2.1 : asp < 1.4 ? 1.35 : 1.05;
+      stage.camera.position.multiplyScalar(camK);
+      if (stage.controls) stage.controls.maxDistance = Math.max(30, stage.camera.position.length() * 1.6);
+      stage.controls?.target.set(0, maxH * 0.32, 0); stage.controls?.update();
       ui.recolor = () => { pal = colors(); bars.forEach((m, i) => { const c = pal[toneOf(tests[i])]; m.material.color.copy(c); m.material.emissive.copy(c); }); };
       let hover = -1;
       stage.onFrame((t, dt) => {
@@ -297,8 +342,7 @@ export default function view(el) {
         cv.style.cursor = hit ? 'pointer' : 'grab';
         if (hit) {
           tipFor(tests[hover], hover);
-          const r2 = ui.mapHost.getBoundingClientRect();
-          ui.tip.style.left = `${Math.min(r2.width - 250, Math.max(8, e.clientX - r2.left + 14))}px`; ui.tip.style.top = `${Math.max(8, e.clientY - r2.top + 14)}px`;
+          placeTip(e.clientX, e.clientY);
         } else ui.tip.hidden = true;
       };
       const onLeave = () => { hover = -1; ui.tip.hidden = true; };
@@ -309,13 +353,13 @@ export default function view(el) {
     }
 
     /** 2D stand-in: the same bars as an SVG column chart. */
-    function fallback2d(host, tests, gaps, toneOf, tipFor, open) {
+    function fallback2d(host, tests, gaps, toneOf, tipFor, open, placeTip) {
       const max = Math.max(...gaps, 1e-9), W = Math.max(320, tests.length * 14), H = 180;
       const svg = s('svg', { class: 'lib-fallback', viewBox: `0 0 ${W} ${H + 10}`, preserveAspectRatio: 'none', role: 'img', 'aria-label': 'Real CTR gap per test, coloured by whether the crowd was right' });
       tests.forEach((t, i) => {
         const hgt = Math.max(3, (gaps[i] / max) * H), r = s('rect', { class: 'lib-fb-bar ' + TONE[toneOf(t)], x: i * 14 + 2, y: H - hgt, width: 10, height: hgt, rx: 2, tabindex: 0 });
         r.style.animationDelay = `${i * 18}ms`;
-        r.addEventListener('mouseenter', () => tipFor(t, i)); r.addEventListener('mouseleave', () => { ui.tip.hidden = true; });
+        r.addEventListener('mouseenter', (e) => { tipFor(t, i); placeTip(e.clientX, e.clientY); }); r.addEventListener('mouseleave', () => { ui.tip.hidden = true; });
         r.addEventListener('click', () => open(i)); r.addEventListener('keydown', (e) => { if (e.key === 'Enter') open(i); });
         svg.append(r);
       });

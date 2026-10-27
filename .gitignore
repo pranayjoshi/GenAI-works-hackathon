@@ -8,3 +8,9 @@ data/raw/
 *.sqlite-shm
 *.sqlite-wal
 data/cache/census_all.json
+
+# Runs kept for the demo video and as evidence (see samples/README-runs.md)
+!runs/20261027-south-congress-coffe-2cfd/
+!runs/20261027-south-congress-coffe-36a2/
+!runs/20261027-south-congress-coffe-1787/
+!runs/bt-261027045944-*/

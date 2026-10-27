@@ -1,0 +1,46 @@
+{
+  "run_id": "bt-261027045944-16-000054",
+  "crowd_seed": "d7989842a057",
+  "business": "Upworthy",
+  "handle": "Upworthy",
+  "place": "the United States",
+  "zip": "US",
+  "geoId": "01000US",
+  "goal": "Get the click",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "A Comedian Saw The Largest Diamond In The World And Got Furious. Historically Furious.",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    },
+    {
+      "variant": "B",
+      "text": "His Hilarious Rant About Diamonds And Colonialism Is Totally NSFHC (Not Safe For History Class)",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    }
+  ],
+  "crowdSize": 40,
+  "rounds": 4,
+  "startHour": 7,
+  "hourStep": 3,
+  "seeds": [
+    1
+  ],
+  "batchSize": 6,
+  "coreAgeBands": [
+    "18-24",
+    "25-34",
+    "35-44",
+    "45-54",
+    "55-64",
+    "65+"
+  ],
+  "coreShare": 1,
+  "useCustomers": false,
+  "events": [],
+  "mode": "backtest",
+  "platform": "facebook",
+  "parent_run": "bt-261027045944-crowd"
+}

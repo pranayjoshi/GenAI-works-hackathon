@@ -1,0 +1,44 @@
+{
+  "run_id": "20261027-south-congress-coffe-2cfd",
+  "crowd_seed": "2eecd06c70f7",
+  "business": "South Congress Coffee",
+  "handle": "@southcongresscoffee",
+  "place": "Austin, TX 78704",
+  "zip": "78704",
+  "geoId": "86000US78704",
+  "goal": "Get people within 3 miles to come in this week",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "New: Oat Milk Honey Latte, $6.50. Made with local wildflower honey. On the menu now at South Congress Coffee.",
+      "business": "South Congress Coffee",
+      "handle": "@southcongresscoffee"
+    },
+    {
+      "variant": "B",
+      "text": "Your new morning ritual: our Oat Milk Honey Latte, 20% off this week only. Come say hi on South Congress.",
+      "business": "South Congress Coffee",
+      "handle": "@southcongresscoffee"
+    }
+  ],
+  "crowdSize": 300,
+  "rounds": 12,
+  "startHour": 7,
+  "hourStep": 2,
+  "seeds": [
+    1,
+    2
+  ],
+  "batchSize": 6,
+  "useCustomers": true,
+  "events": [
+    {
+      "id": "ev_1",
+      "round": 7,
+      "text": "Bean There, the cafe across the street, just posted 30% off all lattes today only",
+      "target": "all",
+      "author": "user"
+    }
+  ],
+  "mode": "ab"
+}

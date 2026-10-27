@@ -1,0 +1,46 @@
+{
+  "run_id": "bt-261027045944-41-0000ac",
+  "crowd_seed": "1edadbfa8f4a",
+  "business": "Upworthy",
+  "handle": "Upworthy",
+  "place": "the United States",
+  "zip": "US",
+  "geoId": "01000US",
+  "goal": "Get the click",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "Her Girlfriend Never Tells Her How Her Day Went. It's Hard Enough Without Reliving Daily Tragedy.",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    },
+    {
+      "variant": "B",
+      "text": "Her Girlfriend Never Tells Her How Her Day Went. You Wouldn't Either If You Saw What She Did.",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    }
+  ],
+  "crowdSize": 40,
+  "rounds": 4,
+  "startHour": 7,
+  "hourStep": 3,
+  "seeds": [
+    1
+  ],
+  "batchSize": 6,
+  "coreAgeBands": [
+    "18-24",
+    "25-34",
+    "35-44",
+    "45-54",
+    "55-64",
+    "65+"
+  ],
+  "coreShare": 1,
+  "useCustomers": false,
+  "events": [],
+  "mode": "backtest",
+  "platform": "facebook",
+  "parent_run": "bt-261027045944-crowd"
+}

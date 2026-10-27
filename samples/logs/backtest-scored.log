@@ -1,0 +1,68 @@
+[1s] selected 982 qualifying tests; dev 20; running 50 from the scored slice
+[1s] crowd: data Registering Census, Pew, priors and customer sources
+[1s] crowd: audience Audience agent is naming the segments
+[1s] crowd: sampling Sampling people from Census and Pew rows
+[2s] crowd: voices Writing one-line voices (numbers first, model second)
+[21s] crowd: voices 15/40 voices
+[47s] crowd: voices 40/40 voices
+[47s] crowd built: 40 personas in 45s
+[313s] [1/50] 547e21c46161330012150000 real=A crowd=B (13/36 vs 15/36) reason=B crowd1=B
+[524s] [2/50] 5409d307c994ef07b9000092 real=B crowd=A (17/37 vs 13/37) reason=B crowd1=B
+[705s] [3/50] 515db1c9683d3f000200112c real=B crowd=A (12/33 vs 5/33) reason=B crowd1=B
+[924s] [4/50] 54d43b8f39326600199d0000 real=B crowd=tie (16/40 vs 16/40) reason=A crowd1=A
+[1127s] [5/50] 54f9c72e613164000c790000 real=A crowd=A (16/37 vs 8/37) reason=A crowd1=A
+[1330s] [6/50] 5449e79738e5ae996c000015 real=B crowd=A (17/38 vs 12/38) reason=A crowd1=A
+[1535s] [7/50] 51c258575245fa4328001869 real=B crowd=A (17/38 vs 12/38) reason=A crowd1=A
+[1746s] [8/50] 552c6c82393664001c1f0000 real=A crowd=B (13/39 vs 21/39) reason=A crowd1=A
+[1935s] [9/50] 5457995ace7a2906a000001d real=B crowd=B (10/38 vs 11/38) reason=B crowd1=B
+[2135s] [10/50] 53e8c7571fdb204023000028 real=A crowd=A (17/36 vs 8/36) reason=A crowd1=A
+[2336s] [11/50] 53a1af910a0cb881b500003f real=B crowd=B (10/38 vs 14/38) reason=A crowd1=A
+[2540s] [12/50] 536173ab29b7aff8d800002e real=A crowd=B (11/37 vs 13/37) reason=A crowd1=A
+[2748s] [13/50] 51b9fdd3bbb4a25e900008f7 real=B crowd=A (16/39 vs 15/39) reason=B crowd1=B
+[2962s] [14/50] 542c55a534120f16c0000061 real=A crowd=B (13/40 vs 18/40) reason=B crowd1=B
+[3162s] [15/50] 51707d7711362200020065a4 real=B crowd=A (14/34 vs 6/34) reason=A crowd1=A
+[3365s] [16/50] 539887f973acb6f3d2000054 real=A crowd=B (10/37 vs 19/37) reason=B crowd1=B
+[3568s] [17/50] 54066a1cb650ed1828000073 real=B crowd=B (9/38 vs 15/38) reason=A crowd1=A
+[3777s] [18/50] 54b2a7fc32653500151a0000 real=B crowd=B (10/37 vs 21/37) reason=A crowd1=A
+[3976s] [19/50] 5400adb3f27b21d27d000052 real=B crowd=B (13/36 vs 15/36) reason=A crowd1=A
+[4184s] [20/50] 53bef3e2f8df064c3e00004a real=B crowd=A (17/38 vs 16/38) reason=B crowd1=B
+[4383s] [21/50] 541ef87088aa4b688f000062 real=B crowd=B (15/38 vs 18/38) reason=A crowd1=A
+[4570s] [22/50] 54538df05bc2317d29000042 real=A crowd=B (12/36 vs 15/36) reason=B crowd1=B
+[4752s] [23/50] 5429f4d95f7828ebff00007c real=A crowd=A (18/38 vs 17/38) reason=A crowd1=A
+[4906s] [24/50] 53990fb7d5d900b82500002d real=A crowd=A (19/35 vs 17/35) reason=B crowd1=B
+[5067s] [25/50] 546f4e0387942a3efd000029 real=A crowd=A (17/36 vs 16/36) reason=A crowd1=A
+[5240s] [26/50] 53c8124e4273de1af700005d real=B crowd=A (24/38 vs 20/38) reason=A crowd1=B
+[5414s] [27/50] 53bff270f8df0616600000ac real=A crowd=B (15/39 vs 21/39) reason=A crowd1=A
+[5589s] [28/50] 53ea19e7bf31227b8c000016 real=B crowd=B (9/39 vs 16/39) reason=B crowd1=B
+[5759s] [29/50] 5390b09bbe300632ee000010 real=B crowd=A (19/38 vs 13/38) reason=B crowd1=B
+[5918s] [30/50] 51436081220cb8000200097d real=B crowd=A (14/36 vs 12/36) reason=A crowd1=A
+[6096s] [31/50] 545a68b8a09e023493000079 real=A crowd=A (16/39 vs 13/39) reason=B crowd1=B
+[6314s] [32/50] 53e516736286023422000014 real=B crowd=A (16/37 vs 14/37) reason=A crowd1=A
+[6480s] [33/50] 54b7276a6565620016180000 real=A crowd=A (13/36 vs 12/36) reason=A crowd1=A
+[6661s] [34/50] 546ff5410e78bdd64600000f real=B crowd=A (15/39 vs 13/39) reason=B crowd1=B
+[6814s] [35/50] 540006e5bd37b6e551000030 real=A crowd=B (12/36 vs 13/36) reason=A crowd1=A
+[6971s] [36/50] 548f98923834330012090000 real=B crowd=tie (20/36 vs 20/36) reason=B crowd1=B
+[7127s] [37/50] 5447f567cdf193ffc1000089 real=B crowd=B (12/35 vs 13/35) reason=B crowd1=A
+[7274s] [38/50] 5485bf3f38316100181a0000 real=A crowd=A (15/34 vs 11/34) reason=A crowd1=A
+[7443s] [39/50] 544fdbcf64ab56ad04000068 real=B crowd=B (13/36 vs 22/36) reason=A crowd1=A
+[7596s] [40/50] 5367bda621525a2933000084 real=B crowd=tie (15/35 vs 15/35) reason=A crowd1=B
+[7768s] [41/50] 536bb7a7c02b17e9880000ac real=B crowd=A (14/38 vs 10/38) reason=A crowd1=A
+[7943s] [42/50] 548768a63031360961020000 real=B crowd=B (13/39 vs 22/39) reason=A crowd1=A
+[8135s] [43/50] 549832ea663661001e4c0000 real=A crowd=B (12/39 vs 17/39) reason=A crowd1=A
+[8289s] [44/50] 53da9ad331693d3a3500001d real=B crowd=B (14/35 vs 17/35) reason=B crowd1=B
+[8447s] [45/50] 52fd2421d624103664000055 real=A crowd=B (14/36 vs 16/36) reason=B crowd1=B
+[8603s] [46/50] 540088475c360384ce000050 real=B crowd=A (12/35 vs 11/35) reason=A crowd1=A
+[8767s] [47/50] 549444f23732320024420000 real=A crowd=B (8/38 vs 11/38) reason=A crowd1=B
+[8919s] [48/50] 546a68186f06eeb606000053 real=A crowd=B (6/35 vs 14/35) reason=B crowd1=B
+[9070s] [49/50] 5418777d93f6337819000071 real=A crowd=A (15/34 vs 14/34) reason=A crowd1=A
+[9242s] [50/50] 5458da6604bb8e70ec000010 real=A crowd=A (15/39 vs 14/39) reason=B crowd1=A
+
+method             correct/n      rate    95% CI
+coin flip              -/-        50.0%   [50.0%, 50.0%]
+single (reason)       24/50       48.0%   [34.8%, 61.5%]
+single (crowd model)    25/50       50.0%   [36.6%, 63.4%]
+Dry Run crowd       22.5/50       45.0%   [32.1%, 58.7%]
+McNemar crowd_vs_single_reason: b=11 c=12.5 p=0.839
+McNemar crowd_vs_single_crowd: b=10.5 c=13 p=0.839
+
+wrote /Users/pranayjoshi/Desktop/projects/GenAI-works-hackathon/samples/backtest/2026-10-27T04-59-44-210Z.json (9242s)

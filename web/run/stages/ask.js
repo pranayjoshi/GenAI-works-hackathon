@@ -4,7 +4,8 @@
  *  - Focus group:        POST /api/runs/:id/focus {size, turns}; live turns also arrive on bus 'focus' (S.focus)
  *  - Version C:          POST /api/runs/:id/version-c, then /version-c/run {text} -> #/run/<new id>
  * All tools need S.verdict (segments come from it), so the stage shows a locked state before that. */
-import { h, s, mount, spin, avatar, actPill, roundTime, hueOf } from '../../core/dom.js';
+import { h, s, mount, spin, avatar, actPill, roundTime, hueOf, cssVar } from '../../core/dom.js';
+import { createStage } from '../../core/three-kit.js';
 import { current } from '../../core/state.js';
 import { api, fail } from '../../core/api.js';
 import { stagger, tilt, magnetic, typeText, reduced, EASE } from '../../core/motion.js';
@@ -46,6 +47,141 @@ const TOOLS = [
   { key: 'c', title: 'Version C', desc: 'The rewriter answers the objections, an honesty check guards the offer, then C runs against the winner.' },
 ];
 
+/* ---------------------------------------------------------------- focus group: 3D round table
+ * A real table with one chair per seat (moderator at the head, empty chairs dashed-dim, taken chairs tinted by the
+ * person's hue, the speaker's chair lit with a beam from the table centre). Both posts lie on the table as cards in the
+ * version colours, because that is what the moderator shows. The HTML avatars stay on top (clickable, accessible) and
+ * are positioned by projecting each chair into screen space. Returns null without WebGL; the SVG table is the fallback. */
+async function roundTable3d(host, isDead) {
+  const stage = await createStage(host, { camera: { fov: 30, x: 0, y: 7.4, z: 8.9 } });
+  if (!stage) return null;
+  if (isDead()) { stage.dispose(); return null; }
+  const { THREE, scene, camera } = stage;
+  const LOOK = new THREE.Vector3(0, -0.35, 0);
+  camera.lookAt(LOOK);
+  const C = (name, fb) => { try { return new THREE.Color(cssVar(name) || fb); } catch { return new THREE.Color(fb); } };
+  const R_TABLE = 2.05, R_CHAIR = 3.05;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 8, 5); scene.add(key);
+  const glow = new THREE.PointLight(0xffffff, 0, 6, 1.6); glow.position.set(0, 1.4, 0); scene.add(glow);
+
+  const mats = {
+    floor: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.55 }),
+    top: new THREE.MeshStandardMaterial({ roughness: 0.55, metalness: 0.15 }),
+    rim: new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.35 }),
+    leg: new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.3 }),
+    ring: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.35 }),
+    beam: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }),
+    cardA: new THREE.MeshStandardMaterial({ roughness: 0.5, emissiveIntensity: 0.35 }),
+    cardB: new THREE.MeshStandardMaterial({ roughness: 0.5, emissiveIntensity: 0.35 }),
+  };
+  // floor: soft disc + faint grid
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(4.2, 64), mats.floor); floor.rotation.x = -Math.PI / 2; floor.position.y = -1.25; scene.add(floor);
+  const grid = new THREE.PolarGridHelper(4.2, 12, 4, 64); grid.position.y = -1.24; scene.add(grid);
+  // table: top, rim, pedestal, foot
+  const table = new THREE.Group(); scene.add(table);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(R_TABLE, R_TABLE, 0.16, 72), mats.top); table.add(top);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(R_TABLE, 0.07, 12, 96), mats.rim); rim.rotation.x = Math.PI / 2; table.add(rim);
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.1, 24), mats.leg); ped.position.y = -0.63; table.add(ped);
+  const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.08, 40), mats.leg); foot.position.y = -1.2; table.add(foot);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(R_TABLE + 0.32, 0.015, 6, 120), mats.ring); ring.rotation.x = Math.PI / 2; ring.position.y = 0.02; table.add(ring);
+  // the two posts the moderator shows, lying on the table
+  const cardGeo = new THREE.BoxGeometry(0.62, 0.025, 0.86);
+  const cardA = new THREE.Mesh(cardGeo, mats.cardA); cardA.position.set(-0.42, 0.095, 0.05); cardA.rotation.y = 0.12; table.add(cardA);
+  const cardB = new THREE.Mesh(cardGeo, mats.cardB); cardB.position.set(0.42, 0.095, -0.02); cardB.rotation.y = -0.1; table.add(cardB);
+  // speaker beam: a thin glowing bar from the centre to the speaking chair
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(1, 0.03, 0.05), mats.beam); beam.position.y = 0.12; scene.add(beam);
+
+  const chairGeo = { seat: new THREE.BoxGeometry(0.62, 0.09, 0.56), back: new THREE.BoxGeometry(0.6, 0.42, 0.07), stem: new THREE.CylinderGeometry(0.05, 0.05, 0.62, 10) };
+  let chairs = [];   // {g, mat, angle, hue, taken}
+  let speaking = null, live = false;
+  const rad = (deg) => (deg * Math.PI) / 180;
+  const chairPos = (deg, y = 0) => new THREE.Vector3(Math.cos(rad(deg)) * R_CHAIR, y, Math.sin(rad(deg)) * R_CHAIR);
+
+  function recolor() {
+    const panel = C('--panel-3', '#20253a'), line = C('--line-2', '#2a3048'), accent = C('--accent', '#8f7bff'), acc2 = C('--accent-2', '#4fe3c1');
+    mats.floor.color.copy(C('--panel-2', '#181c29'));
+    grid.material.color = line; grid.material.transparent = true; grid.material.opacity = document.documentElement.dataset.theme === 'light' || (!document.documentElement.dataset.theme && !matchMedia('(prefers-color-scheme: dark)').matches) ? 0.22 : 0.5;
+    mats.top.color.copy(C('--panel-2', '#181c29')).lerp(accent, 0.12);
+    mats.rim.color.copy(accent).lerp(panel, 0.35);
+    mats.leg.color.copy(panel);
+    mats.ring.color.copy(accent);
+    mats.beam.color.copy(acc2); glow.color.copy(acc2);
+    const a = C('--a', '#5b8cff'), b = C('--b', '#ff9a4d');
+    mats.cardA.color.copy(a); mats.cardA.emissive.copy(a); mats.cardB.color.copy(b); mats.cardB.emissive.copy(b);
+    chairs.forEach(paintChair);
+  }
+  function paintChair(c) {
+    const base = C('--panel-3', '#20253a');
+    if (c.mod) c.mat.color.copy(C('--accent', '#8f7bff'));
+    else if (c.taken) c.mat.color.setHSL(c.hue / 360, 0.55, 0.5);
+    else c.mat.color.copy(base).lerp(C('--muted', '#9196ab'), 0.35);
+    c.mat.opacity = c.taken || c.mod ? 1 : 0.7;
+    const lit = speaking === c;
+    c.mat.emissive.copy(lit ? C('--accent-2', '#4fe3c1') : c.mat.color); c.mat.emissiveIntensity = lit ? 0.75 : (c.taken || c.mod ? 0.12 : 0);
+  }
+  function setChairs(list) {   // list: [{angle, hue, taken, mod}]
+    chairs.forEach((c) => { scene.remove(c.g); c.mat.dispose(); });
+    chairs = list.map((d) => {
+      const mat = new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.1, transparent: true });
+      const g = new THREE.Group();
+      const seat = new THREE.Mesh(chairGeo.seat, mat); seat.position.y = -0.55;
+      const back = new THREE.Mesh(chairGeo.back, mat); back.position.set(0, -0.3, -0.3); back.rotation.x = -0.12;
+      const stem = new THREE.Mesh(chairGeo.stem, mat); stem.position.y = -0.9;
+      g.add(seat, back, stem);
+      g.position.copy(chairPos(d.angle)); g.lookAt(0, 0, 0);
+      scene.add(g);
+      const c = { ...d, g, mat }; paintChair(c); return c;
+    });
+    if (speaking) speaking = chairs.find((c) => c.angle === speaking.angle) || null;
+    aimBeam();
+  }
+  function aimBeam() {
+    if (!speaking) { mats.beam.opacity = 0; glow.intensity = 0; return; }
+    const p = chairPos(speaking.angle, 0.12), len = p.length() - 0.55;
+    beam.scale.x = len; beam.position.set(p.x / 2 * (len / p.length()) + 0, 0.12, p.z / 2 * (len / p.length()));
+    beam.rotation.y = -Math.atan2(p.z, p.x);
+    mats.beam.opacity = 0.9; glow.intensity = 2.2;
+  }
+  function setSpeaker(angle) { speaking = angle == null ? null : chairs.find((c) => Math.abs(c.angle - angle) < 0.01) || null; chairs.forEach(paintChair); aimBeam(); }
+
+  // keep every chair in frame whatever the host's shape: pull the camera back when the host is narrower than 5:4
+  const CAM0 = camera.position.clone();
+  function fit() {
+    const w = host.clientWidth || 1, hh = host.clientHeight || 1, asp = w / hh;
+    const k = Math.max(1, 1.25 / asp);
+    if (Math.abs(camera.aspect - asp) > 1e-3 || Math.abs(camera.position.length() - CAM0.length() * k) > 1e-3) {
+      camera.aspect = asp; camera.position.copy(CAM0).multiplyScalar(k); camera.lookAt(LOOK); camera.updateProjectionMatrix();
+    }
+    camera.updateMatrixWorld();
+  }
+  const v = new THREE.Vector3();
+  function project(deg, y = 0.15) {   // chair "head" -> % of host
+    fit();
+    v.copy(deg == null ? new THREE.Vector3(0, y, 0) : chairPos(deg, y)).project(camera);
+    return { x: (v.x + 1) * 50, y: (1 - v.y) * 50 };
+  }
+
+  stage.onFrame((t0) => {
+    fit();
+    const t = reduced() ? 0 : t0;   // reduced motion: a still table, speaker lit without pulsing
+    ring.rotation.z = t * (live ? 0.5 : 0.08);
+    mats.ring.opacity = live ? 0.55 + 0.25 * Math.sin(t * 3) : 0.3;
+    if (speaking) { mats.beam.opacity = 0.65 + 0.3 * Math.sin(t * 6); glow.intensity = 1.8 + 0.6 * Math.sin(t * 6); }
+    cardA.position.y = 0.095 + 0.012 * Math.sin(t * 1.3); cardB.position.y = 0.095 + 0.012 * Math.sin(t * 1.3 + 1.6);
+  });
+
+  const mo = new MutationObserver(recolor); mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  const mq = matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change', recolor);
+  recolor();
+  return {
+    project, setChairs, setSpeaker,
+    setLive(on) { live = !!on; },
+    dispose() { mo.disconnect(); mq.removeEventListener?.('change', recolor); Object.values(chairGeo).forEach((g) => g.dispose()); chairs.forEach((c) => c.mat.dispose()); stage.dispose(); },
+  };
+}
+
 /* ---------------------------------------------------------------- word diff (LCS) */
 function wordDiff(a, b) {
   const A = String(a || '').match(/\S+\s*/g) || [], B = String(b || '').match(/\S+\s*/g) || [];
@@ -81,8 +217,9 @@ export default {
     const lockedView = () => h('div.ak-locked',
       h('div.ak-lock', s('svg', { viewBox: '0 0 48 48' }, s('rect', { x: 10, y: 21, width: 28, height: 20, rx: 5 }), s('path', { class: 'shackle', d: 'M16 21v-6a8 8 0 0 1 16 0v6' }), s('circle', { cx: 24, cy: 31, r: 2.6 }))),
       h('h2', 'Ask why opens after the verdict'),
-      h('p.muted', 'Segments, interviews and the focus group read from the finished twin worlds. Hang on until both feeds are scored.'),
-      S.status === 'done' || S.status === 'error' ? h('p.muted', 'This run has no verdict, so these tools stay closed.') : h('div.chip', spin(), S.detail || S.phase || 'running'));
+      S.status === 'done' || S.status === 'error'
+        ? h('p.muted', 'Segments, interviews and the focus group read from the finished twin worlds. This run has no verdict, so these tools stay closed.')
+        : [h('p.muted', 'Segments, interviews and the focus group read from the finished twin worlds. Hang on until both feeds are scored.'), h('div.chip', spin(), S.detail || S.phase || 'running')]);
 
     /* ------------------------------------------------------------ tool: interview an agent */
     function buildAgent() {
@@ -140,7 +277,7 @@ export default {
       const segs = (S.verdict?.segments || []).map((x) => x.key);
       const st = { seg: segs[0] || '', variant: '' };
       const q = h('input', { type: 'text', value: 'Why did you prefer one of these posts over the other?', 'aria-label': 'Question' });
-      const out = h('div.ak-answers');
+      const out = h('div.ak-answers', h('div.ak-answers-empty', h('div.ak-answers-grid', [0, 1, 2].map(() => h('div.ak-ghost-card', h('i'), h('i'), h('i')))), h('p.muted', 'Answers appear here as one card per person, each citing the moment they decided.')));
       const segRow = h('div.chips'), varRow = h('div.ak-seg-switch', { role: 'group', 'aria-label': 'Variant' });
       const drawSegs = () => mount(segRow, segs.length ? segs.map((k) => h('button.chip' + (k === st.seg ? '.on' : ''), { title: k, onclick: () => { st.seg = k; drawSegs(); } }, segLabel(k))) : h('span.muted', 'The verdict has no segments.'));
       const drawVar = () => mount(varRow, [['', 'Either version'], ...ctx.variants().map((v) => [v, `Only people who saw ${v}`])].map(([v, l]) => h('button' + (v === st.variant ? '.on' : ''), { onclick: () => { st.variant = v; drawVar(); } }, l)));
@@ -182,7 +319,9 @@ export default {
       const queue = [], seats = new Map(), ghosts = [];
       const spoke = h('svg.ak-spoke', { viewBox: '0 0 100 100', 'aria-hidden': 'true' });
       const bubbleName = h('b'), bubbleText = h('span'), bubble = h('div.ak-fg-bubble', { 'aria-live': 'polite' }, bubbleName, bubbleText);
-      const table = h('div.ak-table',
+      const host3d = h('div.ak-table-3d', { 'aria-hidden': 'true' });
+      let t3 = null;
+      const table = h('div.ak-table', host3d,
         s('svg', { class: 'ak-table-svg', viewBox: '0 0 100 100', 'aria-hidden': 'true' },
           s('circle', { class: 'rim', cx: 50, cy: 50, r: 30 }), s('circle', { class: 'top', cx: 50, cy: 50, r: 27.5 }), s('circle', { class: 'ring', cx: 50, cy: 50, r: 33.5 })),
         spoke, bubble);
@@ -192,7 +331,10 @@ export default {
       const status = h('div.muted.ak-fg-status', 'A moderator seats people from different segments, shows both posts and runs a short discussion. Each person speaks from their own memory.');
       let skipping = false;
 
-      const place = (el, angleDeg, r = 40) => { const a = (angleDeg * Math.PI) / 180; el.style.left = `${(50 + Math.cos(a) * r).toFixed(2)}%`; el.style.top = `${(50 + Math.sin(a) * r).toFixed(2)}%`; };
+      const place = (el, angleDeg, r = 40) => {
+        if (t3) { const p = t3.project(angleDeg); el.style.left = `${p.x.toFixed(2)}%`; el.style.top = `${p.y.toFixed(2)}%`; return; }
+        const a = (angleDeg * Math.PI) / 180; el.style.left = `${(50 + Math.cos(a) * r).toFixed(2)}%`; el.style.top = `${(50 + Math.sin(a) * r).toFixed(2)}%`;
+      };
       const slotAngle = (i, n) => -90 + (360 * (i + 1)) / (n + 1);
       function layout() {
         const parts = [...seats.entries()].filter(([k]) => k !== MOD).map(([, v]) => v);
@@ -202,6 +344,12 @@ export default {
         parts.forEach((v, i) => { v.idx = i; v.angle = slotAngle(i, slotsN); place(v.el, v.angle); });
         ghosts.forEach((g, i) => place(g, slotAngle(parts.length + i, slotsN)));
         const mod = seats.get(MOD); if (mod) place(mod.el, -90);
+        if (t3) {
+          t3.setChairs([{ angle: -90, mod: true, taken: !!mod },
+            ...parts.map((v) => ({ angle: v.angle, taken: true, hue: v.hue })),
+            ...ghosts.map((g, i) => ({ angle: slotAngle(parts.length + i, slotsN), taken: false }))]);
+          const c = t3.project(null, 0.1); bubble.style.left = `${c.x.toFixed(2)}%`; bubble.style.top = `${c.y.toFixed(2)}%`;
+        }
       }
       function claim(t) {
         const isMod = /^Moderator/.test(t.speaker || '');
@@ -213,7 +361,7 @@ export default {
         const seatEl = h('button.ak-seat', { title: isMod ? 'Moderator' : `Open ${t.agent_id || key}`, onclick: () => { if (!isMod && t.agent_id) current.openAgent?.(t.agent_id); } },
           face, h('span.ak-seat-name', isMod ? 'Moderator' : (t.agent_id || key)), isMod || !p ? null : h('span.ak-seat-sub', `${p.age ?? ''} ${p.role || ''}`.trim()),
           h('span.ak-eq', h('i'), h('i'), h('i')));
-        seat = { el: seatEl };
+        seat = { el: seatEl, hue: hueOf(t.agent_id || key) };
         seats.set(key, seat);
         if (!isMod && ghosts.length) ghosts.shift().remove();
         table.append(seatEl); layout();
@@ -222,6 +370,7 @@ export default {
       }
       function aim(seat) {   // draw the spoke from the table centre to the speaker
         const ang = seat === seats.get(MOD) ? -90 : seat.angle;
+        if (t3) { t3.setSpeaker(ang); return; }
         const a = (ang * Math.PI) / 180;
         const line = s('line', { x1: 50, y1: 50, x2: 50 + Math.cos(a) * 31, y2: 50 + Math.sin(a) * 31, pathLength: 1, class: 'spoke-line' });
         spoke.replaceChildren(line);
@@ -252,8 +401,8 @@ export default {
         if (busy) return; busy = true;
         while (queue.length && !dead) { await speak(queue.shift()); skipBtn.hidden = queue.length < 2; }
         busy = false; skipping = false; skipBtn.hidden = true;
-        if (!running && !queue.length) for (const v of seats.values()) v.el.classList.remove('speaking');
-        table.classList.toggle('live', running);
+        if (!running && !queue.length) { for (const v of seats.values()) v.el.classList.remove('speaking'); t3?.setSpeaker(null); }
+        table.classList.toggle('live', running); t3?.setLive(running);
       }
       function sync() {
         const list = S.focus || [];
@@ -263,12 +412,12 @@ export default {
       function reset() {
         queue.length = 0; shown = 0; skipping = false;
         for (const [k, v] of [...seats]) { v.el.remove(); seats.delete(k); }
-        spoke.replaceChildren(); bubble.classList.remove('on'); bubbleText.textContent = ''; bubbleName.textContent = '';
+        spoke.replaceChildren(); t3?.setSpeaker(null); bubble.classList.remove('on'); bubbleText.textContent = ''; bubbleName.textContent = '';
         mount(transcript, h('div.empty', 'The transcript appears here, turn by turn.'));
         layout();
       }
       startBtn.onclick = async () => {
-        startBtn.disabled = true; running = true; S.focus = []; reset(); table.classList.add('live');
+        startBtn.disabled = true; running = true; S.focus = []; reset(); table.classList.add('live'); t3?.setLive(true);
         mount(startBtn, spin(), ' Running...'); status.textContent = 'The moderator is seating people and reading both posts...';
         try {
           const r = await api(`/api/runs/${encodeURIComponent(runId)}/focus`, { method: 'POST', body: { size: 6, turns: 2 } });
@@ -277,9 +426,19 @@ export default {
         } catch (e) { fail(e); status.textContent = 'The focus group could not run.'; }
         running = false; sync();
         startBtn.disabled = false; mount(startBtn, 'Run it again');
-        if (!busy) table.classList.remove('live');
+        if (!busy) { table.classList.remove('live'); t3?.setLive(false); }
       };
       layout();
+      // upgrade to the 3D table when WebGL is there; the SVG table stays as the fallback
+      roundTable3d(host3d, () => dead).then((t) => {
+        if (!t) return;
+        t3 = t; table.classList.add('is3d'); t3.setLive(running || busy);
+        destroyers.push(() => { t3?.dispose(); t3 = null; });
+        layout();
+        const cur = [...seats.values()].find((v) => v.el.classList.contains('speaking')); if (cur) aim(cur);
+        const ro = new ResizeObserver(() => requestAnimationFrame(() => t3 && layout())); ro.observe(host3d);
+        destroyers.push(() => ro.disconnect());
+      }).catch(() => {});
       offs.push(bus.on('focus', () => { table.classList.add('live'); sync(); }));
       // restore a transcript that already exists (earlier in this session) without replaying it
       (async () => { const list = S.focus || []; if (list.length) { shown = list.length; busy = true; for (const t of list) await speak(t, true); busy = false; mount(startBtn, 'Run it again'); status.textContent = `${list.length} turns from the last focus group.`; } })();
@@ -290,7 +449,19 @@ export default {
 
     /* ------------------------------------------------------------ tool: version C (diff view) */
     function buildC() {
-      const out = h('div.ak-c-out');
+      const posts = S.spec?.posts || [];
+      const win = S.verdict?.winner;
+      // before drafting: the same layout the diff will use, so the pane is furnished and nothing jumps later
+      const preview = () => h('div.ak-c-grid.ak-c-preview',
+        h('div.ak-c-col.w', h('label', win ? `Current winner (Version ${win})` : 'Current posts'),
+          h('div.ak-post-stack', (win ? posts.filter((p) => p.variant === win) : posts).map((p) => h('div.ak-post', { style: { '--vc': `var(--${String(p.variant).toLowerCase()}, var(--accent))` } }, h('span.ak-post-tag', `Version ${p.variant}`), p.text)))),
+        h('div.ak-c-mid', { 'aria-hidden': 'true' }, s('svg', { viewBox: '0 0 48 24' }, s('path', { d: 'M4 12h38M32 4l10 8-10 8' }))),
+        h('div.ak-c-col.c', h('label', 'Version C'),
+          h('div.ak-post.ak-c-slot', h('ol.ak-steps',
+            h('li', h('b', 'Rewriter'), h('span.muted', 'answers the objections from the report')),
+            h('li', h('b', 'Honesty check'), h('span.muted', 'keeps price and offer, no invented claims')),
+            h('li', h('b', 'Your edit'), h('span.muted', 'changed words are marked; edit before testing'))))));
+      const out = h('div.ak-c-out', preview());
       const btn = h('button.btn.primary.lg', 'Draft version C');
       btn.onclick = async () => {
         btn.disabled = true; mount(btn, spin(), ' Rewriter and honesty check...');
@@ -414,6 +585,7 @@ export default {
       mountedGate = gate;
       active = null;
       tiltOffs.splice(0).forEach((f) => f());
+      destroyers.splice(0).forEach((f) => f());
       Object.values(panes).forEach((p) => p.el.remove());
       for (const k of Object.keys(panes)) delete panes[k];
       if (gate === 'locked') { mount(root, lockedView()); stagger(root.firstChild.children, { y: 16, gap: 90, ms: 800 }); }

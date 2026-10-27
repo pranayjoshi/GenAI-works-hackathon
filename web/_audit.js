@@ -18,10 +18,15 @@
     // text clipped by overflow hidden without ellipsis/line-clamp
     if ((cs.overflow.includes('hidden') || cs.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 2 && cs.textOverflow !== 'ellipsis' && !cs.webkitLineClamp?.match(/\d/) && el.children.length < 3 && el.textContent.trim().length > 2)
       out.clipped.push(`${path(el)} (${el.scrollWidth}>${el.clientWidth}) "${el.textContent.trim().slice(0, 40)}"`);
+    // content cut off at the bottom of an overflow:hidden box (rows, charts, text)
+    if ((cs.overflowY === 'hidden' || cs.overflow === 'hidden') && el.scrollHeight > el.clientHeight + 4 && el.clientHeight > 40 && !cs.webkitLineClamp?.match(/\d/) && !el.closest('svg'))
+      (out.vclipped ||= []).push(`${path(el)} (${el.scrollHeight}>${el.clientHeight})`);
+    // children that stick out below the bottom of a card (visible overflow)
+    if (box && (r.bottom > box.getBoundingClientRect().bottom + 2) && getComputedStyle(box).overflowY === 'visible' && el.parentElement === box) out.spill.push(`${path(el)}  ⟶ below the bottom of ${path(box).split(' > ').pop()} by ${Math.round(r.bottom - box.getBoundingClientRect().bottom)}px`);
     // unexpected horizontal scrollbars
     if (['auto', 'scroll'].includes(cs.overflowX) && el.scrollWidth > el.clientWidth + 2 && !el.classList.contains('tbl-wrap')) out.hscroll.push(`${path(el)} (${el.scrollWidth}>${el.clientWidth})`);
   }
   const dedupe = (a) => [...new Set(a)].slice(0, 25);
-  out.spill = dedupe(out.spill); out.clipped = dedupe(out.clipped); out.hscroll = dedupe(out.hscroll);
+  out.spill = dedupe(out.spill); out.clipped = dedupe(out.clipped); out.hscroll = dedupe(out.hscroll); out.vclipped = dedupe(out.vclipped || []);
   return out;
 })()

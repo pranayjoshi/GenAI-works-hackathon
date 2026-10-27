@@ -108,13 +108,13 @@ export async function openAgent(agentId, opts = {}) {
       const head = it.hour !== lastHour ? h('div.dz-tl-hour', roundTime(it.hour)) : null;
       lastHour = it.hour;
       const style = { '--i': Math.min(i, 14) };
-      if (it.kind === 'mem') return h('div.dz-tl-item.mem', { style, 'data-mem': it.m.id }, head, h('i.dz-tl-dot'), h('div.dz-tl-card', h('span.dz-tl-tag', 'memory'), it.m.text));
+      if (it.kind === 'mem') return [head, h('div.dz-tl-item.dz-mem', { style, 'data-mem': it.m.id }, h('i.dz-tl-dot'), h('div.dz-tl-card', h('span.dz-tl-tag', 'memory'), it.m.text))];
       const a = it.a;
-      return h('div.dz-tl-item.act', { style, 'data-action': a.id }, head, h('i.dz-tl-dot'),
+      return [head, h('div.dz-tl-item.dz-act', { style, 'data-action': a.id }, h('i.dz-tl-dot'),
         h('div.dz-tl-card', h('div.row', { style: { gap: '8px' } }, actPill(a.action), h('span.chip.mono', a.id)),
           a.text ? h('div.dz-tl-say', `"${a.text}"`) : null, reasonLines(a),
-          a.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), a.unsaid) : null));
-    }));
+          a.unsaid ? h('div.unsaid', h('b', 'kept to themselves: '), a.unsaid) : null))];
+    }).flat().filter(Boolean));
   }
   function focusTarget(sel) {
     setTab('timeline');
@@ -237,7 +237,7 @@ export async function openAgent(agentId, opts = {}) {
   }
 
   /* ---- header: avatar, name, voice, radar */
-  const av = avatar(p.id, 'lg', () => {}); av.title = p.id; av.style.cursor = 'default';
+  const av = avatar(p.id, '', () => {}); av.title = p.id; av.style.cursor = 'default';
   const actionTotal = worldIds.reduce((n, w) => n + (worlds[w].actions || []).length, 0);
   const head = h('div.dz-head',
     h('div.dz-hero',

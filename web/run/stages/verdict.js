@@ -55,11 +55,11 @@ export default {
     function buildWait() {
       mode = 'wait'; key = null;
       const phase = h('div.vd-wait-phase'), detail = h('div.vd-wait-detail'), bar = h('i'), prog = h('div.vd-wait-prog', h('div.vd-wait-bar', bar), h('small'));
-      waitEls = { phase, detail, bar, label: prog.querySelector('small') };
+      const title = h('h2', 'Deliberating'), expl = h('p.expl', 'The verdict appears once both worlds finish. It is computed from every decision, not from a peek at the running totals.');
+      waitEls = { phase, detail, bar, label: prog.querySelector('small'), title, expl };
       mount(root, h('div.card.vd-wait',
         h('div.vd-orbit', { 'aria-hidden': 'true' }, h('i.ring'), h('i.ring.r2'), h('i.dot.a', 'A'), h('i.dot.b', 'B'), h('i.core')),
-        h('div.vd-wait-copy', h('span.tag', 'Verdict'), h('h2', 'Deliberating'), phase, detail, prog,
-          h('p.expl', 'The verdict appears once both worlds finish. It is computed from every decision, not from a peek at the running totals.'))));
+        h('div.vd-wait-copy', h('span.tag', 'Verdict'), title, phase, detail, prog, expl)));
       fadeIn(root.firstChild, 0, 18, 700);
     }
     function updateWait() {
@@ -67,6 +67,9 @@ export default {
       const err = S.status === 'error';
       waitEls.phase.textContent = err ? 'The run stopped before a verdict was computed.' : (PHASE_TEXT[S.phase] || S.phase || 'Waiting');
       waitEls.detail.textContent = err ? (S.error || '') : (S.detail || '');
+      waitEls.title.textContent = err ? 'No verdict' : 'Deliberating';
+      waitEls.expl.textContent = err ? 'A verdict needs both worlds to finish. Whatever was simulated before the stop is still in Twin worlds and Signals; start a new test to get a verdict.'
+        : 'The verdict appears once both worlds finish. It is computed from every decision, not from a peek at the running totals.';
       const rounds = S.spec?.rounds || 0;
       const cur = Math.max(-1, ...ctx.worldIds().map((w) => S.counters[w]?.round ?? -1));
       const f = rounds ? clamp((cur + 1) / rounds, 0, 1) : 0;
@@ -123,61 +126,141 @@ export default {
       const top = Math.max(0.05, (p.a || 0) + (p.moe_a || 0), (p.b || 0) + (p.moe_b || 0));
       const col = (variant, val, moe) => h('div.vd-fb-col' + (v.winner === variant && !tie ? '.lead' : ''),
         h('div.vd-fb-stack', h('i.cap', { style: { bottom: `${((val - (moe || 0)) / top) * 100}%`, height: `${((moe || 0) * 2 / top) * 100}%`, background: vcolor(variant) } }),
-          h('i.bar', { style: { height: `${(val / top) * 100}%`, background: vcolor(variant) } })), h('b', variant));
+          h('i.bar', { style: { height: `${(val / top) * 100}%`, background: vcolor(variant) } })), h('b', { style: { color: vcolor(variant) } }, `${variant} ${pct(val)}`));
       mount(host, h('div.vd-fb', col(va, p.a || 0, p.moe_a), col(vb, p.b || 0, p.moe_b)));
       host.querySelectorAll('.bar').forEach((b, i) => { if (!reduced()) b.animate([{ transform: 'scaleY(0)' }, { transform: 'none' }], { duration: 1100, delay: 200 + i * 120, easing: EASE.expo, fill: 'backwards' }); b.style.transformOrigin = 'bottom'; });
     }
     async function initHero(host, v) {
       const myKey = key;
       let stage = null;
-      try { stage = await createStage(host, { camera: { fov: 38, x: 9, y: 7, z: 14 }, controls: { minDistance: 6, maxDistance: 22 } }); } catch (e) { console.warn('verdict 3D unavailable', e); }
+      try { stage = await createStage(host, { camera: { fov: 34, x: 9, y: 7, z: 14 }, controls: { minDistance: 6, maxDistance: 30 } }); } catch (e) { console.warn('verdict 3D unavailable', e); }
       if (disposed || myKey !== key) { stage?.dispose(); return; }
       if (!stage) { fallbackBars(host, v); return; }
-      const THREE = stage.THREE, scene = stage.scene, p = v.pooled, [va, vb] = v.variants || ['A', 'B'], tie = v.call !== 'winner';
+      const THREE = stage.THREE, scene = stage.scene, cam = stage.camera, p = v.pooled, [va, vb] = v.variants || ['A', 'B'], tie = v.call !== 'winner';
       const colA = new THREE.Color(cssVar('--a') || '#5b8cff'), colB = new THREE.Color(cssVar('--b') || '#ff9a4d');
+      const cMuted = new THREE.Color(cssVar('--muted') || '#9196ab'), cFaint = new THREE.Color(cssVar('--faint') || '#5d6278'), cAccent = new THREE.Color(cssVar('--accent') || '#8f7bff');
+      const cPod = new THREE.Color(cssVar('--panel-3') || '#20253a');
       scene.add(new THREE.HemisphereLight(0xffffff, 0x1a2036, 1.15));
-      const dl = new THREE.DirectionalLight(0xffffff, 1.5); dl.position.set(5, 10, 6); scene.add(dl);
-      const floor = new THREE.Mesh(new THREE.RingGeometry(2.4, 5.4, 64), new THREE.MeshBasicMaterial({ color: 0x8f7bff, transparent: true, opacity: .12, side: THREE.DoubleSide }));
-      floor.rotation.x = -Math.PI / 2; floor.position.y = -0.02; scene.add(floor);
-      const grid = new THREE.GridHelper(12, 12, 0x556080, 0x2a3048); grid.material.transparent = true; grid.material.opacity = .35; grid.position.y = -0.03; scene.add(grid);
-      const HM = 4, top = Math.max(0.05, (p.a || 0) + (p.moe_a || 0), (p.b || 0) + (p.moe_b || 0));
-      const sc = (x) => (x / top) * HM;
+      const dl = new THREE.DirectionalLight(0xffffff, 1.5); dl.position.set(5, 10, 7); scene.add(dl);
+      // scale: values 0..top map to 0..HM; top is a whole number of 25-point steps so the wall ticks are 0/25/50/75%
+      const HM = 4, PODH = 0.32, XS = 2.05, R = 0.82, RC = 1.0, ZW = -1.4;
+      const hiVal = Math.max((p.a || 0) + (p.moe_a || 0), (p.b || 0) + (p.moe_b || 0), 0.05);
+      const top = clamp(Math.ceil(hiVal / 0.25 - 1e-9) * 0.25, 0.25, 1);
+      const sc = (x) => (clamp(x, 0, top) / top) * HM;
       const dotTex = dotTexture(THREE);
+      // floor: fine grid, a soft glow pool, and a faint mirror image of each podium + pillar below it
+      const grid = new THREE.GridHelper(9, 18, cMuted, cFaint); grid.material.transparent = true; grid.material.opacity = .22; grid.material.depthWrite = false; grid.position.set(0, 0, -0.1); scene.add(grid);
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), new THREE.MeshBasicMaterial({ map: dotTex, color: cAccent, transparent: true, opacity: .2, depthWrite: false }));
+      pool.rotation.x = -Math.PI / 2; pool.position.y = 0.005; scene.add(pool);
+      // back wall with the scale
+      const wallL = -(XS + RC + 1.4), wallR = XS + RC + 0.5, wallW = wallR - wallL, wall = new THREE.Mesh(new THREE.PlaneGeometry(wallW, HM + 0.5), new THREE.MeshBasicMaterial({ color: cAccent, transparent: true, opacity: .045, depthWrite: false }));
+      wall.position.set((wallL + wallR) / 2, (HM + 0.5) / 2, ZW); scene.add(wall);
+      const tv = [], ticks = [];
+      for (let k = 0; k <= Math.round(top / 0.25); k++) ticks.push(k * 0.25);
+      for (const x of ticks) { const y = sc(x); tv.push(wallL, y, ZW + 0.01, wallR, y, ZW + 0.01); }
+      tv.push(wallL, 0, ZW + 0.01, wallL, HM, ZW + 0.01);
+      const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(tv, 3));
+      scene.add(new THREE.LineSegments(tg, new THREE.LineBasicMaterial({ color: cMuted, transparent: true, opacity: .35 })));
+      // HTML labels anchored to scene points
+      const labels = h('div.vd-labels'); host.append(labels);
+      const tags = [];
+      const tag = (cls, kids, pos, ax = -50, ay = -50) => { const e = h('div.vd-l3' + cls, kids); labels.append(e); const o = { el: e, p: new THREE.Vector3(...pos), ax, ay }; tags.push(o); return o; };
+      for (const x of ticks) tag('.tick', `${Math.round(x * 100)}%`, [wallL - 0.12, sc(x), ZW], -100, -50);
+      tag('.axis', metricName(v.metric), [wallL - 0.12, HM + 0.38, ZW], -100, -100);
       const mk = (variant, val, moe, x, col) => {
         const lead = v.winner === variant && !tie;
-        const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: lead ? .5 : tie ? .28 : .1, roughness: .35, metalness: .2, transparent: true, opacity: lead || tie ? 1 : .72 });
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 56), mat); pillar.position.x = x; scene.add(pillar);
-        const capH = Math.max(0.04, sc(2 * (moe || 0)));
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.18, capH, 56), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .26, depthWrite: false }));
-        cap.position.set(x, sc(val), 0); cap.scale.y = 0; scene.add(cap);
-        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(cap.geometry), new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: .8 })); cap.add(edges);
-        const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: col, transparent: true, opacity: lead ? .55 : 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-        halo.scale.set(5, 5, 1); halo.position.set(x, .2, 0); scene.add(halo);
-        const lbl = label(THREE, variant, col); lbl.position.set(x, -.55, 1.6); scene.add(lbl);
-        return { pillar, cap, halo, val, lead, mat };
+        const podium = new THREE.Mesh(new THREE.CylinderGeometry(RC + 0.2, RC + 0.32, PODH, 64), new THREE.MeshStandardMaterial({ color: cPod, roughness: .55, metalness: .25 }));
+        podium.position.set(x, PODH / 2, 0); scene.add(podium);
+        const podRim = new THREE.Mesh(new THREE.TorusGeometry(RC + 0.2, 0.022, 8, 96), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: lead ? .95 : .6 }));
+        podRim.rotation.x = Math.PI / 2; podRim.position.set(x, PODH, 0); scene.add(podRim);
+        const mat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: lead ? .5 : tie ? .28 : .12, roughness: .32, metalness: .2, transparent: true, opacity: lead || tie ? 1 : .78 });
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 1, 64), mat); pillar.position.x = x; scene.add(pillar);
+        // mirror image under the floor: same geometry, flipped, very faint
+        const refl = new THREE.Mesh(pillar.geometry, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .1, depthWrite: false })); refl.position.x = x; scene.add(refl);
+        const podRefl = new THREE.Mesh(podium.geometry, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .06, depthWrite: false })); podRefl.position.set(x, -PODH / 2, 0); scene.add(podRefl);
+        // margin of error: a clear glass sleeve from val - moe to val + moe, with a crisp ring at each end
+        const lo = sc((val || 0) - (moe || 0)), hi = sc((val || 0) + (moe || 0)), capH = Math.max(0.05, hi - lo);
+        const glass = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .15, transparent: true, opacity: .16, roughness: .08, metalness: .1, depthWrite: false, side: THREE.DoubleSide });
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(RC, RC, 1, 64, 1, true), glass);
+        const capGroup = new THREE.Group(); capGroup.position.set(x, 0, 0); scene.add(capGroup); capGroup.add(cap);
+        const ringMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .95 });
+        const ringGeo = new THREE.TorusGeometry(RC, 0.028, 8, 112);
+        const rTop = new THREE.Mesh(ringGeo, ringMat), rBot = new THREE.Mesh(ringGeo, ringMat);
+        rTop.rotation.x = rBot.rotation.x = Math.PI / 2; capGroup.add(rTop, rBot);
+        const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: col, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+        halo.scale.set(4.2, 4.2, 1); halo.position.set(x, .3, 0); scene.add(halo);
+        const cls = '.' + String(variant).toLowerCase() + (lead ? '.lead' : '');
+        const value = tag('.val' + cls, [h('b', pct(val || 0)), h('small', moe == null ? '' : `± ${(moe * 100).toFixed(1)} pts`)], [x, PODH + hi + 0.35, 0], -50, -100);
+        const letter = tag('.pod' + cls, [h('b', variant), lead ? h('small', 'winner') : null], [x, PODH * 0.5, RC + 0.34], -50, -50);
+        return { pillar, refl, capGroup, cap, rTop, rBot, lo, hi, capH, halo, val: val || 0, lead, mat, value, letter, x };
       };
-      const A = mk(va, p.a || 0, p.moe_a, -2, colA), B = mk(vb, p.b || 0, p.moe_b, 2, colB);
-      const camTo = new THREE.Vector3(5.6, 4.2, 8.6), camFrom = new THREE.Vector3(11, 8, 15);
-      let userMoved = false; stage.controls?.addEventListener('start', () => { userMoved = true; });
-      if (reduced()) stage.camera.position.copy(camTo);
+      const A = mk(va, p.a || 0, p.moe_a, -XS, colA), B = mk(vb, p.b || 0, p.moe_b, XS, colB);
+      // camera: fit the whole scene (pillars, glass caps, floating values, podium labels, wall scale) for this aspect
+      const center0 = new THREE.Vector3(0, HM * 0.5, 0), center = center0.clone(), dir = new THREE.Vector3(0.2, 0.24, 0.95).normalize();
+      const corners = [];
+      for (const x of [wallL - 1.4, wallR + 0.1]) for (const y of [-0.15, HM + PODH + 1.1]) for (const z of [ZW, RC + 0.75]) corners.push(new THREE.Vector3(x, y, z));
+      const tmp = new THREE.Vector3(), right = new THREE.Vector3(), up = new THREE.Vector3();
+      const fitOnce = () => {
+        let lo = 3, hi = 80;
+        for (let it = 0; it < 26; it++) {
+          const mid = (lo + hi) / 2;
+          cam.position.copy(center).addScaledVector(dir, mid); cam.lookAt(center); cam.updateMatrixWorld();
+          const ok = corners.every((c) => { tmp.copy(c).project(cam); return Math.abs(tmp.x) < 0.92 && Math.abs(tmp.y) < 0.9 && tmp.z < 1; });
+          if (ok) hi = mid; else lo = mid;
+        }
+        return hi;
+      };
+      const fit = () => {
+        center.copy(center0);
+        let d = 0;
+        for (let pass = 0; pass < 3; pass++) {
+          d = fitOnce();
+          cam.position.copy(center).addScaledVector(dir, d); cam.lookAt(center); cam.updateMatrixWorld();
+          let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+          for (const c of corners) { tmp.copy(c).project(cam); x0 = Math.min(x0, tmp.x); x1 = Math.max(x1, tmp.x); y0 = Math.min(y0, tmp.y); y1 = Math.max(y1, tmp.y); }
+          const hh = d * Math.tan((cam.fov * Math.PI) / 360), hw = hh * cam.aspect;
+          right.setFromMatrixColumn(cam.matrixWorld, 0); up.setFromMatrixColumn(cam.matrixWorld, 1);
+          center.addScaledVector(right, ((x0 + x1) / 2) * hw).addScaledVector(up, ((y0 + y1) / 2) * hh);
+        }
+        return fitOnce();
+      };
+      const camTo = new THREE.Vector3(), camFrom = new THREE.Vector3();
+      let userMoved = false, aspect = 0, dist = 10;
+      stage.controls?.addEventListener('start', () => { userMoved = true; });
+      const refit = () => {
+        const save = cam.position.clone();
+        dist = fit();
+        camTo.copy(center).addScaledVector(dir, dist);
+        camFrom.copy(center).addScaledVector(new THREE.Vector3(0.75, 0.55, 0.9).normalize(), dist * 1.45);
+        if (stage.controls) { stage.controls.target.copy(center); stage.controls.minDistance = dist * 0.55; stage.controls.maxDistance = dist * 1.7; }
+        cam.position.copy(userMoved ? save : camTo); cam.lookAt(center);
+      };
+      const pv = new THREE.Vector3();
       const off = stage.onFrame((t) => {
-        const g = reduced() ? 1 : easeOut(clamp(t / 1.4, 0, 1)), g2 = reduced() ? 1 : easeOut(clamp((t - .9) / .9, 0, 1));
+        if (cam.aspect !== aspect) { aspect = cam.aspect; refit(); }
+        const g = reduced() ? 1 : easeOut(clamp(t / 0.9, 0, 1)), g2 = reduced() ? 1 : easeOut(clamp((t - .45) / .6, 0, 1));
         for (const o of [A, B]) {
           const hh = Math.max(0.02, sc(o.val) * g);
-          o.pillar.scale.set(1, hh, 1); o.pillar.position.y = hh / 2;
-          o.cap.scale.y = g2; o.cap.position.y = sc(o.val) * g;
+          o.pillar.scale.set(1, hh, 1); o.pillar.position.y = PODH + hh / 2;
+          o.refl.scale.set(1, hh, 1); o.refl.position.y = -hh / 2 - PODH;
+          const ch = o.capH * g2, mid = PODH + ((o.lo + o.hi) / 2) * g;
+          o.cap.scale.set(1, ch, 1); o.capGroup.position.y = mid;
+          o.rTop.position.y = ch / 2; o.rBot.position.y = -ch / 2;
+          o.rTop.material.opacity = .95 * g2;
+          o.value.p.y = PODH + o.hi * g + 0.3; o.value.el.style.opacity = String(g2);
           if (o.lead) { const pulse = .5 + Math.sin(t * 2.2) * .12; o.halo.material.opacity = pulse * g2; o.mat.emissiveIntensity = .45 + Math.sin(t * 2.2) * .12; }
         }
-        if (!userMoved && !reduced()) { const k = easeOut(clamp(t / 2.2, 0, 1)); stage.camera.position.lerpVectors(camFrom, camTo, k); }
-        if (!userMoved && !tie && !reduced() && t > 2.4) stage.camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.sin(t * .35) * .0009);
+        if (!userMoved && !reduced()) { const k = easeOut(clamp(t / 1.2, 0, 1)); cam.position.lerpVectors(camFrom, camTo, k); cam.lookAt(center); }
+        cam.updateMatrixWorld();
+        const w = host.clientWidth, hgt = host.clientHeight;
+        for (const o of tags) {
+          pv.copy(o.p).project(cam);
+          const out = pv.z > 1 || Math.abs(pv.x) > 1.05 || Math.abs(pv.y) > 1.05;
+          o.el.style.visibility = out ? 'hidden' : '';
+          if (!out) o.el.style.transform = `translate(${((pv.x + 1) / 2 * w).toFixed(1)}px, ${((1 - pv.y) / 2 * hgt).toFixed(1)}px) translate(${o.ax}%, ${o.ay}%)`;
+        }
       });
-      hero3d = { destroy() { off(); dotTex.dispose(); stage.dispose(); } };
-    }
-    function label(THREE, text, col) {
-      const c = document.createElement('canvas'); c.width = c.height = 128;
-      const g = c.getContext('2d'); g.fillStyle = `#${col.getHexString()}`; g.font = '700 84px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 64, 68);
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false })); sp.scale.set(1.1, 1.1, 1); return sp;
+      hero3d = { destroy() { off(); dotTex.dispose(); labels.remove(); stage.dispose(); } };
     }
 
     /* ---------------------------------------------------------------- CI number line */

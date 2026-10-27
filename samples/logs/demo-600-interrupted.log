@@ -1,0 +1,88 @@
+[0s] audience: Audience agent is naming the segments
+[9s] sampling: Sampling people from Census and Pew rows
+[9s] voices: Writing one-line voices (numbers first, model second)
+[18s] voices: 25/600 voices
+[52s] voices: 50/600 voices
+[87s] voices: 75/600 voices
+[115s] voices: 100/600 voices
+[143s] voices: 125/600 voices
+[168s] voices: 150/600 voices
+[196s] voices: 175/600 voices
+[223s] voices: 200/600 voices
+[253s] voices: 225/600 voices
+[281s] voices: 250/600 voices
+[314s] voices: 275/600 voices
+[340s] voices: 300/600 voices
+[366s] voices: 325/600 voices
+[392s] voices: 350/600 voices
+[416s] voices: 375/600 voices
+[439s] voices: 400/600 voices
+[468s] voices: 425/600 voices
+[487s] voices: 450/600 voices
+[509s] voices: 475/600 voices
+[546s] voices: 500/600 voices
+[573s] voices: 525/600 voices
+[605s] voices: 550/600 voices
+[628s] voices: 575/600 voices
+[657s] voices: 600/600 voices
+[657s] running: Seed 1 of 2: forking twin worlds
+[660s] running: Seed 1 of 2: 12 rounds, 600 people per world
+   s1:A p0487 comment: "Ugh, not free money"
+   s1:A Day 1 07:00 deciders=17 intent=6 calls=3
+   s1:B Day 1 07:00 deciders=17 intent=6 calls=3
+   s1:A p0134 comment: "Not worth the $6.50"
+   s1:A Day 1 09:00 deciders=44 intent=17 calls=8
+   s1:B Day 1 09:00 deciders=44 intent=13 calls=8
+   s1:A Day 1 11:00 deciders=80 intent=28 calls=14
+   s1:B p0106 comment: "Next time"
+   s1:B Day 1 11:00 deciders=80 intent=22 calls=14
+   s1:B Day 1 13:00 deciders=145 intent=40 calls=25
+   s1:A p0543 comment: "this latte's vibe matches my quiet coffee habit"
+   s1:A Day 1 13:00 deciders=145 intent=44 calls=25
+   s1:B Day 1 15:00 deciders=181 intent=53 calls=31
+   s1:A Day 1 15:00 deciders=181 intent=61 calls=31
+   s1:B Day 1 17:00 deciders=255 intent=79 calls=44
+   s1:A Day 1 17:00 deciders=255 intent=82 calls=44
+   s1:B p0361 comment: "skip it"
+   s1:B p0468 comment: "love this"
+   s1:B Day 1 19:00 deciders=343 intent=113 calls=59
+   s1:A p0224 comment: "not for me"
+   s1:A Day 1 19:00 deciders=343 intent=112 calls=59
+   s1:B p0173 comment: "can't justify oat milk"
+   s1:B p0274 comment: "skip it out"
+   s1:B p0280 comment: "love it"
+   s1:B p0390 comment: "same scam"
+   s1:B p0419 comment: "yep"
+   s1:B p0445 comment: "lol"
+   s1:B p0474 comment: "Out."
+   s1:B p0595 comment: "just another latte I'll skip"
+   s1:B Day 1 21:00 deciders=453 intent=117 calls=131
+   s1:A p0116 comment: "finally"
+   s1:A p0295 comment: "just another paid lie"
+   s1:A p0306 comment: "Ugh, not now."
+   s1:A p0320 comment: "Not my taste"
+   s1:A p0372 comment: "skipping the deal"
+   s1:A p0474 comment: "skipping"
+   s1:A p0570 comment: "can't afford honey latte now"
+   s1:A p0591 comment: "no thanks, but stays"
+   s1:A Day 1 21:00 deciders=453 intent=141 calls=131
+   s1:B p0523 comment: "misses it monthly, this is my go-to"
+   s1:B Day 1 23:00 deciders=490 intent=127 calls=143
+   s1:A p0396 comment: "no thanks, but stays"
+   s1:A Day 1 23:00 deciders=490 intent=156 calls=143
+   s1:B p0240 comment: "another overpriced latte"
+   s1:B Day 2 01:00 deciders=511 intent=130 calls=147
+   s1:A Day 2 01:00 deciders=511 intent=163 calls=147
+   s1:B Day 2 03:00 deciders=519 intent=134 calls=149
+   s1:A Day 2 03:00 deciders=519 intent=165 calls=149
+   s1:B Day 2 05:00 deciders=525 intent=135 calls=151
+   s1:A Day 2 05:00 deciders=525 intent=170 calls=151
+[7667s] running: Seed 2 of 2: forking twin worlds
+[7685s] running: Seed 2 of 2: 12 rounds, 600 people per world
+   s2:A Day 1 07:00 deciders=11 intent=6 calls=2
+   s2:B Day 1 07:00 deciders=11 intent=4 calls=2
+   s2:A Day 1 09:00 deciders=39 intent=15 calls=7
+   s2:B Day 1 09:00 deciders=39 intent=15 calls=7
+   s2:A p0458 comment: "Waste of minutes and dollars"
+   s2:A Day 1 11:00 deciders=80 intent=24 calls=14
+   s2:B Day 1 11:00 deciders=80 intent=27 calls=14

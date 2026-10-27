@@ -62,7 +62,9 @@ export default function workspace(view, params) {
     banner: h('div.ws-banner'),
   };
   const root = h('div.ws',
-    h('header.ws-head', h('div.ws-head-main', h('a.ws-back', { href: '#/runs', title: 'All runs' }, '← Runs'), ui.title, ui.chips), ui.tools),
+    h('header.ws-head',
+      h('div.ws-head-main', h('div.ws-crumb', h('a.ws-back', { href: '#/runs', title: 'All runs' }, '← Runs'), h('span.ws-crumb-sep', '/'), ui.title), ui.chips),
+      ui.tools),
     ui.phases, ui.banner,
     h('div.ws-body', ui.dock, ui.stage));
   view.append(root);
@@ -149,7 +151,7 @@ export default function workspace(view, params) {
         return h('span.chip.' + (f.identical ? 'good' : 'bad'), { title: `Base log fingerprint ${f.fingerprint}. The twin worlds start from the same crowd, graph and schedule.` },
           f.identical ? `twins identical ${keys.join(' = ')} ✓ ` : `base logs differ, seed ${f.seed} ✗ `, h('span.mono', String(hash).slice(0, 8)));
       }) : h('span.chip', { title: 'Shown once the twin worlds have forked' }, 'twin check pending'),
-      h('span.chip.ws-stream.' + S.stream, { title: 'Server-sent events connection' }, S.stream));
+      S.status === 'done' || S.status === 'error' ? null : h('span.chip.ws-stream.' + S.stream, { title: 'Server-sent events connection' }, S.stream));
     mount(ui.tools,
       sp && sp.seeds?.length > 1 ? h('div.ws-seg', sp.seeds.map((sd) => h('button' + (sd === S.seed ? '.on' : ''), { onclick: () => ctx.setSeed(sd), title: `Show seed ${sd}` }, `Seed ${sd}`))) : null,
       S.replay ? [h('span.chip.on', `Replaying round ${Math.max(0, S.replayLim + 1)} of ${sp.rounds}`), h('button.btn.sm', { onclick: () => stopReplay() }, 'Stop')]
@@ -165,7 +167,7 @@ export default function workspace(view, params) {
     mount(ui.phases,
       h('div.ws-phase-track', h('i', { style: { width: `${frac * 100}%` } })),
       h('div.ws-phase-list', PHASES.map((p, i) => h('div.ws-phase' + (i < idx ? '.done' : i === idx ? '.now' : ''), h('i'), h('span', p[1])))),
-      h('div.ws-phase-detail', S.status === 'error' ? '' : (S.detail || '')));
+      S.status === 'error' || !S.detail || S.status === 'done' ? null : h('div.ws-phase-detail', S.detail));
     mount(ui.banner, S.status === 'error' ? h('div.banner.bad', `Run stopped: ${S.error || 'unknown error'}. Anything already simulated is still shown.`) : null);
     setAmbientMood(S.status === 'done' || S.status === 'error' ? 0.35 : 0.9);
   }
@@ -312,8 +314,9 @@ export default function workspace(view, params) {
   const scheduleBadges = () => { if (!badgeTimer) badgeTimer = setTimeout(() => { badgeTimer = null; updateBadges(); }, 300); };
   ctx.addEvent = (ev) => { if (!S.events.some((x) => x.id === ev.id)) { S.events.push(ev); bus.emit('event', ev); } };
 
-  api(`/api/runs/${id}`).then(() => {
+  api(`/api/runs/${id}`).then((st) => {
     if (closed) return;
+    handle({ type: 'snapshot', state: st });
     es = new EventSource(`/api/runs/${id}/stream`);
     es.onopen = () => setStream('live');
     es.onmessage = (m) => { try { handle(JSON.parse(m.data)); } catch (err) { console.error('stream event failed', err, m.data.slice(0, 200)); } };
@@ -327,6 +330,9 @@ export default function workspace(view, params) {
   };
   document.addEventListener('keydown', onKey);
   window.addEventListener('resize', moveDockInk);
+  // The ink is measured from the dock's layout, which changes when the header wraps or fonts load.
+  const dockRo = 'ResizeObserver' in window ? new ResizeObserver(moveDockInk) : null;
+  dockRo?.observe(ui.dock); document.fonts?.ready.then(moveDockInk);
   bus.on('verdict', () => { if (cur === 'verdict') S.verdictSeen = true; });
 
   const self = { go: (st, fromHash) => { if (st === 'verdict') S.verdictSeen = true; go(st || defaultStage(), fromHash); updateBadges(); } };
@@ -337,5 +343,6 @@ export default function workspace(view, params) {
     for (const m of Object.values(mounted)) { try { m.api?.destroy?.(); } catch (e) { console.error(e); } }
     bus.clear(); current.run = null; setAmbientMood(0.4);
     document.removeEventListener('keydown', onKey); window.removeEventListener('resize', moveDockInk);
+    dockRo?.disconnect();
   };
 }

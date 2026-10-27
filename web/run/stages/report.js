@@ -22,13 +22,19 @@ export default {
     const { S, bus } = ctx;
     const root = h('div.rp'); el.append(root);
     const cleanups = [];
-    let lastKey = null, visible = false, sketchTimer = null, ioObs = null;
+    let lastKey = null, visible = false, sketchTimer = null;
 
-    /* ---- reveal-on-view: adds .in the first time an element is visible in the scroll area */
-    if ('IntersectionObserver' in window) ioObs = new IntersectionObserver((entries) => {
-      for (const e of entries) if (e.isIntersecting) { ioObs.unobserve(e.target); e.target.classList.add('in'); e.target._onIn?.(); }
-    }, { rootMargin: '0px 0px -6% 0px' });
-    const onView = (node, fn) => { node.classList.add('rp-rv'); node._onIn = fn; if (ioObs) ioObs.observe(node); else { node.classList.add('in'); fn?.(); } return node; };
+    /* ---- reveal: each block fades in shortly after mount (staggered, capped so everything is visible within ~600 ms;
+     * content never waits for a scroll position to become visible) */
+    let rvIdx = 0; const rvTimers = new Set();
+    const onView = (node, fn) => {
+      node.classList.add('rp-rv');
+      const fire = () => { node.classList.add('in'); fn?.(); };
+      if (reduced()) { fire(); return node; }
+      const t = setTimeout(() => { rvTimers.delete(t); fire(); }, 40 + Math.min(rvIdx++, 8) * 55);
+      rvTimers.add(t);
+      return node;
+    };
 
     /* ---------------------------------------------------------- waiting states */
     function pendingView() {
@@ -52,7 +58,9 @@ export default {
           lines, rows, h('div.rp-term-scan')),
         h('div.rp-note.muted', spin(), ' Sketch of the kind of queries it runs, not the live log.'));
     }
-    const emptyView = (title, text) => h('div.rp-wait.quiet', h('div.rp-wait-copy', h('div.rp-eyebrow', 'Report'), h('h2', title), h('p.muted', text)));
+    const emptyView = (title, text) => h('div.rp-wait.quiet', h('div.rp-wait-copy',
+      s('svg', { class: 'rp-empty-ic', viewBox: '0 0 48 48', 'aria-hidden': 'true' }, s('path', { d: 'M12 5h17l9 9v29H12z' }), s('path', { d: 'M29 5v9h9' }), s('path', { class: 'ln', d: 'M18 23h14M18 29h14M18 35h8' })),
+      h('div.rp-eyebrow', 'Report'), h('h2', title), h('p.muted', text)));
 
     /* ---------------------------------------------------------- pieces */
     // one quote as a flip card: front = what they said, back = what they thought / kept to themselves
@@ -83,7 +91,7 @@ export default {
 
     // greedy spiral packing of circles (hand-rolled bubble chart), deterministic
     function themeCloud(list, kind, onPick) {
-      const W = 320, H = 190, cx = W / 2, cy = H / 2;
+      const W = 320, H = 168, cx = W / 2, cy = H / 2;
       const max = Math.max(1, ...list.map((t) => (t.action_ids || []).length));
       const items = list.map((t, idx) => ({ t, idx, n: (t.action_ids || []).length, r: 20 + 30 * Math.sqrt(((t.action_ids || []).length || 1) / max) })).sort((a, b) => b.r - a.r);
       const placed = [];
@@ -98,19 +106,45 @@ export default {
         if (!found) { it.r = Math.max(14, it.r * 0.6); it.x = 20 + (placed.length * 37) % (W - 40); it.y = H - 18; }
         placed.push(it);
       }
+      // scale the packed cluster up (or down) and centre it so it fills the card instead of floating in a void
+      if (placed.length) {
+        const x0 = Math.min(...placed.map((p) => p.x - p.r)), x1 = Math.max(...placed.map((p) => p.x + p.r));
+        const y0 = Math.min(...placed.map((p) => p.y - p.r)), y1 = Math.max(...placed.map((p) => p.y + p.r));
+        const pad = 10, k = Math.min((W - 2 * pad) / (x1 - x0), (H - 2 * pad) / (y1 - y0), 2.2);
+        const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        for (const p of placed) { p.x = cx + (p.x - mx) * k; p.y = cy + (p.y - my) * k; p.r *= k; }
+      }
       const svg = s('svg', { class: 'rp-cloud ' + kind, viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${kind} themes sized by number of quotes` });
       placed.forEach((it, k) => {
-        const label = String(it.t.theme || '').length > 18 ? String(it.t.theme).slice(0, 16) + '..' : String(it.t.theme || '');
+        const maxCh = Math.max(6, Math.floor(it.r / 4.2)), th = String(it.t.theme || '');
+        const label = th.length > maxCh ? th.slice(0, maxCh - 1) + '\u2026' : th;
         const g = s('g', { class: 'rp-bub', tabindex: 0, role: 'button', 'aria-label': `${it.t.theme}, ${it.n} quote${it.n === 1 ? '' : 's'}`, style: `--vc:${variantVar(it.t.variant)};--i:${k}` },
           s('title', {}, `${it.t.theme} (${it.n} quote${it.n === 1 ? '' : 's'}, Version ${it.t.variant})`),
           s('g', { transform: `translate(${it.x.toFixed(1)} ${it.y.toFixed(1)})` }, s('g', { class: 'rp-bub-in', style: `animation-delay:${k * 90}ms` },
             s('circle', { r: it.r.toFixed(1) }),
-            it.r > 27 ? s('text', { y: -2, 'text-anchor': 'middle', class: 'l' }, label) : null,
-            s('text', { y: it.r > 27 ? 12 : 4, 'text-anchor': 'middle', class: 'n' }, it.n))));
+            it.r > 27 ? s('text', { y: -it.r * 0.08, 'text-anchor': 'middle', class: 'l', style: `font-size:${Math.min(13, Math.max(8.5, it.r * 0.2)).toFixed(1)}px` }, label) : null,
+            s('text', { y: it.r > 27 ? it.r * 0.3 : 4, 'text-anchor': 'middle', class: 'n', style: `font-size:${Math.min(18, Math.max(10, it.r * 0.26)).toFixed(1)}px` }, it.n))));
         g.addEventListener('click', () => onPick(it.idx)); g.addEventListener('keydown', (e) => { if (e.key === 'Enter') onPick(it.idx); });
         svg.append(g);
       });
       return svg;
+    }
+
+    // first QUOTES_SHOWN quotes, the rest behind a toggle so the two columns stay close in height
+    const QUOTES_SHOWN = 3;
+    function quoteList(b, ids) {
+      const list = h('div.rp-quotes', ids.slice(0, QUOTES_SHOWN).map((id, qi) => quoteCard(b, id, qi)));
+      if (ids.length <= QUOTES_SHOWN) return list;
+      const rest = ids.slice(QUOTES_SHOWN);
+      const more = h('button.rp-more', { 'aria-expanded': 'false', onclick: () => {
+        const open = more.getAttribute('aria-expanded') !== 'true';
+        if (open) { rest.forEach((id, k) => { const c = quoteCard(b, id, k); c.classList.add('extra'); list.insertBefore(c, more); }); }
+        else list.querySelectorAll('.rp-qc.extra').forEach((c) => c.remove());
+        more.setAttribute('aria-expanded', String(open));
+        more.textContent = open ? 'Show fewer' : `Show ${rest.length} more quote${rest.length === 1 ? '' : 's'}`;
+      } }, `Show ${rest.length} more quote${rest.length === 1 ? '' : 's'}`);
+      list.append(more);
+      return list;
     }
 
     function themesColumn(b, title, kind, list) {
@@ -127,7 +161,7 @@ export default {
         const ids = t.action_ids || [];
         const block = onView(h('div.rp-theme', { style: { '--vc': variantVar(t.variant) } },
           h('div.rp-theme-head', variantChip(t.variant), h('h4', t.theme), h('span.rp-count', `${ids.length}`)),
-          ids.length ? h('div.rp-quotes', ids.map((id, qi) => quoteCard(b, id, qi))) : h('div.muted', 'No quotes attached.')));
+          ids.length ? quoteList(b, ids) : h('div.muted', 'No quotes attached.')));
         cards[ti] = block; col.append(block);
       });
       return col;
@@ -166,7 +200,7 @@ export default {
           h('span.chip.' + (ok ? 'good' : 'warn'), ok ? 'passed' : 'issues noted'), crit.revised ? h('span.chip', 'report revised once') : null),
         h('ul.rp-checks',
           row(codeBad ? 'warn' : 'ok', 'Code checks', codeBad ? 'Every claim has a query id that exists, numbers appear in the cited rows, quotes point at real actions. These were flagged:' : 'Every claim has a query id that exists, numbers appear in the cited rows, quotes point at real actions. No issues found.', crit.code_issues),
-          row(modelState, 'Model review', crit.model ? (crit.model.ok ? 'A second model read the report and found nothing to flag.' : 'A second model flagged:') : 'Not available for this run.', crit.model?.issues),
+          row(modelState, 'Model review', crit.model ? (crit.model.ok ? (crit.model.issues?.length ? 'A second model read the report and passed it, with these notes:' : 'A second model read the report and found nothing to flag.') : 'A second model flagged:') : 'Not available for this run.', crit.model?.issues),
           crit.revised ? row('ok', 'Revision', 'The report agent rewrote the report once after the critic spoke.') : null)));
     }
 
@@ -174,7 +208,7 @@ export default {
     function briefing(b) {
       const rep = b.report || {};
       const sentences = String(rep.summary || '').split(/(?<=[.!?])\s+/).filter(Boolean);
-      const lead = h('div.rp-summary', sentences.length ? sentences.map((t, i) => onView(h('p.rp-line', t), () => { const p = lead.children[i]; riseWords(p, { gap: 30, delay: 80 }); })) : h('p.rp-line.in', 'The report has no summary.'));
+      const lead = h('div.rp-summary', sentences.length ? sentences.map((t, i) => onView(h('p.rp-line', t), () => { const p = lead.children[i]; riseWords(p, { gap: 14, delay: 40 }); })) : h('p.rp-line.in', 'The report has no summary.'));
       const head = h('header.rp-head',
         h('div.rp-eyebrow', 'Briefing', b.fallback ? h('span.chip.warn', 'written without a reasoning model') : null, b.served_by?.length ? h('span.muted', 'served by ' + [...new Set(b.served_by)].join(', ')) : null),
         lead,
@@ -193,7 +227,7 @@ export default {
       const key = b ? 'r:' + JSON.stringify(b).length + ':' + (b.report?.summary || '').length : S.verdict ? (running ? 'pending' : 'none') : running ? 'early' : 'none-nv';
       if (key === lastKey) return;
       lastKey = key;
-      clearInterval(sketchTimer); sketchTimer = null;
+      clearInterval(sketchTimer); sketchTimer = null; rvIdx = 0;
       if (b) { mount(root, briefing(b)); root.classList.add('has-report'); }
       else {
         root.classList.remove('has-report');
@@ -202,7 +236,7 @@ export default {
         else if (running) mount(root, emptyView('The report comes after the verdict', 'Once both worlds finish and the verdict is computed, the report agent writes the briefing here.'));
         else mount(root, emptyView('No report for this run', 'This run ended without a verdict, so no report was written.'));
       }
-      if (!reduced()) stagger(root, { y: 16, gap: 90, ms: 800 });
+      if (!reduced()) stagger(root, { y: 14, gap: 60, ms: 520 });
     }
 
     cleanups.push(bus.on('report', render), bus.on('verdict', render), bus.on('snapshot', render), bus.on('done', render), bus.on('status', render));
@@ -211,7 +245,7 @@ export default {
     return {
       show() { visible = true; },
       hide() { visible = false; },
-      destroy() { cleanups.forEach((f) => f()); clearInterval(sketchTimer); ioObs?.disconnect(); },
+      destroy() { cleanups.forEach((f) => f()); clearInterval(sketchTimer); rvTimers.forEach(clearTimeout); },
     };
   },
 };

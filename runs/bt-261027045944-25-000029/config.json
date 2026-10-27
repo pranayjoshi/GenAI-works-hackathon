@@ -1,0 +1,46 @@
+{
+  "run_id": "bt-261027045944-25-000029",
+  "crowd_seed": "4cbf7e8ee084",
+  "business": "Upworthy",
+  "handle": "Upworthy",
+  "place": "the United States",
+  "zip": "US",
+  "geoId": "01000US",
+  "goal": "Get the click",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "Kim Jong Un Would Really Hate For You To Watch This Which Is Exactly Why You Should",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    },
+    {
+      "variant": "B",
+      "text": "This Dictator Would Really Hate For You To Watch This Which Is Exactly Why You Should",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    }
+  ],
+  "crowdSize": 40,
+  "rounds": 4,
+  "startHour": 7,
+  "hourStep": 3,
+  "seeds": [
+    1
+  ],
+  "batchSize": 6,
+  "coreAgeBands": [
+    "18-24",
+    "25-34",
+    "35-44",
+    "45-54",
+    "55-64",
+    "65+"
+  ],
+  "coreShare": 1,
+  "useCustomers": false,
+  "events": [],
+  "mode": "backtest",
+  "platform": "facebook",
+  "parent_run": "bt-261027045944-crowd"
+}

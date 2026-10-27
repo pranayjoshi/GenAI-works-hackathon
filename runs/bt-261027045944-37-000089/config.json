@@ -1,0 +1,46 @@
+{
+  "run_id": "bt-261027045944-37-000089",
+  "crowd_seed": "dc6bab083163",
+  "business": "Upworthy",
+  "handle": "Upworthy",
+  "place": "the United States",
+  "zip": "US",
+  "geoId": "01000US",
+  "goal": "Get the click",
+  "posts": [
+    {
+      "variant": "A",
+      "text": "A Female Journalist Has A Priceless Reply To Comments That Are Definitely Not 'Newsy'",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    },
+    {
+      "variant": "B",
+      "text": "A Female News Anchor Has A Priceless Reply To Comments That Would Never Be Made About A Male Anchor",
+      "business": "Upworthy",
+      "handle": "Upworthy"
+    }
+  ],
+  "crowdSize": 40,
+  "rounds": 4,
+  "startHour": 7,
+  "hourStep": 3,
+  "seeds": [
+    1
+  ],
+  "batchSize": 6,
+  "coreAgeBands": [
+    "18-24",
+    "25-34",
+    "35-44",
+    "45-54",
+    "55-64",
+    "65+"
+  ],
+  "coreShare": 1,
+  "useCustomers": false,
+  "events": [],
+  "mode": "backtest",
+  "platform": "facebook",
+  "parent_run": "bt-261027045944-crowd"
+}

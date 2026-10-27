@@ -4,14 +4,14 @@
 import { h, s, mount, spin, fmtInt, sleepMs, AGE_BANDS, cssVar } from '../core/dom.js';
 import { api, fail } from '../core/api.js';
 import { toast, qidChip } from '../core/ui.js';
-import { reduced, EASE, riseWords, stagger, tilt, magnetic, countUp } from '../core/motion.js';
+import { reduced, EASE, stagger, tilt, magnetic, countUp } from '../core/motion.js';
 import { createStage, dotTexture } from '../core/three-kit.js';
 
 const setupState = {
   business: '', handle: '', place: '', zip: '', goal: '', postA: '', postB: '',
   crowdSize: 60, rounds: 12, seeds: 2, useCustomers: true,
   audience: null, coreBands: null, coreShare: null, coreShareTouched: false,
-  step: 0,
+  step: 0, visited: [0],
 };
 
 /* ---------- audience maths (ported unchanged from legacy) ---------- */
@@ -44,124 +44,228 @@ const ROUNDS = [[6, 'smoke test'], [12, 'standard'], [24, 'one day, hourly']];
 
 const prefersLight = () => { const t = document.documentElement.dataset.theme; return t ? t === 'light' : matchMedia('(prefers-color-scheme: light)').matches; };
 
-/* ============================================================ hero: twin worlds */
-function mountHero(host) {
-  let dead = false, stage = null, stop2D = null;
-  const N = 520;
-  const seedParts = Array.from({ length: N }, () => ({ u: Math.random(), sp: 0.05 + Math.random() * 0.1, dir: Math.random() < 0.5 ? 1 : -1, o: [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5], w: Math.random() * 6.28 }));
+/* ============================================================ hero: twin worlds
+ * One crowd (wireframe sphere in the middle, one dot per person at the configured crowd size) is copied into two
+ * worlds (planets A and B) along a curved bridge. Same people go both ways; only the post each world sees differs.
+ * The returned object has setCrowd(n) and destroy(). WebGL is paused offscreen by createStage; 2D fallback below. */
+const HERO_MAX = 600;
+const heroGeom = { ax: -3.9, ay: -0.5, cx: 0, cy: 0.55, ctrlY: 1.6 };
+/** Point on the bridge: quadratic from A (t=0) through the crowd (t=.5) to B (t=1). */
+function bridgeAt(t, out) {
+  const { ax, ay, ctrlY } = heroGeom, bx = -ax, mt = 1 - t;
+  out[0] = mt * mt * ax + 2 * mt * t * 0 + t * t * bx;
+  out[1] = mt * mt * ay + 2 * mt * t * ctrlY + t * t * ay;
+  return out;
+}
+function heroLabels(host) {
+  const mk = (cls, a, b) => { const el = h('div.su-hl.' + cls, h('b', a), h('span', b)); host.append(el); return el; };
+  return { a: mk('a', 'World A', 'sees version A'), c: mk('c', 'Same crowd', ''), b: mk('b', 'World B', 'sees version B') };
+}
+
+function mountHero(host, initialCrowd) {
+  let dead = false, stage = null, fallback = null, crowd = initialCrowd;
+  const labels = heroLabels(host);
+  const setCrowdLabel = () => { labels.c.querySelector('span').textContent = `${crowd} people, both worlds`; };
+  setCrowdLabel();
+  const N = 440;
+  const parts = Array.from({ length: N }, (_, i) => ({ u: Math.random(), sp: 0.07 + Math.random() * 0.08, side: i % 2 ? 1 : -1, o: [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5], w: Math.random() * 6.28 }));
+  // Crowd members: fixed points inside a unit sphere (golden-angle spiral, cube-root radius for even volume).
+  const members = Array.from({ length: HERO_MAX }, (_, i) => {
+    const y = 1 - 2 * ((i * 0.6180339887) % 1), r = Math.sqrt(Math.max(0, 1 - y * y)), th = i * 2.39996, rad = 0.35 + 0.6 * Math.cbrt(((i * 0.7548776662) % 1));
+    return [Math.cos(th) * r * rad, y * rad, Math.sin(th) * r * rad];
+  });
   const mouse = { x: 0, y: 0, in: false };
   const onMove = (e) => { const r = host.getBoundingClientRect(); mouse.x = ((e.clientX - r.left) / r.width - 0.5) * 2; mouse.y = ((e.clientY - r.top) / r.height - 0.5) * 2; mouse.in = true; };
   const onLeave = () => { mouse.in = false; };
   host.addEventListener('pointermove', onMove); host.addEventListener('pointerleave', onLeave);
+  let applyCrowd = () => {};
 
-  createStage(host, { camera: { fov: 40, z: 9.5 } }).then((st) => {
+  createStage(host, { camera: { fov: 34, y: 0.7, z: 8.6 } }).then((st) => {
     if (dead) { st?.dispose(); return; }
-    if (!st) { stop2D = twin2D(host, seedParts, mouse); return; }
+    if (!st) { fallback = twin2D(host, parts, members, mouse, labels, () => crowd); return; }
     stage = st;
-    const { THREE, scene } = st, light = prefersLight();
+    const { THREE, scene, camera } = st, light = prefersLight();
+    camera.lookAt(0, 0.1, 0);
+    const blend = light ? THREE.NormalBlending : THREE.AdditiveBlending;
     const cA = new THREE.Color(cssVar('--a') || '#5b8cff'), cB = new THREE.Color(cssVar('--b') || '#ff9a4d');
+    const cMid = new THREE.Color(light ? (cssVar('--accent') || '#6a52ff') : '#e9e6ff');
+    const lineCol = light ? 0x5a6080 : 0xffffff;
     const group = new THREE.Group(); scene.add(group);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-    const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3, 4, 6); scene.add(key);
+    scene.add(new THREE.AmbientLight(0xffffff, light ? 1.0 : 0.55));
+    const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(-2, 4, 6); scene.add(key);
     const glow = dotTexture(THREE);
-    const mk = (c) => {
-      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.85, 40, 28), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.35, roughness: 0.45, metalness: 0.1 }));
-      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: c, transparent: true, opacity: light ? 0.35 : 0.6, depthWrite: false, blending: light ? THREE.NormalBlending : THREE.AdditiveBlending }));
-      halo.scale.setScalar(4.2); orb.add(halo); group.add(orb); return orb;
-    };
-    const orbA = mk(cA), orbB = mk(cB);
-    const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({ length: 96 }, (_, i) => new THREE.Vector3(Math.cos(i / 96 * 6.2832) * 2.7, 0, Math.sin(i / 96 * 6.2832) * 2.7))),
-      new THREE.LineBasicMaterial({ color: light ? 0x8890aa : 0xffffff, transparent: true, opacity: 0.12 }));
-    group.add(ring);
+
+    // floor grid: frames the scene without competing with it
+    const grid = new THREE.GridHelper(16, 32, lineCol, lineCol);
+    grid.material.transparent = true; grid.material.opacity = light ? 0.06 : 0.035; grid.material.depthWrite = false; grid.position.y = -1.9;
+    scene.add(grid);
+
+    // planets with a fresnel atmosphere, a thin tilted orbit ring and a small moon
+    const atmoMat = (c) => new THREE.ShaderMaterial({
+      uniforms: { c: { value: c }, k: { value: light ? 0.7 : 1.0 } }, transparent: true, depthWrite: false, side: THREE.BackSide, blending: blend,
+      vertexShader: 'varying vec3 vN; varying vec3 vV; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform vec3 c; uniform float k; varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(vN, vV)), 2.2); gl_FragColor = vec4(c, f * k); }',
+    });
+    const planets = [cA, cB].map((c, i) => {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 48, 32), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: light ? 0.15 : 0.32, roughness: 0.55, metalness: 0.05 }));
+      const atmo = new THREE.Mesh(new THREE.SphereGeometry(0.7, 48, 32), atmoMat(c)); atmo.scale.setScalar(1.32);
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, color: c, transparent: true, opacity: light ? 0.18 : 0.38, depthWrite: false, blending: blend })); halo.scale.setScalar(3.4);
+      const tilt = new THREE.Group(); tilt.rotation.set(1.18, 0, i ? -0.32 : 0.32);
+      const ring = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({ length: 128 }, (_, k) => new THREE.Vector3(Math.cos(k / 128 * 6.2832) * 1.18, Math.sin(k / 128 * 6.2832) * 1.18, 0))),
+        new THREE.LineBasicMaterial({ color: c, transparent: true, opacity: light ? 0.55 : 0.4 }));
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.075, 16, 12), new THREE.MeshBasicMaterial({ color: light ? c : 0xffffff }));
+      tilt.add(ring, moon);
+      g.add(halo, body, atmo, tilt); group.add(g);
+      return { g, body, moon, side: i ? 1 : -1 };
+    });
+
+    // the crowd: faint wireframe sphere with one dot per person
+    const crowdG = new THREE.Group(); crowdG.position.set(heroGeom.cx, heroGeom.cy, 0); group.add(crowdG);
+    const wire = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(0.95, 2)), new THREE.LineBasicMaterial({ color: light ? 0x6a52ff : 0xb9adff, transparent: true, opacity: light ? 0.22 : 0.14, depthWrite: false }));
+    crowdG.add(wire);
+    const mPos = new Float32Array(HERO_MAX * 3); members.forEach((m, i) => { mPos[i * 3] = m[0] * 0.92; mPos[i * 3 + 1] = m[1] * 0.92; mPos[i * 3 + 2] = m[2] * 0.92; });
+    const mGeo = new THREE.BufferGeometry(); mGeo.setAttribute('position', new THREE.BufferAttribute(mPos, 3));
+    const mPts = new THREE.Points(mGeo, new THREE.PointsMaterial({ size: 0.11, map: glow, color: cMid, transparent: true, opacity: 0.95, depthWrite: false, blending: blend }));
+    crowdG.add(mPts);
+    applyCrowd = () => { mGeo.setDrawRange(0, Math.min(HERO_MAX, crowd)); mPts.material.size = crowd > 200 ? 0.07 : crowd > 80 ? 0.09 : 0.12; };
+    applyCrowd();
+
+    // bridge guide line + streaming copies of the crowd
+    const guide = new THREE.Line(new THREE.BufferGeometry().setFromPoints(Array.from({ length: 81 }, (_, k) => { const p = bridgeAt(k / 80, [0, 0]); return new THREE.Vector3(p[0], p[1], 0); })),
+      new THREE.LineDashedMaterial({ color: lineCol, transparent: true, opacity: light ? 0.25 : 0.16, dashSize: 0.12, gapSize: 0.1 }));
+    guide.computeLineDistances(); group.add(guide);
     const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.17, map: glow, vertexColors: true, transparent: true, opacity: light ? 0.8 : 0.9, depthWrite: false, blending: light ? THREE.NormalBlending : THREE.AdditiveBlending, sizeAttenuation: true }));
+    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.12, map: glow, vertexColors: true, transparent: true, opacity: light ? 0.85 : 0.9, depthWrite: false, blending: blend }));
     pts.frustumCulled = false; group.add(pts);
-    const tmp = new THREE.Color(), still = reduced();
-    let ang = 0, tx = 0, ty = 0;
+
+    const tmp = new THREE.Color(), still = reduced(), b2 = [0, 0], v3 = new THREE.Vector3();
+    let tx = 0, ty = 0;
+    const place = (el, obj, dy) => {
+      obj.getWorldPosition(v3); v3.y += dy; v3.project(camera);
+      const H = host.clientHeight, lh = el.offsetHeight, y = (1 - v3.y) / 2 * H;
+      const top = Math.max(6, Math.min(H - lh - 6, dy > 0 ? y - lh : y)); // keep labels inside the frame
+      el.style.transform = `translate(-50%, 0) translate(${((v3.x + 1) / 2 * host.clientWidth).toFixed(1)}px, ${top.toFixed(1)}px)`;
+    };
+    const halfTan = Math.tan((34 / 2) * Math.PI / 180);
     st.onFrame((t, dt) => {
-      const boost = !still && mouse.in ? 1.8 : 1;
-      if (!still) ang += dt * 0.45 * boost;
-      const R = 2.7;
-      orbA.position.set(Math.cos(ang) * R, Math.sin(ang * 0.7) * 0.35, Math.sin(ang) * R);
-      orbB.position.set(-orbA.position.x, -orbA.position.y, -orbA.position.z);
-      orbA.rotation.y = orbB.rotation.y = ang * 2;
-      tx += ((still ? 0 : mouse.y * 0.35) + 0.25 - tx) * 0.06; ty += ((still ? 0 : mouse.x * 0.5) - ty) * 0.06;
+      const T = still ? 0 : t, boost = !still && mouse.in ? 1.7 : 1;
+      // keep both planets and their rings in frame on narrow cards: fit ~5.4 world units of half-width
+      const z = Math.max(8.6, 5.4 / (halfTan * camera.aspect));
+      if (Math.abs(camera.position.z - z) > 0.01) { camera.position.z = z; camera.lookAt(0, 0.1, 0); }
+      planets.forEach((p) => {
+        p.g.position.set(-heroGeom.ax * p.side, heroGeom.ay + Math.sin(T * 0.8 + (p.side > 0 ? 1.6 : 0)) * 0.08, 0);
+        p.body.rotation.y = T * 0.3;
+        const a = T * 0.9 * p.side + (p.side > 0 ? 3.1 : 0); p.moon.position.set(Math.cos(a) * 1.18, Math.sin(a) * 1.18, 0);
+      });
+      crowdG.rotation.y = T * 0.25; crowdG.rotation.x = Math.sin(T * 0.2) * 0.15;
+      tx += ((still ? 0 : mouse.y * 0.12) - tx) * 0.06; ty += ((still ? 0 : mouse.x * 0.28) - ty) * 0.06;
       group.rotation.x = tx; group.rotation.y = ty;
-      const wx = mouse.x * 7, wy = -mouse.y * 2.8; // pointer in roughly world units at z=0
+      const wx = mouse.x * 6.2, wy = -mouse.y * 2.1;
       for (let i = 0; i < N; i++) {
-        const p = seedParts[i];
-        if (!still) p.u = (p.u + dt * p.sp) % 1;
-        const u = p.dir > 0 ? p.u : 1 - p.u;
-        const e = u * u * (3 - 2 * u);
-        const sw = Math.sin(p.u * Math.PI);
-        let x = orbA.position.x + (orbB.position.x - orbA.position.x) * e + p.o[0] * 0.9 * sw;
-        let y = orbA.position.y + (orbB.position.y - orbA.position.y) * e + p.o[1] * 0.9 * sw + Math.sin(p.u * 6.28 + p.w + (still ? 0 : t)) * 0.18 * sw;
-        const z = orbA.position.z + (orbB.position.z - orbA.position.z) * e + p.o[2] * 0.9 * sw;
-        if (!still && mouse.in) { const dx = x - wx, dy = y - wy, d = Math.hypot(dx, dy); if (d < 2) { const k = (1 - d / 2) * 0.7 / (d || 1); x += dx * k; y += dy * k; } }
+        const p = parts[i];
+        if (!still) p.u = (p.u + dt * p.sp * boost) % 1;
+        const t2 = 0.5 + p.side * 0.5 * p.u;               // from the crowd (t=.5) out to one planet
+        bridgeAt(t2, b2);
+        const sw = Math.sin(p.u * Math.PI) * 0.55 + 0.08;   // tube widens mid-flight
+        let x = b2[0] + p.o[0] * sw * 0.5, y = b2[1] + p.o[1] * sw + Math.sin(p.u * 6.28 + p.w + T) * 0.06;
+        const z = p.o[2] * sw * 1.2;
+        if (!still && mouse.in) { const dx = x - wx, dy = y - wy, d = Math.hypot(dx, dy); if (d < 1.6) { const k = (1 - d / 1.6) * 0.5 / (d || 1); x += dx * k; y += dy * k; } }
         pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
-        tmp.copy(cA).lerp(cB, u); col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;
+        tmp.copy(cMid).lerp(p.side < 0 ? cA : cB, Math.min(1, p.u * 1.4)); col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;
       }
       geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
+      place(labels.a, planets[0].g, -1.05); place(labels.b, planets[1].g, -1.05); place(labels.c, crowdG, 1.12);
     });
     host.classList.add('ready');
-  }).catch(() => { if (!dead) stop2D = twin2D(host, seedParts, mouse); });
+  }).catch(() => { if (!dead) fallback = twin2D(host, parts, members, mouse, labels, () => crowd); });
 
-  return () => { dead = true; host.removeEventListener('pointermove', onMove); host.removeEventListener('pointerleave', onLeave); stop2D?.(); stage?.dispose(); };
+  return {
+    setCrowd(n) { crowd = n; setCrowdLabel(); applyCrowd(); fallback?.draw?.(); },
+    destroy() { dead = true; host.removeEventListener('pointermove', onMove); host.removeEventListener('pointerleave', onLeave); fallback?.stop(); stage?.dispose(); Object.values(labels).forEach((l) => l.remove()); },
+  };
 }
 
-/** 2D canvas version of the same picture, used when WebGL is missing. */
-function twin2D(host, parts, mouse) {
+/** 2D canvas version of the same picture, used when WebGL is missing. Pauses when hidden or offscreen. */
+function twin2D(host, parts, members, mouse, labels, getCrowd) {
   const cv = h('canvas'); cv.style.cssText = 'display:block;width:100%;height:100%'; host.append(cv);
   const g = cv.getContext('2d'), still = reduced();
-  const cA = cssVar('--a') || '#5b8cff', cB = cssVar('--b') || '#ff9a4d';
-  let W = 1, H = 1, raf = 0, ang = 0, last = performance.now();
-  const size = () => { const d = Math.min(2, devicePixelRatio || 1); W = host.clientWidth || 1; H = host.clientHeight || 1; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); };
-  const ro = new ResizeObserver(size); ro.observe(host); size();
+  const cA = cssVar('--a') || '#5b8cff', cB = cssVar('--b') || '#ff9a4d', cM = cssVar('--accent') || '#8f7bff';
+  let W = 1, H = 1, raf = 0, last = performance.now(), onScreen = true, T = 0;
+  const size = () => { const d = Math.min(2, devicePixelRatio || 1); W = host.clientWidth || 1; H = host.clientHeight || 1; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); draw(); };
+  const io = new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; }); io.observe(host);
+  const b2 = [0, 0];
+  function draw() {
+    const S = Math.min(W / 9, H / 4.2), ox = W / 2, oy = H * 0.55;
+    const X = (x) => ox + x * S, Y = (y) => oy - y * S;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = cM; g.globalAlpha = 0.25; g.setLineDash([4, 4]); g.beginPath();
+    for (let k = 0; k <= 60; k++) { bridgeAt(k / 60, b2); k ? g.lineTo(X(b2[0]), Y(b2[1])) : g.moveTo(X(b2[0]), Y(b2[1])); } g.stroke(); g.setLineDash([]);
+    for (const p of parts) {
+      bridgeAt(0.5 + p.side * 0.5 * p.u, b2);
+      const sw = Math.sin(p.u * Math.PI) * 0.55 + 0.08;
+      g.globalAlpha = 0.3 + 0.5 * Math.sin(p.u * Math.PI); g.fillStyle = p.u < 0.35 ? cM : p.side < 0 ? cA : cB;
+      g.beginPath(); g.arc(X(b2[0] + p.o[0] * sw * 0.5), Y(b2[1] + p.o[1] * sw), 1.5, 0, 6.2832); g.fill();
+    }
+    const cx = X(heroGeom.cx), cy = Y(heroGeom.cy), r = 0.95 * S, n = Math.min(HERO_MAX, getCrowd());
+    g.globalAlpha = 0.35; g.strokeStyle = cM; g.beginPath(); g.arc(cx, cy, r, 0, 6.2832); g.stroke(); g.beginPath(); g.ellipse(cx, cy, r, r * 0.35, 0, 0, 6.2832); g.stroke();
+    g.globalAlpha = 0.9; g.fillStyle = cM;
+    for (let i = 0; i < n; i++) { const m = members[i], c = Math.cos(T * 0.25), s2 = Math.sin(T * 0.25); g.beginPath(); g.arc(cx + (m[0] * c - m[2] * s2) * r * 0.92, cy - m[1] * r * 0.92, n > 200 ? 1 : 1.6, 0, 6.2832); g.fill(); }
+    g.globalAlpha = 1;
+    const pr = 0.7 * S, py = Y(heroGeom.ay);
+    for (const [x, c] of [[X(heroGeom.ax), cA], [X(-heroGeom.ax), cB]]) {
+      g.fillStyle = c; g.shadowColor = c; g.shadowBlur = 22; g.beginPath(); g.arc(x, py, pr, 0, 6.2832); g.fill(); g.shadowBlur = 0;
+      g.strokeStyle = c; g.globalAlpha = 0.5; g.beginPath(); g.ellipse(x, py, pr * 1.7, pr * 0.45, -0.2, 0, 6.2832); g.stroke(); g.globalAlpha = 1;
+    }
+    const lab = (el, x, y) => { const top = Math.max(6, Math.min(H - el.offsetHeight - 6, y)); el.style.transform = `translate(-50%, 0) translate(${x.toFixed(1)}px, ${top.toFixed(1)}px)`; };
+    lab(labels.a, X(heroGeom.ax), Y(heroGeom.ay - 1.05)); lab(labels.b, X(-heroGeom.ax), Y(heroGeom.ay - 1.05)); lab(labels.c, cx, Y(heroGeom.cy + 1.12) - 32);
+  }
   const frame = (now) => {
     raf = requestAnimationFrame(frame);
-    if (document.hidden || host.offsetParent === null) { last = now; return; }
+    if (!onScreen || document.hidden || host.offsetParent === null) { last = now; return; }
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (!still) ang += dt * 0.45 * (mouse.in ? 1.8 : 1);
-    g.clearRect(0, 0, W, H);
-    const cx = W / 2, cy = H / 2, R = Math.min(W * 0.28, H * 0.9), ax = cx + Math.cos(ang) * R, ay = cy + Math.sin(ang) * R * 0.35, bx = 2 * cx - ax, by = 2 * cy - ay;
-    for (const p of parts) {
-      if (!still) p.u = (p.u + dt * p.sp) % 1;
-      const u = p.dir > 0 ? p.u : 1 - p.u, sw = Math.sin(p.u * Math.PI);
-      const x = ax + (bx - ax) * u + p.o[0] * 26 * sw, y = ay + (by - ay) * u + p.o[1] * 26 * sw;
-      g.globalAlpha = 0.35 + 0.5 * sw; g.fillStyle = u < 0.5 ? cA : cB; g.beginPath(); g.arc(x, y, 1.6, 0, 6.2832); g.fill();
-    }
-    g.globalAlpha = 1;
-    for (const [x, y, c] of [[ax, ay, cA], [bx, by, cB]]) { g.fillStyle = c; g.shadowColor = c; g.shadowBlur = 18; g.beginPath(); g.arc(x, y, Math.min(16, H * 0.14), 0, 6.2832); g.fill(); g.shadowBlur = 0; }
+    if (still) return;
+    T += dt;
+    for (const p of parts) p.u = (p.u + dt * p.sp * (mouse.in ? 1.7 : 1)) % 1;
+    draw();
   };
+  const ro = new ResizeObserver(size); ro.observe(host); size();
   raf = requestAnimationFrame(frame);
   host.classList.add('ready');
-  return () => { cancelAnimationFrame(raf); ro.disconnect(); cv.remove(); };
+  return { draw, stop() { cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); cv.remove(); } };
 }
 
 /* ============================================================ crowd dot field (step 4) */
 function dotField(host) {
-  const cv = h('canvas'); cv.style.cssText = 'display:block;width:100%;height:100%'; host.append(cv);
+  // One slot per possible person (600 max). The chosen crowd lights up scattered across the field (seeded order),
+  // so a 60-person crowd reads as a sample of the full population rather than a filled first row.
+  const cv = h('canvas'); cv.style.cssText = 'position:absolute;inset:0;display:block;width:100%;height:100%'; host.append(cv);
   const g = cv.getContext('2d');
   let W = 1, H = 1, shown = 0, target = 0, share = null, raf = 0;
   const MAX = 600;
+  const rank = new Array(MAX);
+  { const order = Array.from({ length: MAX }, (_, i) => i); let seed = 7;
+    for (let i = MAX - 1; i > 0; i--) { seed = (seed * 16807) % 2147483647; const j = seed % (i + 1); [order[i], order[j]] = [order[j], order[i]]; }
+    order.forEach((slot, r) => { rank[slot] = r; }); }
   const size = () => { const d = Math.min(2, devicePixelRatio || 1); W = host.clientWidth || 1; H = host.clientHeight || 1; cv.width = W * d; cv.height = H * d; g.setTransform(d, 0, 0, d, 0, 0); draw(); };
   function draw() {
     g.clearRect(0, 0, W, H);
-    let sp = Math.max(5, Math.floor(Math.sqrt(W * H / (MAX * 1.05))));
-    let cols = Math.max(1, Math.floor(W / sp));
-    while (Math.ceil(MAX / cols) * sp > H && sp > 5) { sp--; cols = Math.max(1, Math.floor(W / sp)); }
-    const rows = Math.ceil(MAX / cols), ox = (W - cols * sp) / 2 + sp / 2, oy = (H - rows * sp) / 2 + sp / 2;
+    const HH = Math.max(40, H - 40), WW = W - 16; // leave room for the caption pill under the field
+    let sp = Math.max(5, Math.floor(Math.sqrt(WW * HH / (MAX * 1.05))));
+    let cols = Math.max(1, Math.floor(WW / sp));
+    while (Math.ceil(MAX / cols) * sp > HH && sp > 5) { sp--; cols = Math.max(1, Math.floor(WW / sp)); }
+    const rows = Math.ceil(MAX / cols), ox = (W - cols * sp) / 2 + sp / 2, oy = 8 + (HH - rows * sp) / 2 + sp / 2;
     const accent = cssVar('--accent') || '#8f7bff', teal = cssVar('--accent-2') || '#4fe3c1', faint = cssVar('--line-2') || 'rgba(255,255,255,.13)';
     const r0 = sp * 0.33;
     for (let i = 0; i < MAX; i++) {
-      const x = ox + (i % cols) * sp, y = oy + Math.floor(i / cols) * sp;
-      let k = i < Math.floor(shown) ? 1 : i < shown ? shown - Math.floor(shown) : 0;
+      const x = ox + (i % cols) * sp, y = oy + Math.floor(i / cols) * sp, r = rank[i];
+      const k = r < Math.floor(shown) ? 1 : r < shown ? shown - Math.floor(shown) : 0;
       g.beginPath();
       if (k <= 0) { g.fillStyle = faint; g.globalAlpha = 0.6; g.arc(x, y, r0 * 0.5, 0, 6.2832); }
       else {
-        const isCore = share != null && ((i * 0.6180339887) % 1) < share;
+        const isCore = share != null && ((r * 0.6180339887) % 1) < share;
         g.fillStyle = share == null || isCore ? accent : teal; g.globalAlpha = 0.95; g.arc(x, y, r0 * (0.4 + 0.9 * k), 0, 6.2832);
       }
       g.fill();
@@ -171,7 +275,7 @@ function dotField(host) {
   function tick() {
     raf = 0;
     const d = target - shown;
-    if (Math.abs(d) < 0.05) shown = target; else shown += Math.sign(d) * Math.max(0.6, Math.abs(d) * 0.1);
+    if (Math.abs(d) < 0.5) shown = target; else shown += Math.sign(d) * Math.max(2, Math.abs(d) * 0.16);
     draw();
     if (shown !== target) raf = requestAnimationFrame(tick);
   }
@@ -190,13 +294,15 @@ export default function mountSetup(view) {
   const f = {};          // key -> input element
   const wrap = {};       // key -> field wrapper (shake target)
   const syncers = [];    // functions re-run when state changes from outside an input
-  let cur = Math.min(Math.max(S.step || 0, 0), STEPS.length - 1), goSeq = 0, launching = false;
+  let cur = Math.min(Math.max(S.step || 0, 0), STEPS.length - 1), goSeq = 0, launching = false, heroCtl = null;
 
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
   const missing = () => REQUIRED.filter((k) => !String(S[k]).trim());
   const payload = () => ({ business: S.business, handle: S.handle, place: S.place, zip: S.zip, goal: S.goal, postA: S.postA, postB: S.postB });
+  // A step reads as done once its inputs are complete. Run settings has working defaults, so it only counts once seen.
+  const seen = new Set([...(S.visited || []), cur]);
   const stepDone = (i) => [
-    !!(S.business.trim() && S.zip.trim()), !!(S.postA.trim() && S.postB.trim()), !!S.audience, true, false,
+    !!(S.business.trim() && S.zip.trim()), !!(S.postA.trim() && S.postB.trim()), !!S.audience, seen.has(3), false,
   ][i];
 
   /* ---- fields ---- */
@@ -210,8 +316,9 @@ export default function mountSetup(view) {
   const heroHost = h('div.su-orbs', { 'aria-hidden': 'true' });
   const title = h('h1', 'Two drafts in. A verdict, with reasons, out.');
   const hero = h('header.su-hero',
-    h('div.su-hero-copy', title,
-      h('p', 'A crowd sampled from live Census and Pew data sees each draft in a twin world: same people, same follower graph, same schedule. Only the post differs.')),
+    h('div.su-hero-copy', h('div.su-kicker', 'New test'), title,
+      h('p', 'A crowd sampled from live Census and Pew data sees each draft in a twin world: same people, same follower graph, same schedule. Only the post differs.'),
+      h('ul.su-hero-pts', h('li', h('b', '1 crowd'), ' sampled once'), h('li', h('b', '2 worlds'), ' in parallel'), h('li', h('b', '1 verdict'), ' with reasons'))),
     heroHost);
 
   /* ---- panel scaffolding ---- */
@@ -242,7 +349,7 @@ export default function mountSetup(view) {
       const t = S[key], n = t.length;
       count.textContent = `${n.toLocaleString()} / 2,200`; count.classList.toggle('over', n > 2200);
       const words = t.trim() ? t.trim().split(/\s+/).length : 0;
-      peek.replaceChildren(h('span.su-peek-l', 'In the feed'), t.trim() ? [t.length > 125 ? t.slice(0, 125).trimEnd() : t, t.length > 125 ? h('span.su-more', '… more') : null] : h('i', 'Nothing yet'), h('span.su-words', `${words} words`));
+      peek.replaceChildren(h('span.su-peek-l', 'In the feed'), h('span.su-peek-t', t.trim() ? [t.length > 125 ? t.slice(0, 125).trimEnd() : t, t.length > 125 ? h('span.su-more', ' … more') : null] : h('i', 'Nothing yet')), h('span.su-words', `${words} words`));
     };
     syncers.push(upd); upd();
     const card = h('article.su-post.' + lc,
@@ -324,7 +431,7 @@ export default function mountSetup(view) {
     playBars = () => {
       fills.forEach(([el]) => { el.style.transition = 'none'; el.style.width = '0%'; });
       void chart.offsetWidth;
-      fills.forEach(([el, w], i) => { el.style.transition = ''; el.style.transitionDelay = `${Math.floor(i / 2) * 70 + (i % 2) * 90}ms`; el.style.width = `${w}%`; });
+      fills.forEach(([el, w], i) => { el.style.transition = ''; el.style.transitionDelay = `${Math.floor(i / 2) * 40 + (i % 2) * 60}ms`; el.style.width = `${w}%`; });
     };
     const tbl = h('div.tbl-wrap', { hidden: true }, h('table', h('thead', h('tr', h('th', 'Age band'), h('th.num', 'Adults (Census)'), h('th.num', 'Instagram use (Pew)'), h('th.num', 'Instagram users'))),
       h('tbody', rows.map((r) => h('tr', h('td', r.band), h('td.num', fmtInt(r.adults)), h('td.num', `${Number(r.instagram_pct).toFixed(0)}%`), h('td.num', fmtInt(r.instagram_users)))))));
@@ -375,7 +482,8 @@ export default function mountSetup(view) {
   }
 
   /* ---------- step 4: run settings ---------- */
-  const fieldHost = h('div.su-dots');
+  const dotsCap = h('div.su-dots-cap');
+  const fieldHost = h('div.su-dots', dotsCap);
   let dots = null;
   const estLine = h('p.su-est');
   function choiceRow(label, key, opts, fmt) {
@@ -395,9 +503,10 @@ export default function mountSetup(view) {
       h('div.su-set-vis', fieldHost, estLine)));
 
   function crowdShare() { return S.audience && S.coreBands?.length ? (S.coreShareTouched && S.coreShare != null ? S.coreShare : clamp(estimateCoreShare(S.audience.join.rows, S.coreBands) ?? 0.6, 0.5, 0.7)) : null; }
-  function syncCrowd() { dots?.set(S.crowdSize, crowdShare()); }
+  function syncCrowd() { dots?.set(S.crowdSize, crowdShare()); heroCtl?.setCrowd(S.crowdSize); }
   function settingsChanged() {
     syncCrowd();
+    mount(dotsCap, h('b', `${S.crowdSize}`), ` of 600 people`, h('span', S.crowdSize === 600 ? 'full population' : 'one dot per person'));
     const pr = S.crowdSize * S.rounds * S.seeds;
     mount(estLine, h('b', `${S.crowdSize} people`), ` over ${S.rounds} rounds, ${S.seeds} seed${S.seeds > 1 ? 's' : ''}, in both worlds: `, h('b', `${(pr * 2).toLocaleString()} person-rounds`),
       `. ${S.seeds > 1 ? 'Two seeds let us check the passes agree. ' : 'One seed cannot show whether the result is stable. '}No clock time is promised; larger settings take longer.`,
@@ -408,7 +517,7 @@ export default function mountSetup(view) {
   /* ---------- step 5: launch ---------- */
   const summary = h('div.su-summary');
   const fold = h('div.su-fold');
-  const runBtn = h('button.btn.primary.lg.su-run', { onclick: launch }, 'Run Dry Run');
+  const runBtn = h('button.btn.primary.su-run', { onclick: launch }, 'Run Dry Run');
   cleanups.push(magnetic(runBtn, 0.18));
   const foldLabel = h('div.su-fold-cap', 'Folding the two drafts into twin worlds...');
   const p4 = panel(4, 'One last look. Launching samples the crowd and starts both worlds.', null,
@@ -482,15 +591,19 @@ export default function mountSetup(view) {
     h('span.su-num', h('em', String(i + 1)), s('svg', { viewBox: '0 0 16 16', width: 14, height: 14 }, s('path', { d: 'M3 8.5l3.2 3L13 4.5', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }))),
     h('span.su-st', h('b', st.label), h('small', st.hint))));
   const rail = h('nav.su-rail', { 'aria-label': 'New test steps' }, ind, railBtns);
-  const progress = h('i.su-prog');
+  const progFill = h('i'), progText = h('span');
+  const progress = h('div.su-prog', h('div.su-prog-bar', progFill), progText);
   rail.append(progress);
   function railDone() {
     railBtns.forEach((b, i) => { b.classList.toggle('done', i !== cur && stepDone(i)); b.classList.toggle('now', i === cur); b.setAttribute('aria-current', i === cur ? 'step' : 'false'); });
+    const ready = [0, 1, 2, 3].filter(stepDone).length, req = missing().length;
+    progFill.style.width = `${(ready / 4) * 100}%`;
+    progText.textContent = req ? `${ready} of 4 steps ready` : 'Ready to launch';
+    progress.classList.toggle('ok', !req);
   }
   function moveInd() {
     const b = railBtns[cur]; if (!b) return;
     ind.style.width = `${b.offsetWidth}px`; ind.style.height = `${b.offsetHeight}px`; ind.style.transform = `translate(${b.offsetLeft}px, ${b.offsetTop}px)`;
-    progress.style.setProperty('--p', String(cur / (STEPS.length - 1)));
   }
   const backBtn = h('button.btn.ghost', { onclick: () => go(cur - 1) }, 'Back');
   const nextBtn = h('button.btn.primary', { onclick: () => go(cur + 1) }, 'Next');
@@ -499,10 +612,10 @@ export default function mountSetup(view) {
   function updateNav() {
     backBtn.disabled = cur === 0; nextBtn.hidden = cur === STEPS.length - 1;
     nextBtn.textContent = cur === 2 && !S.audience ? 'Skip audience' : 'Next';
-    navCount.textContent = `${cur + 1} / ${STEPS.length}`;
+    navCount.textContent = `${cur + 1} of ${STEPS.length}`;
   }
   const panels = [p0, p1, p2, p3, p4];
-  const stagePane = h('div.su-stage', panels);
+  const stagePane = h('div.su-stage', h('div.su-panels', panels), nav);
 
   function onEnter(i) {
     if (i === 1) syncers.forEach((fn) => fn());
@@ -511,39 +624,33 @@ export default function mountSetup(view) {
     if (i === 4) renderSummary();
   }
 
+  // Swap panels at once (never blank) and let the new one settle in under ~300 ms.
   async function go(i) {
     i = clamp(i, 0, STEPS.length - 1);
     if (launching || i === cur) return;
-    const seq = ++goSeq, prev = cur, dir = i > prev ? 1 : -1;
+    goSeq++;
+    const dir = i > cur ? 1 : -1;
     panels.forEach((p) => p.getAnimations().forEach((a) => a.cancel()));
-    panels.forEach((p, k) => { p.hidden = k !== prev; });
-    cur = S.step = i; railDone(); moveInd(); updateNav();
-    const to = panels[i];
-    if (!reduced()) {
-      const out = panels[prev].animate([{ opacity: 1, transform: 'none', filter: 'blur(0)' }, { opacity: 0, transform: `translateX(${-dir * 36}px) scale(.985)`, filter: 'blur(6px)' }], { duration: 220, easing: EASE.exit, fill: 'forwards' });
-      await out.finished.catch(() => {});
-      if (seq !== goSeq) return;
-    }
-    panels[prev].hidden = true; panels[prev].getAnimations().forEach((a) => a.cancel());
-    to.hidden = false;
+    cur = S.step = i; seen.add(i); S.visited = [...seen];
+    panels.forEach((p, k) => { p.hidden = k !== i; });
+    railDone(); moveInd(); updateNav();
     onEnter(i);
-    if (!reduced()) {
-      to.animate([{ opacity: 0, transform: `translateX(${dir * 44}px) scale(.99)`, filter: 'blur(6px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }], { duration: 520, easing: EASE.expo });
-      stagger([...to.querySelectorAll(':scope > .su-body > *')], { y: 14, gap: 70, ms: 600, delay: 80 });
-    }
-    window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' });
+    if (!reduced()) panels[i].animate([{ opacity: 0.25, transform: `translateX(${dir * 12}px)` }, { opacity: 1, transform: 'none' }], { duration: 280, easing: EASE.out });
+    const top = stagePane.getBoundingClientRect().top;
+    if (top < 70) window.scrollTo({ top: Math.max(0, window.scrollY + top - 84), behavior: reduced() ? 'auto' : 'smooth' });
   }
 
-  const shell = h('div.su-shell', rail, h('div.su-main', stagePane, nav));
+  const shell = h('div.su-shell', rail, h('div.su-main', stagePane));
   shell.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target.matches('input[type=text]') && cur < STEPS.length - 1) { e.preventDefault(); go(cur + 1); }
   });
 
   view.append(h('div.view-page.su-page', hero, shell));
-  riseWords(title, { gap: 55, delay: 80 });
-  cleanups.push(mountHero(heroHost));
-  stagger([...hero.querySelectorAll('.su-hero-copy > p')], { y: 10, ms: 700, delay: 500 });
-  stagger(railBtns, { y: 8, gap: 60, ms: 600, delay: 200 });
+  if (!reduced()) {
+    [...hero.querySelectorAll('.su-hero-copy > *')].forEach((el, k) => el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 420, delay: k * 50, easing: EASE.out, fill: 'backwards' }));
+    stagger(railBtns, { y: 6, gap: 35, ms: 360, delay: 60 });
+  }
+  heroCtl = mountHero(heroHost, S.crowdSize); cleanups.push(() => heroCtl.destroy());
 
   dots = dotField(fieldHost); cleanups.push(() => dots.destroy());
   const ro = new ResizeObserver(moveInd); ro.observe(rail); cleanups.push(() => ro.disconnect());

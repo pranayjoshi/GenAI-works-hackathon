@@ -1,44 +1,48 @@
-/* Agents stage: the live multi-agent workflow as a flow-based node graph (flow runs UPWARD).
+/* Agents stage: the live multi-agent workflow as a flow-based node graph (flow runs top to bottom).
  * Hand-rolled SVG edges + HTML nodes, a pooled set of SVG packets for model calls, A/B sparks for decisions,
- * a side drawer per node and a Nemotron panel (gauges, token bars, served_by, live ticker).
+ * a side drawer per node, a three.js "engine room" (one column per model role: height = calls, spin = latency)
+ * and a Nemotron panel (gauges, token bars, served_by, live ticker).
  * Driven by ctx.S and the bus: status, trace, action, round, snapshot, history, verdict, report, done, error, seed. */
-import { h, s, mount, fmtInt, vcolor } from '../../core/dom.js';
+import { h, s, mount, fmtInt, vcolor, cssVar } from '../../core/dom.js';
 import { countUp, reduced } from '../../core/motion.js';
+import { createStage, dotTexture } from '../../core/three-kit.js';
 
-/* ---------------------------------------------------------------- layout (logical 1000 x 860 canvas, y grows downward) */
-const W = 1000, H = 860;
-const SPINE = 440;
-// i = pipeline order (0 = first), ord = vertical order in the phone list (0 = top)
+/* ---------------------------------------------------------------- layout (logical 1000 x 446 canvas, y grows downward)
+ * A four-row snake that reads top to bottom: row 1 data prep (left to right), row 2 the twin worlds, row 3 checks and
+ * analysis (left to right), row 4 the verdict, with the optional "Ask why" branch hanging under the analyst. */
+const W = 1000, H = 430;
+const R1 = 48, R2 = 166, R3 = 284, R4 = 386;
+// i = pipeline order (0 = first), ord = order in the phone list (0 = top)
 const NODES = [
-  { id: 'verdict', i: 9, ord: 0, x: SPINE, y: 40, w: 300, h: 54, label: 'Verdict and report', rc: '--good', go: 'verdict',
-    short: 'The call: a winner, or too close to call, with the written report.', long: 'The finished answer: which version wins, how sure the simulation is, or "too close to call" when the interval spans zero.' },
-  { id: 'critic', i: 8, ord: 1, x: SPINE, y: 120, w: 300, h: 54, label: 'Critic', role: 'review', rc: '--warn', go: 'report',
-    short: 'Reviews every claim against the data before it ships.', long: 'Role review. Checks the written report against the numbers and flags claims the data does not support.' },
-  { id: 'report', i: 7, ord: 2, x: SPINE, y: 200, w: 300, h: 54, label: 'Report agent', role: 'reason', rc: '--accent', go: 'report',
-    short: 'Writes the claims, with SQL tool calls as receipts.', long: 'Role reason. Queries the run database with SQL tool calls and writes each claim with the query that backs it.' },
-  { id: 'analyst', i: 6, ord: 3, x: SPINE, y: 280, w: 300, h: 54, label: 'Analyst', rc: '--good', go: 'verdict',
-    short: 'Verdict, segment splits and the tipping point.', long: 'Computes the verdict with intervals, segment splits (role, age, income, customer status) and the tipping point. This step is statistics, not a model call.' },
-  { id: 'guard', i: 5, ord: 4, x: SPINE, y: 360, w: 300, h: 54, label: 'Fact-check guard', rc: '--bad', go: 'worlds',
-    short: 'Withholds invented prices, version leaks and contradictions.', long: 'Rule-based checks on every decision: invented prices, details leaked from the other version, false "seen it before" claims, duplicates, and private feelings that contradict the public action.' },
-  { id: 'twin0', i: 4, ord: 5, kind: 'twin', v: 0, x: 290, y: 470, w: 270, h: 84, label: 'Twin world A', role: 'crowd', rc: '--a', go: 'worlds',
-    short: 'Every simulated person decides. Same crowd, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this version. Both worlds share the same crowd, social graph and schedule, so only the post differs.' },
-  { id: 'twin1', i: 4, ord: 5, kind: 'twin', v: 1, x: 590, y: 470, w: 270, h: 84, label: 'Twin world B', role: 'crowd', rc: '--b', go: 'worlds',
-    short: 'Every simulated person decides. Same crowd, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this version. Both worlds share the same crowd, social graph and schedule, so only the post differs.' },
-  { id: 'voice', i: 3, ord: 6, x: SPINE, y: 580, w: 300, h: 54, label: 'Voice writer', role: 'voice', rc: '--accent-2', go: 'crowd',
-    short: 'Writes each persona\'s own voice lines.', long: 'Role voice. Gives each sampled persona the words they would use in a comment or a private thought.' },
-  { id: 'sampler', i: 2, ord: 7, x: SPINE, y: 660, w: 300, h: 54, label: 'Crowd sampler', rc: '--accent-2', go: 'crowd',
-    short: 'Copula sampling matched to Census marginals.', long: 'Draws a synthetic crowd whose age, income and role mix matches the Census marginals while keeping realistic correlations (a copula). Statistics, not a model call.' },
-  { id: 'audience', i: 1, ord: 8, x: SPINE, y: 740, w: 300, h: 54, label: 'Audience agent', role: 'reason', rc: '--accent', go: 'crowd',
-    short: 'Names the core and spillover segments.', long: 'Role reason. Reads the post and the business and names the core audience segments plus the spillover segments the post might reach.' },
-  { id: 'sources', i: 0, ord: 9, kind: 'sources', x: SPINE, y: 815, w: 440, h: 64, label: 'Data sources', rc: '--faint', go: 'crowd',
-    chips: ['Census ACS', 'Pew platform use', 'Priors', 'Customer list'],
+  { id: 'sources', i: 0, ord: 0, kind: 'sources', x: 135, y: R1, w: 240, h: 72, label: 'Data sources', rc: '--faint', go: 'crowd',
+    chips: ['Census ACS', 'Pew', 'Priors', 'Customers'], chipsLong: ['Census ACS', 'Pew platform use', 'Behavioural priors', 'Customer list'],
     short: 'Federated SQL (Zetaris / DuckDB) over four sources.', long: 'Census ACS demographics, Pew platform use, behavioural priors and your customer list, joined through federated SQL (Zetaris, DuckDB).' },
-  // "Ask why" side branch, dimmer
-  { id: 'interviewer', side: true, ord: 31, x: 860, y: 200, w: 200, h: 54, label: 'Interviewer', role: 'interview', rc: '--muted', go: 'ask',
+  { id: 'audience', i: 1, ord: 1, x: 395, y: R1, w: 200, h: 68, label: 'Audience agent', role: 'reason', rc: '--accent', go: 'crowd',
+    short: 'Names the core and spillover segments.', long: 'Role reason. Reads the post and the business and names the core audience segments plus the spillover segments the post might reach.' },
+  { id: 'sampler', i: 2, ord: 2, x: 635, y: R1, w: 200, h: 68, label: 'Crowd sampler', rc: '--accent-2', go: 'crowd',
+    short: 'Copula sampling matched to Census marginals.', long: 'Draws a synthetic crowd whose age, income and role mix matches the Census marginals while keeping realistic correlations (a copula). Statistics, not a model call.' },
+  { id: 'voice', i: 3, ord: 3, x: 880, y: R1, w: 210, h: 68, label: 'Voice writer', role: 'voice', rc: '--accent-2', go: 'crowd',
+    short: 'Writes each persona\'s own voice lines.', long: 'Role voice. Gives each sampled persona the words they would use in a comment or a private thought.' },
+  { id: 'twin0', i: 4, ord: 4, kind: 'twin', v: 0, x: 350, y: R2, w: 270, h: 96, label: 'Twin world A', role: 'crowd', rc: '--a', go: 'worlds',
+    short: 'Every simulated person decides. Same crowd, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this version. Both worlds share the same crowd, social graph and schedule, so only the post differs.' },
+  { id: 'twin1', i: 4, ord: 4, kind: 'twin', v: 1, x: 650, y: R2, w: 270, h: 96, label: 'Twin world B', role: 'crowd', rc: '--b', go: 'worlds',
+    short: 'Every simulated person decides. Same crowd, graph and schedule.', long: 'Role crowd. Each simulated person decides what to do with this version. Both worlds share the same crowd, social graph and schedule, so only the post differs.' },
+  { id: 'guard', i: 5, ord: 5, x: 135, y: R3, w: 240, h: 68, label: 'Fact-check guard', rc: '--bad', go: 'worlds',
+    short: 'Withholds invented prices, version leaks and contradictions.', long: 'Rule-based checks on every decision: invented prices, details leaked from the other version, false "seen it before" claims, duplicates, and private feelings that contradict the public action.' },
+  { id: 'analyst', i: 6, ord: 6, x: 395, y: R3, w: 200, h: 68, label: 'Analyst', rc: '--good', go: 'verdict',
+    short: 'Verdict, segment splits and the tipping point.', long: 'Computes the verdict with intervals, segment splits (role, age, income, customer status) and the tipping point. This step is statistics, not a model call.' },
+  { id: 'report', i: 7, ord: 7, x: 635, y: R3, w: 200, h: 68, label: 'Report agent', role: 'reason', rc: '--accent', go: 'report',
+    short: 'Writes the claims, with SQL tool calls as receipts.', long: 'Role reason. Queries the run database with SQL tool calls and writes each claim with the query that backs it.' },
+  { id: 'critic', i: 8, ord: 8, x: 880, y: R3, w: 210, h: 68, label: 'Critic', role: 'review', rc: '--warn', go: 'report',
+    short: 'Reviews every claim against the data before it ships.', long: 'Role review. Checks the written report against the numbers and flags claims the data does not support.' },
+  { id: 'verdict', i: 9, ord: 9, x: 835, y: R4, w: 300, h: 64, label: 'Verdict and report', rc: '--good', go: 'verdict',
+    short: 'A winner, or too close to call, with the written report.', long: 'The finished answer: which version wins, how sure the simulation is, or "too close to call" when the interval spans zero.' },
+  // "Ask why" side branch under the analyst, dimmer
+  { id: 'interviewer', side: true, ord: 31, x: 120, y: R4, w: 195, h: 60, label: 'Interviewer', role: 'interview', rc: '--muted', go: 'ask',
     short: 'Asks one simulated person why.', long: 'Role interview. Answers "why did you do that" in the voice of one specific simulated person, using their own memories.' },
-  { id: 'moderator', side: true, ord: 32, x: 860, y: 280, w: 200, h: 54, label: 'Focus group', role: 'interview', rc: '--muted', go: 'ask',
+  { id: 'moderator', side: true, ord: 32, x: 335, y: R4, w: 195, h: 60, label: 'Focus group', role: 'interview', rc: '--muted', go: 'ask',
     short: 'Moderates a group of people.', long: 'Role interview. A moderator puts a question to a sampled group and records each turn.' },
-  { id: 'rewriter', side: true, ord: 33, x: 860, y: 360, w: 200, h: 54, label: 'Rewriter', role: 'reason', rc: '--c', go: 'ask',
+  { id: 'rewriter', side: true, ord: 33, x: 550, y: R4, w: 195, h: 60, label: 'Rewriter', role: 'reason', rc: '--c', go: 'ask',
     short: 'Drafts Version C.', long: 'Role reason. Rewrites the post into a Version C using what the crowd disliked, ready for a follow-up run.' },
 ];
 const NODE = Object.fromEntries(NODES.map((n) => [n.id, n]));
@@ -52,6 +56,7 @@ const EDGES = [
 ];
 const PHASE_IDX = { data: 0, audience: 1, sampling: 2, voices: 3, running: 4, analyzing: 6, report: 7 };
 const ROLE_ORDER = ['reason', 'voice', 'crowd', 'review', 'interview'];
+const ROLE_FALLBACK = { reason: '#8f7bff', voice: '#4fe3c1', crowd: '#ffc84d', review: '#4fe3a0', interview: '#9196ab' };
 const ROLE_META = {
   reason: { c: 'var(--accent)', d: 'Audience agent, report agent, rewriter' },
   voice: { c: 'var(--accent-2)', d: 'Persona voice lines' },
@@ -90,13 +95,20 @@ export default {
     const stageBox = h('div.pl-stage', canvas);
     const drawer = h('aside.pl-drawer', { hidden: true, 'aria-label': 'Node details' });
     const summary = h('div.pl-summary');
-    const replayBtn = h('button.btn.sm', { type: 'button', onclick: () => replayFlow() }, 'Replay flow');
+    const replayBtn = h('button.btn.sm.pl-replay', { type: 'button', onclick: () => replayFlow() }, 'Replay flow');
     const head = h('div.pl-head',
-      h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Sources at the bottom, the verdict at the top. Each glowing packet is one model call.')),
+      h('div.pl-head-t', h('h2', 'Agents at work'), h('p.muted', 'Sources at the top, the verdict at the bottom; each row reads left to right.')),
       h('div.pl-head-r', summary, replayBtn));
-    const legend = h('div.pl-legend', h('span', h('i.lg.done'), 'done'), h('span', h('i.lg.now'), 'working now'), h('span', h('i.lg.future'), 'waiting'), h('span', h('i.lg.side'), 'Ask why (after the verdict)'));
+    const legend = h('div.pl-legend', h('span', h('i.lg.done'), 'done'), h('span', h('i.lg.now'), 'working now'), h('span', h('i.lg.future'), 'waiting'), h('span', h('i.lg.side'), 'Ask why (after the verdict)'), h('span.lg-pk', h('i.lg.pk'), 'one glowing packet = one model call'));
+    stageBox.append(legend);
     const nemo = h('section.pl-nemo');
-    const root = h('div.pl', head, h('div.pl-main', stageBox, drawer), legend, nemo);
+    const eng = { view: h('div.pl-eng-view'), labs: {}, flat: h('div.pl-eng-flat'), st: null, cols: {}, sub: h('span.sub') };
+    eng.labLayer = h('div.pl-eng-labs');
+    eng.empty = h('div.pl-eng-empty', 'No model calls recorded yet');
+    eng.view.append(eng.labLayer, eng.flat, eng.empty);
+    const engCard = h('section.pl-eng', h('div.card-head', h('h2', 'Engine room'), eng.sub), eng.view,
+      h('div.pl-eng-key', h('span', h('i.k-h'), 'height = calls (square-root scale)'), h('span', h('i.k-s'), 'spin and rise speed = 1 / avg latency')));
+    const root = h('div.pl', head, h('div.pl-main', stageBox, drawer), h('div.pl-lower', engCard, nemo));
     el.append(root);
     NODES.forEach((n, k) => { nodeEls[n.id] = nodeEls_[k]; });
     buildEdges();
@@ -113,22 +125,25 @@ export default {
         onfocus: () => highlight(n.id), onblur: () => highlight(null),
       },
         h('span.pl-glow'), h('span.pl-hit'),
-        h('div.pl-top', h('span.pl-dot'), h('b.pl-name', n.label), n.role ? h('span.pl-role', n.role) : null, h('span.pl-stat')),
+        h('div.pl-top', h('span.pl-dot'), h('b.pl-name', n.label), n.role ? h('span.pl-role', n.role) : null),
         n.chips ? h('div.pl-chips', n.chips.map((c) => h('span', c))) : h('div.pl-desc', n.short),
-        n.kind === 'twin' ? h('div.pl-twin', h('span.pl-count'), h('span.pl-count-l', 'decisions'), h('span.pl-round')) : null,
-        h('div.pl-spark-layer'),
-        h('div.pl-detail'));
+        n.kind === 'twin' ? h('div.pl-twin', h('span.pl-count'), h('span.pl-count-l', 'decisions'), h('span.pl-round')) : h('div.pl-stat'),
+        h('div.pl-spark-layer'));
       return nd;
     }
-    // anchor points in canvas units: spine edges leave a node's top and enter the next node's bottom
-    function pathFor(a, b, side) {
-      if (side) { const x1 = a.x + a.w / 2, y1 = a.y, x2 = b.x - b.w / 2, y2 = b.y, mx = (x1 + x2) / 2; return `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`; }
-      const x1 = a.x, y1 = a.y - a.h / 2, x2 = b.x, y2 = b.y + b.h / 2, my = (y1 + y2) / 2;
+    // anchor points in canvas units: edges in a row run left to right (right side -> left side),
+    // edges between rows run downward (bottom -> top)
+    function pathFor(a, b) {
+      if (Math.abs(a.y - b.y) < 8) {
+        const x1 = a.x + a.w / 2, x2 = b.x - b.w / 2, mx = (x1 + x2) / 2;
+        return `M${x1} ${a.y} C${mx} ${a.y} ${mx} ${b.y} ${x2} ${b.y}`;
+      }
+      const x1 = a.x, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y - b.h / 2, my = (y1 + y2) / 2;
       return `M${x1} ${y1} C${x1} ${my} ${x2} ${my} ${x2} ${y2}`;
     }
     function buildEdges() {
       for (const [id, from, to, kind] of EDGES) {
-        const a = NODE[from], b = NODE[to], d = pathFor(a, b, kind === 'side');
+        const a = NODE[from], b = NODE[to], d = pathFor(a, b);
         const col = b.kind === 'twin' ? vcolor(vkey(variantOf(b.v))) : a.kind === 'twin' ? vcolor(vkey(variantOf(a.v))) : `var(${b.rc === '--faint' ? '--accent' : b.rc})`;
         const base = s('path', { class: 'pl-e-base', d });
         const flow = s('path', { class: 'pl-e-flow', d });
@@ -199,7 +214,7 @@ export default {
     function queuePaint() { if (!paintT && !destroyed) paintT = setTimeout(() => { paintT = 0; paintAll(); }, 140); }
     function paintAll() {
       if (destroyed) return;
-      paintStates(); paintSummary(); if (visible) paintNemo(); if (openId) paintDrawer(true);
+      paintStates(); paintSummary(); if (visible) { paintNemo(); paintEngine(); } if (openId) paintDrawer(true);
     }
     function paintStates() {
       const cur = curIdx(), running = replayIdx != null || (S.status !== 'done' && S.status !== 'error' && cur >= 0);
@@ -211,10 +226,15 @@ export default {
         if (n.side) nd.classList.toggle('used', usageOf('interview').length > 0 && n.id !== 'rewriter');
         nd.setAttribute('aria-label', `${n.label}: ${st === 'now' ? 'working now' : st === 'done' ? 'done' : st === 'error' ? 'failed' : st === 'side' ? 'optional follow-up' : 'waiting'}. Open details.`);
         if (prev !== st && visible && !reduced() && (st === 'done' || st === 'now')) nd.animate([{ transform: 'translate(-50%,-50%) scale(1.06)' }, { transform: 'translate(-50%,-50%) scale(1)' }], { duration: 520, easing: 'cubic-bezier(0.34,1.4,0.64,1)' });
-        const det = nd.querySelector('.pl-detail');
+        // while a node works (or failed), its description line carries the live detail instead
+        const det = nd.querySelector('.pl-desc');
         const txt = st === 'now' ? (S.detail || '') : st === 'error' ? (S.error || 'The run stopped here.') : '';
-        if (det.textContent !== txt) det.textContent = txt;
-        det.dataset.on = txt ? '1' : '0';
+        if (det) {
+          const want = txt || n.short;
+          if (det.textContent !== want) det.textContent = want;
+          det.dataset.live = txt ? (st === 'error' ? 'err' : 'now') : '';
+          det.title = txt || '';
+        }
         paintNodeStat(n, nd);
       }
       for (const e of Object.values(edgeEls)) {
@@ -252,7 +272,7 @@ export default {
         if (st && st.calls && !st.shared) txt = `${fmtInt(st.calls)} calls`;
         if (n.id === 'moderator' && S.focus?.length) txt = `${S.focus.length} turns`;
       }
-      if (n.kind !== 'twin' && out.textContent !== txt) out.textContent = txt;
+      if (out && out.textContent !== txt) { out.textContent = txt; out.title = txt; }
     }
     function paintSummary() {
       const rows = [...S.usage.values()];
@@ -280,11 +300,13 @@ export default {
       nemo.querySelector('.pl-nemo-sub').textContent = `${fmtInt(totalCalls)} calls. served_by shows which model actually answered each call.`;
       if (!roles.length) {
         wrap.classList.add('empty');
-        if (!wrap.querySelector('.pl-empty')) mount(wrap, h('div.pl-empty.muted', S.status === 'done' ? 'No model calls were recorded for this run.' : 'Waiting for the first model call...'));
-        else wrap.querySelector('.pl-empty').textContent = S.status === 'done' ? 'No model calls were recorded for this run.' : 'Waiting for the first model call...';
+        const msg = S.status === 'done' ? 'No model calls were recorded for this run.' : S.status === 'error' ? 'The run stopped before any model call was recorded.' : 'Waiting for the first model call...';
+        if (!wrap.querySelector('.pl-empty')) mount(wrap, h('div.pl-empty', h('b', 'No calls yet'), h('span.muted', msg)));
+        else wrap.querySelector('.pl-empty span').textContent = msg;
       } else {
         wrap.classList.remove('empty');
         wrap.querySelector('.pl-empty')?.remove();
+        wrap.dataset.n = String(roles.length);
         for (const r of roles) {
           const t = roleTotals(r), meta = ROLE_META[r] || { c: 'var(--muted)', d: '' };
           let card = wrap.querySelector(`[data-role="${r}"]`);
@@ -305,7 +327,7 @@ export default {
           mount(card.querySelector('.pl-g-meta'), h('span', `avg ${t.calls ? ms1(t.ms / t.calls) : '-'}`), t.errors ? h('span.chip.bad', `${t.errors} failed`) : h('span.chip.good', 'no failures'));
           const sv = Object.entries(t.served).sort((a, b) => b[1] - a[1]), sn = sv.reduce((a, [, c]) => a + c, 0);
           mount(card.querySelector('.pl-g-served'), sv.length ? [h('div.pl-bar.stack', sv.map(([k, c], idx) => h('i', { title: `${k} x ${c}`, style: { width: `${(c / sn) * 100}%`, opacity: String(1 - idx * 0.22) } }))),
-            h('div.pl-bar-l.wrap', sv.map(([k, c]) => h('span.served', `${k} × ${fmtInt(c)}`)))] : null);
+            h('div.pl-bar-l.wrap', sv.map(([k, c]) => h('span.served', { title: `served_by ${k} × ${fmtInt(c)}` }, h('span.sv-k', k), h('span.sv-n', `× ${fmtInt(c)}`))))] : null);
         }
       }
       // live ticker, newest first; rows that arrived since the last paint slide in
@@ -347,7 +369,7 @@ export default {
         h('p', n.long),
         st === 'now' && S.detail ? h('div.pl-d-now', S.detail) : null,
         st === 'error' && S.error ? h('div.banner.bad', S.error) : null,
-        n.chips ? h('div.pl-chips.big', n.chips.map((c) => h('span', c))) : null,
+        n.chips ? h('div.pl-chips.big', (n.chipsLong || n.chips).map((c) => h('span', c))) : null,
         n.kind === 'twin' ? h('div.pl-d-grid', h('div', h('small', 'Decisions'), h('b', fmtInt(decisionsOf(n.v)))), h('div', h('small', 'Rounds'), h('b', S.spec ? fmtInt(S.spec.rounds) : '-'))) : null,
         stats ? [
           h('div.pl-d-grid',
@@ -363,7 +385,7 @@ export default {
         ] : h('p.muted.pl-note', 'This step is statistics and rules, not a model call, so it has no model latency to show.'),
         h('button.btn.primary.pl-go', { type: 'button', onclick: () => ctx.go(n.go) }, `Go to ${({ crowd: 'Crowd', worlds: 'Twin worlds', verdict: 'Verdict', report: 'Report', ask: 'Ask why' })[n.go] || n.go}`),
       ];
-      mount(drawer, body);
+      mount(drawer, body.flat(3));   // mount() only flattens one level; the stats block nests deeper
       if (!soft && !reduced()) drawer.querySelectorAll('.pl-hist i').forEach((b, k) => b.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: 600, delay: 120 + k * 40, easing: 'cubic-bezier(0.16,1,0.3,1)', fill: 'backwards' }));
     }
     function histogram(vals) {
@@ -420,6 +442,7 @@ export default {
     function routeTrace(t, replay) {
       const A = vcolor(vkey(variantOf(0))), B = vcolor(vkey(variantOf(1))), acc = 'var(--accent)';
       const tag = String(t.tag || '').toLowerCase(), bad = t.ok === false;
+      enginePulse(t.role, bad);
       switch (t.role) {
         case 'crowd': { const k = altTick++ & 1; spawn(k ? 'e-v1' : 'e-v0', k ? B : A, 800, bad); break; }
         case 'voice': spawn('e-smp', 'var(--accent-2)', 800, bad); break;
@@ -448,7 +471,8 @@ export default {
       const big = rec.action && rec.action !== 'scroll_past';
       const sp = h('i.pl-spark' + (big ? '.big' : ''), { style: { left: `${10 + Math.random() * 80}%`, background: vcolor(vkey(v)) } });
       layer.append(sp); sparkLive++;
-      const a = sp.animate([{ opacity: 0, transform: 'translateY(0) scale(.4)' }, { opacity: 1, offset: 0.2 }, { opacity: 0, transform: `translate(${(Math.random() - 0.5) * 30}px, ${-(big ? 90 : 60) - Math.random() * 40}px) scale(${big ? 1.3 : 0.8})` }], { duration: 1100 + Math.random() * 500, easing: 'cubic-bezier(0.22,1,0.36,1)' });
+      // decisions fall out of the bottom of the world, toward the fact-check guard below
+      const a = sp.animate([{ opacity: 0, transform: 'translateY(0) scale(.4)' }, { opacity: 1, offset: 0.2 }, { opacity: 0, transform: `translate(${(Math.random() - 0.5) * 24}px, ${(big ? 34 : 24) + Math.random() * 12}px) scale(${big ? 1.3 : 0.8})` }], { duration: 1000 + Math.random() * 400, easing: 'cubic-bezier(0.22,1,0.36,1)' });
       const end = () => { sp.remove(); sparkLive--; };
       a.onfinish = end; a.oncancel = end;
     }
@@ -473,6 +497,179 @@ export default {
     }
     function stopReplay() { replayTimers.forEach((t) => { clearTimeout(t); timers.delete(t); }); replayTimers = []; replayIdx = null; }
 
+    /* ---------------------------------------------------------------- engine room: one glowing column per model role.
+     * Column height = calls (square-root scale, so a 3-call role still shows next to a 2,000-call one), the halo on
+     * top spins and the glowing calls rise at a speed that follows 1 / average latency, live calls send a burst up
+     * their column. Falls back to 2D bars without WebGL. */
+    const ROLE_VAR = { reason: '--accent', voice: '--accent-2', crowd: '--warn', review: '--good', interview: '--muted' };
+    const roleColor = (r) => (ROLE_VAR[r] && cssVar(ROLE_VAR[r])) || ROLE_FALLBACK[r] || '#9196ab';
+    const engRoles = () => ROLE_ORDER.concat([...new Set([...S.usage.values()].map((u) => u.role))].filter((r) => r && !ROLE_ORDER.includes(r))).slice(0, 7);
+    function engineData() {
+      const rows = engRoles().map((r) => { const t = roleTotals(r); return { r, calls: t.calls, avg: t.calls ? t.ms / t.calls : 0, errors: t.errors, k: 0 }; });
+      const mx = Math.max(1, ...rows.map((x) => x.calls));
+      rows.forEach((x) => { x.k = Math.sqrt(x.calls / mx); });
+      return rows;
+    }
+    function paintEngine() {
+      const rows = engineData(), total = rows.reduce((a, x) => a + x.calls, 0);
+      eng.sub.textContent = total ? `${fmtInt(total)} calls across ${rows.filter((x) => x.calls).length} of ${rows.length} roles` : 'idle';
+      eng.empty.hidden = total > 0;
+      eng.empty.textContent = S.status === 'error' ? 'The run stopped before any model call' : S.status === 'done' ? 'No model calls were recorded' : 'Waiting for the first model call';
+      engCard.classList.toggle('idle', !total);
+      rows.forEach((x, k) => {
+        let lab = eng.labs[x.r];
+        if (!lab) { lab = eng.labs[x.r] = h('div.pl-eng-lab', h('b'), h('span.n'), h('span.l')); eng.labLayer.append(lab); }
+        lab.style.setProperty('--gc', roleColor(x.r));
+        lab.querySelector('b').textContent = x.r;
+        lab.querySelector('.n').textContent = `${fmtInt(x.calls)} call${x.calls === 1 ? '' : 's'}`;
+        lab.querySelector('.l').textContent = x.calls ? `avg ${ms1(x.avg)}` : 'no calls';
+        lab.title = `${x.r}: ${fmtInt(x.calls)} calls, average latency ${x.calls ? ms1(x.avg) : '-'}${x.errors ? `, ${x.errors} failed` : ''}`;
+        lab.classList.toggle('bad', x.errors > 0);
+        lab.classList.toggle('idle', !x.calls);
+        if (!eng.st) { lab.style.left = `${((k + 0.5) / rows.length) * 100}%`; lab.style.top = ''; }
+      });
+      if (eng.isFlat) mount(eng.flat, rows.map((x) => h('div.pl-eng-bar' + (x.calls ? '' : '.idle'), { style: { '--gc': roleColor(x.r) } }, h('i', { style: { height: `${x.calls ? Math.max(6, x.k * 100) : 3}%` } }))));
+      if (eng.st) { updateEngineScene(rows); eng.place?.(performance.now() / 1000, true); }
+    }
+    async function buildEngine() {
+      let st = null;
+      try { st = await createStage(eng.view, { camera: { fov: 34, x: 0, y: 4, z: 12 } }); } catch (e) { console.warn('pipeline: engine room 3D unavailable, using 2D bars', e); }
+      if (destroyed) { st?.dispose(); return; }
+      if (!st) { eng.isFlat = true; engCard.classList.add('flat'); paintEngine(); return; }
+      eng.st = st;
+      const { THREE, scene, camera } = st;
+      eng.view.prepend(st.canvas);
+      st.canvas.classList.add('pl-eng-cv');
+      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+      const key = new THREE.DirectionalLight(0xffffff, 1.0); key.position.set(4, 9, 7); scene.add(key);
+      const grid = new THREE.GridHelper(22, 44, 0xffffff, 0xffffff);
+      grid.material.transparent = true; grid.material.opacity = 0.08; grid.material.depthWrite = false; scene.add(grid);
+      eng.grid = grid;
+      eng.tex = dotTexture(THREE);
+      eng.MAXH = 4.2;
+      eng.geo = {
+        base: new THREE.CylinderGeometry(0.56, 0.64, 0.12, 48),
+        tube: new THREE.CylinderGeometry(0.4, 0.4, eng.MAXH, 40, 1, true).translate(0, eng.MAXH / 2, 0),
+        fill: new THREE.CylinderGeometry(0.3, 0.3, 1, 40).translate(0, 0.5, 0),
+        cap: new THREE.TorusGeometry(0.37, 0.03, 10, 56).rotateX(Math.PI / 2),
+        arc: new THREE.TorusGeometry(0.58, 0.026, 8, 48, Math.PI * 0.6).rotateX(Math.PI / 2),
+        floor: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      };
+      eng.pool = [];
+      for (let k = 0; k < 64; k++) {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: eng.tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+        sp.visible = false; scene.add(sp); eng.pool.push(sp);
+      }
+      eng.parts = [];
+      const v3 = new THREE.Vector3(), target = new THREE.Vector3(0, eng.MAXH * 0.5 - 0.3, 0);
+      // frame every column (fit the arc's width and the tallest column), then pin the HTML labels under the bases.
+      // Also run outside the frame loop, so the layout is right even before (or without) a rendered frame.
+      eng.place = (t, renderNow) => {
+        const W2 = eng.view.clientWidth, H2 = eng.view.clientHeight;
+        if (!W2 || !H2) return;
+        if (Math.abs(camera.aspect - W2 / H2) > 0.001) { camera.aspect = W2 / H2; camera.updateProjectionMatrix(); }
+        const vf = (camera.fov * Math.PI) / 360, hf = Math.atan(Math.tan(vf) * camera.aspect), n = eng.n || 5;
+        // spread the row to fill a wide view; fall back to a fixed gap (and a farther camera) in a narrow one
+        const dv = (eng.MAXH * 0.6 + 1.0) / Math.tan(vf);
+        const gap = n > 1 ? clamp((1.45 * dv * Math.tan(hf)) / (n - 1), 1.7, 3.4) : 1.7;
+        for (const c of Object.values(eng.cols)) c.g.position.x = (c.k - (n - 1) / 2) * gap;
+        const halfW = ((n - 1) / 2) * gap + 0.85;
+        const d = Math.max(halfW / Math.tan(hf), dv) * 1.06;
+        const sway = reduced() ? 0 : Math.sin(t * 0.18) * 0.6;
+        camera.position.set(sway, 1.3 + d * 0.22, d);
+        camera.lookAt(target);
+        camera.updateMatrixWorld();
+        for (const [r, c] of Object.entries(eng.cols)) {
+          const lab = eng.labs[r]; if (!lab) continue;
+          v3.set(c.g.position.x, 0, 1.0).project(camera);
+          const x = Math.round(((v3.x + 1) / 2) * W2), y = Math.round(((1 - v3.y) / 2) * H2) + 6;
+          if (lab._x !== x || lab._y !== y) { lab._x = x; lab._y = y; lab.style.left = `${x}px`; lab.style.top = `${y}px`; }
+        }
+        if (renderNow) { st.resize(); st.renderer.render(scene, camera); }
+      };
+      st.onFrame((t, dt) => {
+        const still = reduced();
+        eng.place(t);
+        for (const c of Object.values(eng.cols)) {
+          // wall-clock easing (not frame-count based) so throttled frames still land on the true height in ~700 ms
+          const u = still ? 1 : Math.min(1, (performance.now() - c.t0) / 700);
+          c.h = c.from + (c.th - c.from) * (1 - Math.pow(1 - u, 3));
+          c.fill.scale.y = Math.max(0.001, c.h);
+          c.cap.position.y = c.spin.position.y = 0.14 + c.h;
+          if (!still && c.calls) {
+            c.spin.rotation.y += dt * c.speed;
+            c.acc += dt * c.rate;
+            while (c.acc >= 1) { c.acc -= 1; emit(c, false, false); }
+          }
+        }
+        for (let k = eng.parts.length - 1; k >= 0; k--) {
+          const p = eng.parts[k]; p.u += dt / p.dur;
+          if (p.u >= 1) { p.sp.visible = false; eng.parts.splice(k, 1); continue; }
+          const c = p.c;
+          p.sp.position.set(c.g.position.x + p.dx, 0.2 + p.u * (c.h + 0.15), p.dz);
+          p.sp.material.opacity = Math.sin(Math.PI * p.u) * (p.big ? 1 : 0.8);
+        }
+      });
+      paintEngine();
+    }
+    function makeColumn() {
+      const { THREE, scene } = eng.st, g = new THREE.Group();
+      const base = new THREE.Mesh(eng.geo.base, new THREE.MeshStandardMaterial({ color: 0x1a1e2c, roughness: 0.55, metalness: 0.45, emissive: 0xffffff, emissiveIntensity: 0.12 }));
+      base.position.y = 0.07;
+      const glow = new THREE.Mesh(eng.geo.floor, new THREE.MeshBasicMaterial({ map: eng.tex, transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending }));
+      glow.position.y = 0.004; glow.scale.setScalar(2.1);
+      const tube = new THREE.Mesh(eng.geo.tube, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }));
+      tube.position.y = 0.14;
+      const fill = new THREE.Mesh(eng.geo.fill, new THREE.MeshStandardMaterial({ emissiveIntensity: 0.6, transparent: true, opacity: 0.9, roughness: 0.3, metalness: 0.1 }));
+      fill.position.y = 0.14; fill.scale.y = 0.001;
+      const cap = new THREE.Mesh(eng.geo.cap, new THREE.MeshBasicMaterial());
+      const arcM = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85 });
+      const spin = new THREE.Group();
+      const a1 = new THREE.Mesh(eng.geo.arc, arcM), a2 = new THREE.Mesh(eng.geo.arc, arcM); a2.rotation.y = Math.PI;
+      spin.add(a1, a2); spin.rotation.x = 0.12;
+      g.add(glow, base, tube, fill, cap, spin);
+      scene.add(g);
+      return { g, base, glow, tube, fill, cap, spin, arcM, h: 0.001, th: 0.001, from: 0.001, t0: 0, speed: 0, rate: 0, acc: Math.random(), calls: 0, dur: 1.5, col: '' };
+    }
+    function updateEngineScene(rows) {
+      const n = rows.length, line = cssVar('--text') || '#ffffff', panel = cssVar('--panel-3') || '#20253a', bad = cssVar('--bad') || '#ff5f6d';
+      eng.n = n;
+      eng.grid.material.color.set(line);
+      rows.forEach((x, k) => {
+        const c = eng.cols[x.r] ||= makeColumn();
+        const col = roleColor(x.r);
+        if (c.col !== col + panel) {
+          c.col = col + panel;
+          c.base.material.color.set(panel); c.base.material.emissive.set(col);
+          [c.glow.material, c.tube.material, c.arcM].forEach((m) => m.color.set(col));
+          c.fill.material.color.set(col); c.fill.material.emissive.set(col);
+          c.pc = col;
+        }
+        c.cap.material.color.set(x.errors ? bad : col);
+        c.k = k;
+        const th = x.calls ? 0.3 + x.k * (eng.MAXH - 0.3) : 0.03;
+        // first build lands at full height (never waits on frames); later changes grow over ~700 ms
+        if (!c.t0) { c.h = c.from = c.th = th; c.t0 = 1; c.fill.scale.y = Math.max(0.001, th); c.cap.position.y = c.spin.position.y = 0.14 + th; }
+        else if (th !== c.th) { c.from = c.h; c.th = th; c.t0 = performance.now(); }
+        c.calls = x.calls;
+        c.dur = clamp(0.5 + 0.065 * (x.avg / 1000), 0.6, 3.2);       // seconds for a call to rise: slower model, slower rise
+        c.speed = x.calls ? 1.8 / c.dur : 0;                           // halo spin, rad/s
+        c.rate = x.calls ? 0.25 + 1.4 * x.k : 0;                       // ambient calls per second, a hum proportional to volume
+        c.tube.material.opacity = x.calls ? 0.09 : 0.04;
+        c.glow.material.opacity = x.calls ? 0.4 : 0.12;
+      });
+    }
+    function emit(c, big, bad) {
+      const sp = eng.pool.find((p) => !p.visible); if (!sp) return;
+      sp.visible = true; sp.material.color.set(bad ? (cssVar('--bad') || '#ff5f6d') : c.pc || '#ffffff');
+      sp.scale.setScalar(big ? 0.46 : 0.26);
+      eng.parts.push({ sp, c, u: 0, dur: c.dur * (big ? 0.8 : 1), big, dx: (Math.random() - 0.5) * 0.28, dz: (Math.random() - 0.5) * 0.28 });
+    }
+    function enginePulse(role, bad) {
+      if (!eng.st || !visible || reduced()) return;
+      const c = eng.cols[role]; if (c) emit(c, true, bad);
+    }
+
     /* ---------------------------------------------------------------- pointer tilt (a subtle 3D feel) */
     let tiltOn = !reduced() && !matchMedia('(pointer: coarse)').matches;
     const onMove = (e) => {
@@ -492,6 +689,7 @@ export default {
       if (!w) return;
       const lm = w < 760;
       if (lm !== listMode) { listMode = lm; root.classList.toggle('pl-list', lm); clearPackets(); onLeave(); }
+      eng.place?.(performance.now() / 1000, true);
     };
     const ro = 'ResizeObserver' in window ? new ResizeObserver(measure) : null;
     ro?.observe(root);
@@ -508,14 +706,16 @@ export default {
     measure();
     paintAll();
     paintNemo();
+    paintEngine();
 
     return {
       show() {
         visible = true; measure(); paintAll();
-        if (!reduced()) {
-          const nodes = [...nodeEls_];
-          nodes.forEach((nd, k) => nd.animate([{ opacity: 0, transform: 'translate(-50%,-50%) translateY(26px) scale(.92)', filter: 'blur(4px)' }, { opacity: 1, transform: 'translate(-50%,-50%)', filter: 'blur(0)' }], { duration: 650, delay: k * 45, easing: 'cubic-bezier(0.16,1,0.3,1)', fill: 'backwards' }));
+        if (!reduced() && !listMode) {
+          // nodes drop into place in pipeline order, top row first
+          [...NODES].sort((a, b) => a.ord - b.ord).forEach((n, k) => nodeEls[n.id].animate([{ opacity: 0, transform: 'translate(-50%,-50%) translateY(-14px) scale(.94)' }, { opacity: 1, transform: 'translate(-50%,-50%)' }], { duration: 380, delay: k * 18, easing: 'cubic-bezier(0.16,1,0.3,1)', fill: 'backwards' }));
         }
+        if (!eng.started) { eng.started = true; buildEngine(); }
       },
       hide() { visible = false; clearPackets(); },
       destroy() {
@@ -524,6 +724,7 @@ export default {
         timers.forEach((t) => clearTimeout(t)); timers.clear(); clearTimeout(paintT);
         clearPackets(); stopReplay();
         ro?.disconnect();
+        eng.st?.dispose(); eng.st = null;
         stageBox.removeEventListener('pointermove', onMove); stageBox.removeEventListener('pointerleave', onLeave);
         document.removeEventListener('keydown', onKey);
         root.remove();

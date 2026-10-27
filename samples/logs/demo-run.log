@@ -1,0 +1,76 @@
+[0s] audience: Audience agent is naming the segments
+[6s] sampling: Sampling people from Census and Pew rows
+[7s] voices: Writing one-line voices (numbers first, model second)
+[29s] voices: 25/300 voices
+[53s] voices: 50/300 voices
+[72s] voices: 75/300 voices
+[94s] voices: 100/300 voices
+[114s] voices: 125/300 voices
+[132s] voices: 150/300 voices
+[154s] voices: 175/300 voices
+[172s] voices: 200/300 voices
+[193s] voices: 225/300 voices
+[216s] voices: 250/300 voices
+[239s] voices: 275/300 voices
+[259s] voices: 300/300 voices
+[259s] running: Seed 1 of 2: forking twin worlds
+[259s] running: Seed 1 of 2: 12 rounds, 300 people per world
+   s1:A Day 1 07:00 deciders=5 intent=1 calls=1
+   s1:B Day 1 07:00 deciders=5 intent=1 calls=1
+   s1:A Day 1 09:00 deciders=29 intent=14 calls=5
+   s1:B Day 1 09:00 deciders=29 intent=13 calls=5
+   s1:A Day 1 11:00 deciders=55 intent=24 calls=10
+   s1:B Day 1 11:00 deciders=55 intent=22 calls=10
+   s1:A Day 1 13:00 deciders=85 intent=41 calls=15
+   s1:B Day 1 13:00 deciders=85 intent=39 calls=15
+   s1:A Day 1 15:00 deciders=110 intent=48 calls=20
+   s1:B Day 1 15:00 deciders=110 intent=48 calls=20
+   s1:A Day 1 17:00 deciders=135 intent=64 calls=25
+   s1:B Day 1 17:00 deciders=135 intent=59 calls=25
+   s1:A Day 1 19:00 deciders=173 intent=78 calls=32
+   s1:B Day 1 19:00 deciders=173 intent=72 calls=32
+   s1:A Day 1 21:00 deciders=230 intent=84 calls=67
+   s1:B Day 1 21:00 deciders=230 intent=79 calls=67
+   s1:A Day 1 23:00 deciders=254 intent=87 calls=74
+   s1:B Day 1 23:00 deciders=254 intent=85 calls=74
+   s1:A Day 2 01:00 deciders=260 intent=87 calls=76
+   s1:B Day 2 01:00 deciders=260 intent=85 calls=76
+   s1:A Day 2 03:00 deciders=263 intent=87 calls=77
+   s1:B Day 2 03:00 deciders=263 intent=87 calls=77
+   s1:A Day 2 05:00 deciders=266 intent=89 calls=78
+   s1:B Day 2 05:00 deciders=266 intent=87 calls=78
+[2383s] running: Seed 2 of 2: forking twin worlds
+[2384s] running: Seed 2 of 2: 12 rounds, 300 people per world
+   s2:A Day 1 07:00 deciders=12 intent=7 calls=2
+   s2:B Day 1 07:00 deciders=12 intent=3 calls=2
+   s2:A Day 1 09:00 deciders=20 intent=9 calls=4
+   s2:B Day 1 09:00 deciders=20 intent=5 calls=4
+   s2:A Day 1 11:00 deciders=38 intent=17 calls=7
+   s2:B Day 1 11:00 deciders=38 intent=9 calls=7
+   s2:A Day 1 13:00 deciders=71 intent=31 calls=13
+   s2:B Day 1 13:00 deciders=71 intent=17 calls=13
+   s2:A Day 1 15:00 deciders=84 intent=38 calls=16
+   s2:B Day 1 15:00 deciders=84 intent=23 calls=16
+   s2:A Day 1 17:00 deciders=115 intent=52 calls=22
+   s2:B Day 1 17:00 deciders=115 intent=34 calls=22
+   s2:A Day 1 19:00 deciders=162 intent=69 calls=30
+   s2:B Day 1 19:00 deciders=162 intent=48 calls=30
+   s2:A Day 1 21:00 deciders=218 intent=72 calls=66
+   s2:B Day 1 21:00 deciders=218 intent=57 calls=66
+   s2:A Day 1 23:00 deciders=240 intent=74 calls=73
+   s2:B Day 1 23:00 deciders=240 intent=62 calls=73
+   s2:A Day 2 01:00 deciders=250 intent=75 calls=75
+   s2:B Day 2 01:00 deciders=250 intent=65 calls=75
+   s2:A Day 2 03:00 deciders=258 intent=76 calls=77
+   s2:B Day 2 03:00 deciders=258 intent=67 calls=77
+   s2:A Day 2 05:00 deciders=259 intent=76 calls=78
+   s2:B Day 2 05:00 deciders=259 intent=67 calls=78
+[5025s] analyzing: Computing verdict, segments and validity panel
+[5025s] report: Report agent is querying the action log
+[5115s] done: Too close to call on intent to visit: A 31.4% vs B 29.3% (±7.9 pts), A ahead in 2 of 2 seeds.
+
+VERDICT: Too close to call on intent to visit: A 31.4% vs B 29.3% (±7.9 pts), A ahead in 2 of 2 seeds.
+validity: {"decisions":2078,"repaired_share":0.0058,"distinct_reason_ratio":0.981,"top_reason_opener":{"text":"oat milk honey","share":0.011},"scroll_past_share":0.714,"stance_sd_by_world":[{"world":"s1:A","sd":0.266},{"world":"s1:B","sd":0.294},{"world":"s2:A","sd":0.319},{"world":"s2:B","sd":0.301}],"silenced":0,"guard":{"decisions_with_a_check":316,"by_check":{"reason:false_repeat_claim":43,"reason:other_version_leak":13,"coherence:positive_action_negative_feeling":87,"reason:invented_price":51,"coherence:visit_with_strong_dislike":87,"text:false_repeat_claim":20,"text:invented_price":17,"text:copied_reason":12,"reason:duplicate_in_batch":17,"text:brand_voice":8,"reason:invented_percent":1}}}
+fairness: [{"seed":1,"fingerprint":"9bf19cd5ac60a3574c59bbebc1e04e91","base_shapes":{"s1:A":"a028bfaa4685ecbcb09c5e1a81f47edc","s1:B":"a028bfaa4685ecbcb09c5e1a81f47edc"},"identical":true},{"seed":2,"fingerprint":"71b6d95992614c2720c90f02b4e039f8","base_shapes":{"s2:A":"04740f782bfe4970c93f3e33ed3fee6b","s2:B":"04740f782bfe4970c93f3e33ed3fee6b"},"identical":true}]
+usage: [{"tag":"20261027-south-congress-coffe-2cfd","role":"reason","model":"nemotron-3-nano:4b","calls":3,"tokens_in":11516,"tokens_out":684,"avg_ms":24156,"errors":0,"served_by":{"ollama-local:nemotron-3-nano:4b":3}},{"tag":"20261027-south-congress-coffe-2cfd","role":"voice","model":"nemotron-3-nano:4b","calls":12,"tokens_in":18129,"tokens_out":7810,"avg_ms":137217,"errors":0,"served_by":{"ollama-local:nemotron-3-nano:4b":12}},{"tag":"20261027-south-congress-coffe-2cfd","role":"crowd","model":"nemotron-3-nano:4b","calls":312,"tokens_in":467431,"tokens_out":130199,"avg_ms":388267,"errors":0,"served_by":{"ollama-local:nemotron-3-nano:4b":312}},{"tag":"20261027-south-congress-coffe-2cfd","role":"review","model":"nemotron-3-nano:4b","calls":1,"tokens_in":5190,"tokens_out":26,"avg_ms":23590,"errors":0,"served_by":{"ollama-local:nemotron-3-nano:4b":1}}]
+run 20261027-south-congress-coffe-2cfd: 2078 decisions in 5115s

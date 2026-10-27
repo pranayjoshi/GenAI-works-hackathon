@@ -19,17 +19,20 @@ const METRICS = [
 ];
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-function niceCeil(x) {
-  if (!(x > 0)) return 1;
-  const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
-  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+/** smallest "nice" step >= x (1, 2, 2.5, 5 x 10^k); integer steps only when ints is set */
+function niceStep(x, ints = false) {
+  if (!(x > 0)) return ints ? 1 : 0.05;
+  const p = Math.pow(10, Math.floor(Math.log10(x)));
+  for (const m of [1, 2, 2.5, 5, 10]) { const st = m * p; if (st >= x - 1e-12 && (!ints || (Number.isInteger(st) && st >= 1))) return st; }
+  return 10 * p;
 }
-/** y domain + five tick values for a metric given every value that exists */
+/** y domain + five evenly spaced, round tick values (four steps) for a metric given every value that exists */
 function domainOf(M, vals) {
   const mx = Math.max(0, ...vals), mn = Math.min(0, ...vals);
   let lo = 0, hi = 1;
-  if (M.kind === 'rate') hi = Math.min(1, Math.max(0.2, Math.ceil(mx * 10 + 1) / 10));
-  else if (M.kind === 'signed') { const m = Math.max(0.2, Math.ceil(Math.max(mx, -mn) * 10) / 10); lo = -m; hi = m; } else hi = niceCeil(mx * 1.05);
+  if (M.kind === 'rate') { const st = Math.min(0.25, Math.max(0.05, niceStep((mx * 1.04) / 4))); hi = st * 4; }
+  else if (M.kind === 'signed') { const st = Math.max(0.05, niceStep(Math.max(mx, -mn) * 1.04 / 2)); lo = -2 * st; hi = 2 * st; }
+  else hi = niceStep(Math.max(mx, 4) * 1.04 / 4, true) * 4;
   return { lo, hi, ticks: Array.from({ length: 5 }, (_, i) => lo + ((hi - lo) * i) / 4) };
 }
 
@@ -67,7 +70,7 @@ export default {
       h('div.card-head', h('div', h('h2', 'Signals by round'), h('span.sub', 'Same crowd, same schedule; only the post differs.')),
         h('div.sg-tools', h('div.ws-seg.sg-metrics', metricBtns), h('div.ws-seg', btn2d, btn3d))),
       legend, stageBox, note);
-    el.append(h('div.sg-wrap', chartCard, minis));
+    el.append(h('div.sg-wrap', h('div.sg-grid', chartCard, minis)));
 
     /* ---------------------------------------------------------------- model */
     function roundsN() {
@@ -242,49 +245,82 @@ export default {
     });
 
     /* ---------------------------------------------------------------- 3D ribbons */
-    const XW = 11, ZW = 1.7, HMAX = 4.2;
+    // Same model as the 2D chart: x = round, height = metric, one ribbon per version. Labels are HTML anchored to
+    // projected scene points (rounds on the floor, the metric scale on the back wall, the latest value over each
+    // ribbon's head, events over their planes). The camera is fitted to the scene box on every resize.
+    const XW = 11, ZW = 1.7, HMAX = 4.2, ZBACK = -2.7, ZFRONT = 2.75;
     async function ensure3d() {
       if (three !== undefined) return three;
       three = null;
       let stage = null;
-      try { stage = await createStage(host3d, { camera: { fov: 40, x: 15, y: 11, z: 17 }, controls: { minDistance: 6, maxDistance: 32 } }); } catch (e) { console.warn('signals 3D unavailable', e); }
+      try { stage = await createStage(host3d, { camera: { fov: 36, x: 15, y: 11, z: 17 }, controls: { minDistance: 8, maxDistance: 40 } }); } catch (e) { console.warn('signals 3D unavailable', e); }
       if (!stage || disposed) { stage?.dispose(); return (three = null); }
       const THREE = stage.THREE, scene = stage.scene;
-      cs.a = cssVar('--a') || '#5b8cff'; cs.b = cssVar('--b') || '#ff9a4d'; cs.bad = cssVar('--bad') || '#ff5f6d'; cs.muted = cssVar('--muted') || '#9196ab'; cs.line = cssVar('--line-2') || '#444';
+      cs.a = cssVar('--a') || '#5b8cff'; cs.b = cssVar('--b') || '#ff9a4d'; cs.bad = cssVar('--bad') || '#ff5f6d'; cs.muted = cssVar('--muted') || '#9196ab'; cs.faint = cssVar('--faint') || '#5d6278'; cs.accent = cssVar('--accent') || '#8f7bff';
       scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 1.1));
       const dl = new THREE.DirectionalLight(0xffffff, 1.4); dl.position.set(6, 12, 8); scene.add(dl);
-      const grid = new THREE.GridHelper(XW + 2, 14, 0x556080, 0x2a3048); grid.material.transparent = true; grid.material.opacity = .45; grid.position.y = -0.01; scene.add(grid);
-      const state = { stage, THREE, rib: [], dots: [], evGroup: new THREE.Group(), lblGroup: new THREE.Group(), n: -1, camT: 0, dotTex: dotTexture(THREE) };
-      scene.add(state.evGroup, state.lblGroup);
+      // floor: grid + a faint slab under the ribbons
+      const grid = new THREE.GridHelper(XW + 2, 13, new THREE.Color(cs.muted), new THREE.Color(cs.faint));
+      grid.scale.z = (ZFRONT - ZBACK + 0.6) / (XW + 2); grid.position.set(0, -0.005, (ZFRONT + ZBACK) / 2);
+      grid.material.transparent = true; grid.material.opacity = .28; grid.material.depthWrite = false; scene.add(grid);
+      const slab = new THREE.Mesh(new THREE.PlaneGeometry(XW + 2, ZFRONT - ZBACK + 0.6), new THREE.MeshBasicMaterial({ color: new THREE.Color(cs.accent), transparent: true, opacity: .05, depthWrite: false }));
+      slab.rotation.x = -Math.PI / 2; slab.position.set(0, -0.01, (ZFRONT + ZBACK) / 2); scene.add(slab);
+      // back wall with the metric scale
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(XW + 2, HMAX + 0.4), new THREE.MeshBasicMaterial({ color: new THREE.Color(cs.accent), transparent: true, opacity: .035, depthWrite: false, side: THREE.DoubleSide }));
+      wall.position.set(0, (HMAX + 0.4) / 2, ZBACK); scene.add(wall);
+      const tickMat = new THREE.LineBasicMaterial({ color: new THREE.Color(cs.muted), transparent: true, opacity: .32 });
+      const tickGeo = new THREE.BufferGeometry(); const ticks = new THREE.LineSegments(tickGeo, tickMat); scene.add(ticks);
+      const labels = h('div.sg-3d-labels'); host3d.append(labels, h('div.sg-3d-hint', 'drag to orbit, scroll to zoom'));
+      const tags = [];
+      const tag = (cls, text, p, ax = -50, ay = -50) => { const e = h('span.sg-l3' + cls, text); labels.append(e); const o = { el: e, p: new THREE.Vector3(...p), ax, ay }; tags.push(o); return o; };
+      const dropTags = (pred) => { for (let i = tags.length - 1; i >= 0; i--) if (pred(tags[i])) { tags[i].el.remove(); tags.splice(i, 1); } };
+      const state = { stage, THREE, rib: [], dots: [], heads: [], evGroup: new THREE.Group(), n: -1, camT: 0, dotTex: dotTexture(THREE), tickKey: '' };
+      scene.add(state.evGroup);
       for (let i = 0; i < 2; i++) {
         const geo = new THREE.BufferGeometry();
-        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(i ? cs.b : cs.a), emissive: new THREE.Color(i ? cs.b : cs.a), emissiveIntensity: .28, roughness: .38, metalness: .15, transparent: true, opacity: .93, side: THREE.DoubleSide });
+        const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color(i ? cs.b : cs.a), emissive: new THREE.Color(i ? cs.b : cs.a), emissiveIntensity: .28, roughness: .38, metalness: .15, transparent: true, opacity: .86, side: THREE.DoubleSide });
         const mesh = new THREE.Mesh(geo, mat); mesh.userData.i = i; scene.add(mesh);
         const dot = new THREE.Sprite(new THREE.SpriteMaterial({ map: state.dotTex, color: new THREE.Color(i ? cs.b : cs.a), transparent: true, depthWrite: false }));
         dot.scale.set(.9, .9, .9); dot.visible = false; scene.add(dot);
         state.rib.push(mesh); state.dots.push(dot);
+        const head = tag('.ver.' + (i ? 'b' : 'a'), '', [0, 0, 0], -50, -100); head.el.hidden = true; state.heads.push(head);
       }
       const zc = (i) => (i === 0 ? -1 : 1) * (ZW / 2 + 0.35);
+      const xr = (r, n) => (n > 1 ? r / (n - 1) - 0.5 : 0) * XW;
       function layout(n) {   // (re)build index + z once per round count
         state.n = n;
         state.rib.forEach((mesh, i) => {
           const pos = new Float32Array(Math.max(n, 1) * 4 * 3), idx = [];
           for (let r = 0; r < n; r++) {
-            const x = (n > 1 ? r / (n - 1) - 0.5 : 0) * XW, zs = [zc(i) - ZW / 2, zc(i) - ZW / 2, zc(i) + ZW / 2, zc(i) + ZW / 2];
+            const x = xr(r, n), zs = [zc(i) - ZW / 2, zc(i) - ZW / 2, zc(i) + ZW / 2, zc(i) + ZW / 2];
             for (let c = 0; c < 4; c++) { pos[(r * 4 + c) * 3] = x; pos[(r * 4 + c) * 3 + 2] = zs[c]; }
             if (r < n - 1) for (let c = 0; c < 3; c++) { const a = r * 4 + c, b = a + 1, a2 = a + 4, b2 = b + 4; idx.push(a, b, a2, b, b2, a2); }
           }
           mesh.geometry.dispose();
           const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(idx); mesh.geometry = g;
         });
-        state.lblGroup.children.slice().forEach((c) => { c.material.map?.dispose(); c.material.dispose(); state.lblGroup.remove(c); });
+        dropTags((o) => o.round);
         const step = Math.max(1, Math.ceil(n / 8));
-        for (let r = 0; r < n; r += step) {
-          const sp = textSprite(THREE, `r${r + 1}`, cs.muted); sp.position.set((n > 1 ? r / (n - 1) - 0.5 : 0) * XW, 0.05, 3.2); state.lblGroup.add(sp);
-        }
+        for (let r = 0; r < n; r += step) tag('', `r${r + 1}`, [xr(r, n), 0, ZFRONT], -50, 0).round = true;
+        tag('.axis', 'round', [XW / 2 + 0.9, 0, ZFRONT], 0, 0).round = true;
+      }
+      function scale(to) {   // back-wall gridlines + labels for the current metric
+        if (state.tickKey === to.tkey) return;
+        state.tickKey = to.tkey;
+        const v = [];
+        // an L-shaped frame: gridlines across the back wall and along the left side, a ruler at the front-left corner
+        const xl = -XW / 2 - 0.6;
+        for (const tk of to.ticks) { const y = tk.p * HMAX; v.push(xl, y, ZBACK, XW / 2 + 0.6, y, ZBACK, xl, y, ZBACK, xl, y, ZFRONT, xl, y, ZFRONT, xl - 0.18, y, ZFRONT); }
+        v.push(xl, 0, ZFRONT, xl, to.ticks.at(-1).p * HMAX, ZFRONT, xl, 0, ZBACK, xl, HMAX, ZBACK);
+        if (to.dom.lo < 0) { const y = (-to.dom.lo / (to.dom.hi - to.dom.lo)) * HMAX; v.push(xl, y, ZBACK + 0.01, XW / 2 + 0.6, y, ZBACK + 0.01, xl, y, ZBACK, xl, y, ZFRONT); }
+        tickGeo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); tickGeo.computeBoundingSphere();
+        dropTags((o) => o.tick);
+        for (const tk of to.ticks) tag('.tick', to.M.fmt(tk.v), [xl - 0.3, tk.p * HMAX, ZFRONT], -100, -50).tick = true;
+        tag('.axis', to.M.label, [xl, HMAX + 0.45, ZFRONT], -50, -100).tick = true;
       }
       state.apply = (from, to, k, reveal) => {
         if (state.n !== to.n) layout(to.n);
+        scale(to);
         const n = to.n;
         state.rib.forEach((mesh, i) => {
           const pa = mesh.geometry.getAttribute('position'); if (!pa) return;
@@ -298,25 +334,94 @@ export default {
             if (p != null && grow > 0.05) { lastR = r; lastH = hh; }
           }
           pa.needsUpdate = true; mesh.geometry.computeVertexNormals();
-          const d = state.dots[i];
-          d.visible = lastR >= 0;
-          if (lastR >= 0) d.position.set((n > 1 ? lastR / (n - 1) - 0.5 : 0) * XW, lastH + 0.35, zc(i));
+          const d = state.dots[i], hd = state.heads[i];
+          d.visible = lastR >= 0; hd.el.hidden = lastR < 0;
+          if (lastR >= 0) {
+            d.position.set(xr(lastR, n), lastH + 0.35, zc(i));
+            hd.p.set(xr(lastR, n), lastH + 0.75, zc(i));
+            const val = to.raw[i]?.[lastR];
+            hd.el.textContent = `${to.vs[i]} ${val == null ? '' : to.M.fmt1(val)}`;
+          }
         });
-        // event planes
-        if (state.evKey !== to.events.map((e) => e.id ?? e.round).join(',') + n) {
-          state.evKey = to.events.map((e) => e.id ?? e.round).join(',') + n;
+        // event planes, each labelled with its round
+        const ek = to.events.map((e) => e.id ?? e.round).join(',') + '|' + n;
+        if (state.evKey !== ek) {
+          state.evKey = ek;
           state.evGroup.children.slice().forEach((c) => { c.geometry.dispose(); c.material.dispose(); state.evGroup.remove(c); });
+          dropTags((o) => o.ev);
           for (const ev of to.events) {
-            const pl = new THREE.Mesh(new THREE.PlaneGeometry(ZW * 2 + .9, HMAX), new THREE.MeshBasicMaterial({ color: new THREE.Color(cs.bad), transparent: true, opacity: .16, side: THREE.DoubleSide, depthWrite: false }));
-            pl.rotation.y = Math.PI / 2; pl.position.set((n > 1 ? ev.round / (n - 1) - 0.5 : 0) * XW, HMAX / 2, 0); state.evGroup.add(pl);
+            const x = xr(ev.round, n);
+            const pl = new THREE.Mesh(new THREE.PlaneGeometry(ZFRONT - ZBACK, HMAX + 0.4), new THREE.MeshBasicMaterial({ color: new THREE.Color(cs.bad), transparent: true, opacity: .13, side: THREE.DoubleSide, depthWrite: false }));
+            pl.rotation.y = Math.PI / 2; pl.position.set(x, (HMAX + 0.4) / 2, (ZFRONT + ZBACK) / 2); state.evGroup.add(pl);
+            const rim = new THREE.LineSegments(new THREE.EdgesGeometry(pl.geometry), new THREE.LineBasicMaterial({ color: new THREE.Color(cs.bad), transparent: true, opacity: .55 }));
+            rim.rotation.copy(pl.rotation); rim.position.copy(pl.position); state.evGroup.add(rim);
+            const tg = tag('.ev', `Event, round ${ev.round + 1}`, [x, HMAX + 0.45, (ZFRONT + ZBACK) / 2], -50, -100); tg.ev = true; tg.el.title = ev.text || '';
           }
         }
       };
+      // camera: fit the scene box (with its labels) into the viewport for the current aspect
+      const center0 = new THREE.Vector3(0, HMAX * 0.45, 0), center = center0.clone(), dir = new THREE.Vector3(0.34, 0.33, 0.88).normalize();
+      const corners = [];
+      for (const x of [-XW / 2 - 1.9, XW / 2 + 1.3]) for (const y of [-0.1, HMAX + 0.8]) for (const z of [ZBACK, ZFRONT + 0.35]) corners.push(new THREE.Vector3(x, y, z));
+      const cam = stage.camera, tmp = new THREE.Vector3();
+      const right = new THREE.Vector3(), up = new THREE.Vector3();
+      function fitDist() {
+        // binary-search the distance, then recentre on the projected bounds; twice is enough to converge
+        let d = 0;
+        for (let pass = 0; pass < 3; pass++) {
+          d = fitOnce();
+          cam.position.copy(center).addScaledVector(dir, d); cam.lookAt(center); cam.updateMatrixWorld();
+          let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+          for (const c of corners) { tmp.copy(c).project(cam); x0 = Math.min(x0, tmp.x); x1 = Math.max(x1, tmp.x); y0 = Math.min(y0, tmp.y); y1 = Math.max(y1, tmp.y); }
+          const hh = d * Math.tan((cam.fov * Math.PI) / 360), hw = hh * cam.aspect;
+          right.setFromMatrixColumn(cam.matrixWorld, 0); up.setFromMatrixColumn(cam.matrixWorld, 1);
+          center.addScaledVector(right, ((x0 + x1) / 2) * hw).addScaledVector(up, ((y0 + y1) / 2) * hh);
+        }
+        return fitOnce();
+      }
+      function fitOnce() {
+        let lo = 4, hi = 120;
+        for (let it = 0; it < 26; it++) {
+          const mid = (lo + hi) / 2;
+          cam.position.copy(center).addScaledVector(dir, mid); cam.lookAt(center); cam.updateMatrixWorld();
+          const ok = corners.every((c) => { tmp.copy(c).project(cam); return Math.abs(tmp.x) < 0.94 && Math.abs(tmp.y) < 0.88 && tmp.z < 1; });
+          if (ok) hi = mid; else lo = mid;
+        }
+        return hi;
+      }
+      let aspect = 0, userMoved = false;
+      state.camTarget = new THREE.Vector3();
+      const refit = () => {
+        const save = cam.position.clone();
+        center.copy(center0);
+        const d = fitDist();
+        state.camTarget.copy(center).addScaledVector(dir, d);
+        if (stage.controls) { stage.controls.target.copy(center); stage.controls.minDistance = d * 0.55; stage.controls.maxDistance = d * 1.8; }
+        if (userMoved || state.camT > 0) cam.position.copy(save); else cam.position.copy(state.camTarget);
+        cam.lookAt(center);
+      };
+      stage.controls?.addEventListener('start', () => { userMoved = true; state.camT = 0; });
+      state.intro = () => {
+        userMoved = false; refit();
+        if (reduced()) { cam.position.copy(state.camTarget); state.camT = 0; return; }
+        cam.position.copy(center).addScaledVector(dir, center.distanceTo(state.camTarget) * 1.35).add(new THREE.Vector3(2.5, 1.5, 0));
+        state.camT = 1.4;
+      };
+      const pv = new THREE.Vector3();
       state.off = stage.onFrame((t, dt) => {
-        if (state.camT > 0) { state.camT -= dt; stage.camera.position.lerp(state.camTarget, 1 - Math.exp(-dt * 3.2)); }
+        if (cam.aspect !== aspect) { aspect = cam.aspect; refit(); }
+        if (state.camT > 0) { state.camT -= dt; cam.position.lerp(state.camTarget, 1 - Math.exp(-dt * 4.5)); if (state.camT <= 0) cam.position.copy(state.camTarget); }
         if (curModel && reduced() === false) state.dots.forEach((d, i) => d.scale.setScalar(.85 + Math.sin(t * 3 + i) * .08));
+        const w = host3d.clientWidth, hh = host3d.clientHeight;
+        cam.updateMatrixWorld();
+        for (const o of tags) {
+          if (o.el.hidden) continue;
+          pv.copy(o.p).project(cam);
+          const off = pv.z > 1 || Math.abs(pv.x) > 1.05 || Math.abs(pv.y) > 1.05;
+          o.el.style.visibility = off ? 'hidden' : '';
+          if (!off) o.el.style.transform = `translate(${((pv.x + 1) / 2 * w).toFixed(1)}px, ${((1 - pv.y) / 2 * hh).toFixed(1)}px) translate(${o.ax}%, ${o.ay}%)`;
+        }
       });
-      state.camTarget = new THREE.Vector3(8.5, 6.5, 11);
       // hover: nearest round under the pointer
       const canvas = stage.canvas;
       canvas.addEventListener('pointermove', (e) => {
@@ -324,20 +429,13 @@ export default {
         if (!hit || !curModel) { setHover(null); return; }
         const n = curModel.n, r = clamp(Math.round((hit.point.x / XW + 0.5) * (n - 1)), 0, Math.max(0, n - 1));
         hov = r; cross.setAttribute('opacity', 0); fillTip(curModel, r, null);
-        const b = canvas.getBoundingClientRect(), sb = stageBox.getBoundingClientRect();
+        const sb = stageBox.getBoundingClientRect();
         tip.style.left = `${clamp(e.clientX - sb.left + 14, 6, sb.width - 230)}px`; tip.style.top = `${clamp(e.clientY - sb.top + 10, 6, sb.height - 120)}px`;
-        void b;
       });
       canvas.addEventListener('pointerleave', () => setHover(null));
       three = state;
       if (curModel) state.apply(shown, curModel, 1, rv);
       return state;
-    }
-    function textSprite(THREE, text, color) {
-      const c = document.createElement('canvas'); c.width = 128; c.height = 48;
-      const g = c.getContext('2d'); g.fillStyle = color; g.font = '600 26px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 64, 24);
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false })); sp.scale.set(1.2, .45, 1); return sp;
     }
 
     /* ---------------------------------------------------------------- controls */
@@ -352,15 +450,14 @@ export default {
       if (m === '3d') {
         host3d.hidden = false; host3d.classList.add('loading'); const st = await ensure3d(); host3d.classList.remove('loading');
         if (!st) { host3d.hidden = true; btn3d.disabled = true; btn3d.title = '3D is not available in this browser (no WebGL). The 2D chart shows the same data.'; return; }
-        st.stage.camera.position.set(17, 13, 19); st.camT = 2.2;
-        if (reduced()) st.stage.camera.position.copy(st.camTarget);
+        st.intro();
       }
       mode = m; hov = null; applyHover();
       if (m === '2d') setTimeout(() => { if (mode === '2d' && !disposed) host3d.hidden = true; }, 600); else host3d.hidden = false;
       btn2d.classList.toggle('on', m === '2d'); btn3d.classList.toggle('on', m === '3d');
       stageBox.dataset.mode = m;
       host3d.setAttribute('aria-hidden', m === '3d' ? 'false' : 'true');
-      if (curModel) run(900, shown, curModel, 0, 1);
+      if (curModel) run(700, shown, curModel, 0, 1);
     }
 
     /* ---------------------------------------------------------------- legend + notes */
@@ -369,8 +466,8 @@ export default {
       mount(legend, m.vs.map((v, i) => {
         const val = m.raw[i].findLast?.((x) => x != null), idx = m.raw[i].reduce((a, x, j) => (x != null ? j : a), -1);
         const num_ = h('b.mono', val == null ? '-' : ''); num_._cu = lastLeg[v] ?? 0; if (val != null) { lastLeg[v] = val; if (m.M.kind === 'rate') countUp(num_, val * 100, (x) => `${x.toFixed(1)}%`, 700); else if (m.M.kind === 'signed') countUp(num_, val, m.M.fmt1, 700); else countUp(num_, val, fmtInt, 700); }
-        return h('div.sg-leg', h('i', { style: { background: vcolor(v) } }), h('span', `Version ${v}`), num_, idx >= 0 ? h('small', `round ${idx + 1}`) : null);
-      }), m.events.length ? h('div.sg-leg', h('i.flag'), h('span', `${m.events.length} injected event${m.events.length > 1 ? 's' : ''}`)) : null,
+        return h('div.sg-leg', h('i', { style: { background: vcolor(v) } }), h('span.sg-leg-k', `Version ${v}`), ' ', num_, ' ', h('small', idx >= 0 ? `after round ${idx + 1}` : 'no rounds yet'));
+      }), m.events.length ? h('div.sg-leg.ev', h('i.flag'), h('span.sg-leg-k', `${m.events.length} injected event${m.events.length > 1 ? 's' : ''}`), ' ', h('small', m.events.map((e) => `round ${e.round + 1}`).join(', '))) : null,
       S.replay ? h('span.chip.on', `replaying round ${Math.max(0, (S.replayLim ?? 0) + 1)}`) : null);
       const any = m.raw.some((a) => a.some((x) => x != null));
       empty.hidden = any; empty.textContent = S.status === 'error' ? 'This run stopped before any round finished.' : S.spec ? 'The lines appear as the first rounds complete.' : 'Waiting for the run to start.';
@@ -378,52 +475,85 @@ export default {
     }
 
     /* ---------------------------------------------------------------- small multiples */
-    let barsDone = {}, linesDrawn = false;
-    function drawMinis(m) {
-      const target = Math.min(500, S.spec?.crowdSize || 500);
-      // vocal vs silent
-      const vocalRows = m.vs.map((v, i) => {
-        const bars = s('svg', { class: 'sg-mini', viewBox: `0 0 ${Math.max(1, m.n) * 10} 100`, preserveAspectRatio: 'none', role: 'img', 'aria-label': `Vocal share per round, Version ${v}` });
-        const done = barsDone[v] ?? 0; let lastC = null;
-        m.cnt[i].forEach((c, r) => {
-          if (!c || !(c.deciders > 0)) return;
-          lastC = c;
-          const vs_ = c.vocal / c.deciders;
-          const g = s('g', { class: r >= done ? 'sg-bar-new' : '', style: `animation-delay:${Math.min(r - done, 20) * 30}ms` },
-            s('rect', { x: r * 10 + 1, y: 0, width: 8, height: 100, fill: 'var(--faint)', opacity: .22, rx: 1.5 }),
-            s('rect', { x: r * 10 + 1, y: 100 - vs_ * 100, width: 8, height: vs_ * 100, fill: vcolor(v), rx: 1.5 }, s('title', {}, `${ctx.hourOfRound(r)}: ${pct(vs_, 0)} vocal, ${pct(1 - vs_, 0)} silent (${c.vocal} of ${c.deciders})`)));
-          bars.append(g);
-        });
-        barsDone[v] = m.n;
-        const vsL = lastC ? lastC.vocal / lastC.deciders : 0;
-        return h('div.sg-mrow', h('div.sg-mhead', h('span.chip.' + v.toLowerCase(), `Version ${v}`), h('small', lastC ? `${pct(vsL, 0)} vocal (commented or shared), ${pct(1 - vsL, 0)} silent` : 'waiting for deciders')),
-          bars, h('div.sg-meter', h('i', { style: { width: `${vsL * 100}%`, background: vcolor(v) } })));
-      });
-      // cumulative deciders
-      const maxD = Math.max(target, ...m.cnt.flat().map((c) => c?.deciders || 0));
-      const lines = m.vs.map((v, i) => {
-        const n = Math.max(2, m.n), sx = (r) => (r / (n - 1)) * 300, sy = (d) => 90 - (d / maxD) * 84;
-        const pts = m.cnt[i].map((c, r) => (c ? [sx(r), sy(c.deciders), c] : null)).filter(Boolean);
+    // Two compact cards with one shape: header, a stat per version, then both versions on one small chart
+    // with a labelled zero line, so a share of 0% reads as a line on the baseline rather than an empty slot.
+    let linesDrawn = false, drawT = 0;
+    const miniCard = (title, sub) => {
+      const stats = h('div.sg-stats'), chart = h('div.sg-mchart'), foot = h('div.sg-mfoot');
+      const card = h('div.card.sg-mini-card', h('div.card-head', h('h3', title), h('span.sub', sub)), stats, chart, foot);
+      return { card, stats, chart, foot };
+    };
+    const vocalCard = miniCard('Vocal vs silent', 'share of deciders who commented or shared');
+    const decCard = miniCard('Deciders so far', 'cumulative, against the target crowd');
+    minis.append(vocalCard.card, decCard.card);
+
+    function statBlock(v, val, unit, sub) {
+      return h('div.sg-stat', h('span.sg-stat-k', h('i', { style: { background: vcolor(v) } }), `Version ${v}`),
+        h('b.sg-stat-v.mono', val, unit ? h('small', unit) : null), h('small.sg-stat-s', sub));
+    }
+    /** both versions on one small chart: y from 0 to hi with three labelled gridlines; optional dashed reference */
+    function miniChart(host, m, series, hi, fmt, label, ref) {
+      const Wm = Math.max(220, Math.floor(host.clientWidth || 320)), Hm = Math.max(96, Math.floor(host.clientHeight || 120));
+      const l = 40, r = 12, tp = 10, bt = 22, n = Math.max(2, m.n);
+      const sx = (i) => l + (i / (n - 1)) * (Wm - l - r), sy = (v) => Hm - bt - (clamp(v, 0, hi) / hi) * (Hm - tp - bt);
+      const svg = s('svg', { class: 'sg-mini', width: Wm, height: Hm, viewBox: `0 0 ${Wm} ${Hm}`, role: 'img', 'aria-label': label });
+      [0, hi / 2, hi].forEach((tv, i) => svg.append(
+        s('line', { x1: l, x2: Wm - r, y1: sy(tv), y2: sy(tv), stroke: i ? 'var(--line)' : 'var(--line-2)', 'stroke-width': i ? 1 : 1.4 }),
+        s('text', { x: l - 8, y: sy(tv) + 3.5, 'text-anchor': 'end', 'font-size': 10.5, fill: 'var(--muted)', 'font-variant-numeric': 'tabular-nums' }, fmt(tv))));
+      const step = Math.max(1, Math.ceil(m.n / (Wm < 320 ? 4 : 6)));
+      for (let i = 0; i < m.n; i += step) svg.append(s('text', { x: sx(i), y: Hm - 6, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--faint)' }, `r${i + 1}`));
+      if (ref) svg.append(s('line', { x1: l, x2: Wm - r, y1: sy(ref.v), y2: sy(ref.v), stroke: 'var(--muted)', 'stroke-dasharray': '4 4', opacity: .7 }),
+        s('text', { x: Wm - r, y: sy(ref.v) - 5, 'text-anchor': 'end', 'font-size': 10, fill: 'var(--muted)' }, ref.label));
+      // identical series (e.g. both at zero) would hide one line; draw the first one dashed on top so both read
+      const same = series.length === 2 && series[0].vals.every((x, j) => x === series[1].vals[j]);
+      (same ? [series[1], series[0]] : series).forEach(({ v, vals }, i) => {
+        const pts = vals.map((x, j) => (x == null ? null : [sx(j), sy(x), j])).filter(Boolean);
+        if (!pts.length) return;
         const d = pts.map((p, j) => `${j ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join('');
-        const last = pts.at(-1)?.[2];
-        const num_ = h('b.mono', last ? '' : '0'); num_._cu = lastDec[v] ?? 0; if (last) { lastDec[v] = last.deciders; countUp(num_, last.deciders, fmtInt, 700); }
-        return h('div.sg-mrow', h('div.sg-mhead', h('span.chip.' + v.toLowerCase(), `Version ${v}`), h('small', h('b.mono', num_), ` / ${fmtInt(target)} target`)),
-          s('svg', { class: 'sg-mini line', viewBox: '0 0 300 96', preserveAspectRatio: 'none', role: 'img', 'aria-label': `Cumulative deciders, Version ${v}` },
-            s('line', { x1: 0, x2: 300, y1: sy(target), y2: sy(target), stroke: 'var(--line-2)', 'stroke-dasharray': '4 4', 'vector-effect': 'non-scaling-stroke' }),
-            pts.length > 1 ? s('path', { d: `${d}L${pts.at(-1)[0]},90L${pts[0][0]},90Z`, fill: vcolor(v), opacity: .13 }) : null,
-            pts.length ? s('path', { class: linesDrawn ? '' : 'sg-draw', d, fill: 'none', stroke: vcolor(v), 'stroke-width': 2.6, 'vector-effect': 'non-scaling-stroke', pathLength: 1 }) : null,
-            pts.length ? s('circle', { cx: pts.at(-1)[0], cy: pts.at(-1)[1], r: 3.4, fill: vcolor(v), 'vector-effect': 'non-scaling-stroke' }) : null));
+        const col = vcolor(v);
+        if (pts.length > 1 && !(same && i === 1)) svg.append(s('path', { d: `${d}L${pts.at(-1)[0]},${sy(0)}L${pts[0][0]},${sy(0)}Z`, fill: col, opacity: .1 }));
+        const dash = same && i === 1;
+        svg.append(s('path', { class: linesDrawn || dash ? '' : 'sg-draw', d, fill: 'none', stroke: col, 'stroke-width': 2.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', pathLength: dash ? null : 1, 'stroke-dasharray': dash ? '6 6' : null }));
+        pts.forEach((p, j) => svg.append(s('circle', { cx: p[0], cy: p[1], r: j === pts.length - 1 ? 3.6 : 2.2, fill: col, stroke: 'var(--panel-solid)', 'stroke-width': j === pts.length - 1 ? 1.5 : 0 })));
       });
-      if (m.cnt.flat().some(Boolean)) linesDrawn = true;
-      mount(minis,
-        h('div.card.sg-mini-card', h('div.card-head', h('h3', 'Vocal vs silent'), h('span.sub', 'share of deciders who commented or shared, per round')), vocalRows),
-        h('div.card.sg-mini-card', h('div.card-head', h('h3', 'Deciders so far'), h('span.sub', 'cumulative; dashed line = target crowd')), lines));
+      mount(host, svg);
+    }
+    function drawMinis(m) {
+      const target = S.spec?.crowdSize || 0;
+      const lastOf = (a) => { for (let r = a.length - 1; r >= 0; r--) if (a[r] && a[r].deciders > 0) return a[r]; return null; };
+      // vocal vs silent
+      const vocal = m.cnt.map((a) => a.map((c) => (c && c.deciders > 0 ? c.vocal / c.deciders : null)));
+      const vmax = Math.max(0, ...vocal.flat().filter((x) => x != null));
+      const vhi = Math.max(0.1, niceStep((vmax * 1.08) / 2) * 2);
+      mount(vocalCard.stats, m.vs.map((v, i) => {
+        const c = lastOf(m.cnt[i]);
+        return c ? statBlock(v, pct(c.vocal / c.deciders, 0), 'vocal', `${fmtInt(c.vocal)} of ${fmtInt(c.deciders)} spoke up`)
+          : statBlock(v, '-', '', 'waiting for deciders');
+      }));
+      miniChart(vocalCard.chart, m, m.vs.map((v, i) => ({ v, vals: vocal[i] })), vhi, (x) => pct(x, 0), 'Vocal share per round for both versions');
+      const anyDec = vocal.flat().some((x) => x != null);
+      vocalCard.foot.textContent = !anyDec ? 'Appears once people start deciding.'
+        : vmax === 0 ? 'Nobody has commented or shared yet: every decider so far stayed silent, so both lines sit on 0%.'
+          : 'Vocal people are the ones a social listening tool would see; the silent rest still decided.';
+      // cumulative deciders
+      const dec = m.cnt.map((a) => a.map((c) => (c ? c.deciders : null)));
+      const dmax = Math.max(target, ...dec.flat().filter((x) => x != null));
+      const dhi = niceStep((Math.max(dmax, 2) * 1.08) / 2, true) * 2;
+      mount(decCard.stats, m.vs.map((v, i) => {
+        const c = lastOf(m.cnt[i]);
+        const num_ = h('span', c ? '' : '0'); num_._cu = lastDec[v] ?? 0;
+        if (c) { lastDec[v] = c.deciders; countUp(num_, c.deciders, fmtInt, 600); }
+        return statBlock(v, num_, target ? ` / ${fmtInt(target)}` : '', c ? (target ? `${pct(c.deciders / target, 0)} of the crowd` : `${fmtInt(c.exposures)} exposures`) : 'waiting for deciders');
+      }));
+      miniChart(decCard.chart, m, m.vs.map((v, i) => ({ v, vals: dec[i] })), dhi, (x) => fmtInt(Math.round(x)), 'Cumulative deciders per round for both versions', target ? { v: target, label: `target ${fmtInt(target)}` } : null);
+      decCard.foot.textContent = 'Each person decides at most once per exposure; the line flattens when the crowd has seen the post.';
+      if (m.cnt.flat().some(Boolean) && !linesDrawn && !drawT) drawT = setTimeout(() => { linesDrawn = true; drawT = 0; }, 160);
     }
 
     /* ---------------------------------------------------------------- refresh */
     function measure() {
       const w = Math.floor(stageBox.clientWidth || el.clientWidth || 640);
-      const nw = clamp(w, 280, 1400), nh = nw < 520 ? 250 : 320;
+      const nw = clamp(w, 260, 1600), nh = clamp(Math.floor(stageBox.clientHeight || (nw < 520 ? 250 : 320)), 200, 900);
       const changed = nw !== W || nh !== H; W = nw; H = nh;
       return changed;
     }
@@ -435,7 +565,7 @@ export default {
       if (hov != null && hov >= m.n) hov = null;
       if (first || replay) {
         first = false;
-        run(1100, null, m, 0, 1);
+        run(650, null, m, 0, 1);
       } else run(morph ? 760 : 420, shown, m, 1, 1);
     }
     const queue = () => { if (!sched) sched = requestAnimationFrame(() => { sched = 0; refresh(); }); };
@@ -443,11 +573,17 @@ export default {
     /* ---------------------------------------------------------------- live wiring */
     const offs = [
       ctx.bus.on('round', queue), ctx.bus.on('event', queue), ctx.bus.on('snapshot', queue), ctx.bus.on('history', queue),
-      ctx.bus.on('seed', () => { barsDone = {}; linesDrawn = false; refresh({ replay: true }); }),
-      ctx.bus.on('replay', (p) => { if (p?.on && p.round === -1) { barsDone = {}; linesDrawn = false; } queue(); }),
+      ctx.bus.on('seed', () => { linesDrawn = false; refresh({ replay: true }); }),
+      ctx.bus.on('replay', (p) => { if (p?.on && p.round === -1) linesDrawn = false; queue(); }),
     ];
-    const ro = new ResizeObserver(() => { if (el.offsetParent === null) return; if (measure() && curModel) run(0, shown, curModel, 1, 1); });
-    ro.observe(stageBox);
+    let miniW = 0;
+    const ro = new ResizeObserver(() => {
+      if (el.offsetParent === null) return;
+      if (measure() && curModel) run(0, shown, curModel, 1, 1);
+      const mw = vocalCard.chart.clientWidth + 'x' + vocalCard.chart.clientHeight;
+      if (mw !== miniW && curModel) { miniW = mw; drawMinis(curModel); }
+    });
+    ro.observe(stageBox); ro.observe(vocalCard.chart);
     metricBtns[0].classList.add('on'); stageBox.dataset.mode = '2d';
     refresh();
 
@@ -455,7 +591,7 @@ export default {
       show() { measure(); const again = needsReveal; needsReveal = false; refresh({ replay: again }); three?.stage.resize(); },
       hide() { setHover(null); },
       destroy() {
-        disposed = true; cancelAnimationFrame(raf); cancelAnimationFrame(sched); ro.disconnect(); offs.forEach((o) => o());
+        disposed = true; clearTimeout(drawT); cancelAnimationFrame(raf); cancelAnimationFrame(sched); ro.disconnect(); offs.forEach((o) => o());
         if (three) { three.off?.(); three.dotTex?.dispose(); three.stage.dispose(); }
         three = null; clear(el);
       },
