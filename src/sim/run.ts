@@ -197,6 +197,8 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
       for (const [aid, mem] of r.memories) m.set(aid, mem.all());
       st.memories.set(r.world_id, m);
     }
+    // save each finished seed, so an interrupted run keeps the seeds it completed
+    try { persist(st); } catch (e) { console.warn(`[run] could not save seed ${seed}: ${(e as Error).message}`); }
   }
   timing.sim_ms = Date.now() - t1;
   st.status = 'analyzing';
