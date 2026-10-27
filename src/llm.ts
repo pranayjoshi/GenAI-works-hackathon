@@ -158,7 +158,7 @@ async function openAiCompat(p: 'nightshift', o: ChatOpts<unknown>, jsonSchema: u
     chat_template_kwargs: { enable_thinking: thinking },
   };
   const res = await fetch(`${c.baseUrl}/chat/completions`, {
-    method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(180_000),
+    method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(Number(process.env.NIGHTSHIFT_TIMEOUT_MS) || 90_000),
   });
   if (!res.ok) throw new Error(`${p} HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const j = (await res.json()) as any;
@@ -191,7 +191,7 @@ async function ollama(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawRes
   };
   if (jsonSchema) body.format = jsonSchema;
   const res = await fetch(`${config.ollama.baseUrl}/api/chat`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(300_000),
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(Number(process.env.OLLAMA_TIMEOUT_MS) || 300_000),
   });
   if (!res.ok) throw new Error(`ollama HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const j = (await res.json()) as any;

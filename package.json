@@ -11,14 +11,13 @@
   "scripts": {
     "dev": "tsx watch src/api.ts",
     "start": "tsx src/api.ts",
-    "data": "tsx scripts/fetch-data.ts",
     "run:ab": "tsx scripts/run-ab.ts",
     "backtest": "tsx scripts/backtest.ts",
     "probe": "tsx scripts/probe.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "smoke": "bash scripts/smoke.sh",
-    "start:replay": "SAMPLE_MODE=true PORT=8788 tsx src/api.ts"
+    "start:replay": "tsx scripts/start-replay.ts"
   },
   "dependencies": {
     "@duckdb/node-api": "^2.0.0-r.1",

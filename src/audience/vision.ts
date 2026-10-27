@@ -1,7 +1,9 @@
 /**
  * VisionAgent: turns an uploaded image into a short factual description the crowd reads as "[image: ...]".
- * Images are real inputs: the bytes go to a vision-capable Nemotron model over the NVIDIA route
- * (nemotron-3.5-super-vl-120b-a12b first, nemotron-3-nano-omni-30b-a3b-reasoning if that fails), thinking off.
+ * Images are real inputs: the bytes go to a vision-capable Nemotron model through Nightshift (the only route; the app holds no
+ * NVIDIA key). Nightshift must have a vision lane: the Super VL id (nemotron-3.5-super-vl-120b-a12b) is excluded on the box we tested,
+ * and Lightning, Ultra and Bolt answered 'this box cannot serve vision'. Without a vision lane the image is noted as not described
+ * and the crowd reacts to the caption and text alone. Thinking off.
  * Results are cached by image hash (data/cache/vision/), so a rerun or the second world never calls twice.
  * If no model can see the image, the description says so; nothing is invented.
  */

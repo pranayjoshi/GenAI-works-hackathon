@@ -38,9 +38,9 @@ export function parseFeatures(text: string): Features {
     price: price ? Number(price[1]) : 0,
     free: /\bfree\b|\bcomplimentary\b|on the house|no (signup|sign-up|joining) fee/.test(t),
     isNew: /\bnew\b|\bnow open|just (launched|opened|dropped)|introducing|seasonal|opens?\b/.test(t),
-    local: /\blocal\b|neighbou?r|community|family[- ]owned|small[- ]batch|hometown|south congress|downtown|block/.test(t),
+    local: /\blocal\b|neighbou?r|community|family[- ]owned|small[- ]batch|hometown|downtown|nearby|\bblock\b|your town/.test(t),
     urgency: /today only|this week only|limited|last chance|hurry|ends (today|soon|sunday|friday)|while (supplies|they) last|first \d+|only \d+|don'?t miss|act now/.test(t),
-    quality: /hand[- ]?(made|crafted)|craft|organic|certified|coach|expert|fresh|slow[- ]?(ferment|roast)|sourdough|artisan|small[- ]group|personal|wildflower|honey|quality|stone[- ]?(milled|ground)/.test(t),
+    quality: /hand[- ]?(made|crafted)|craft|organic|certified|expert|fresh|slow[- ]?(ferment|roast)|artisan|premium|ingredients|locally sourced|from scratch|made to order|trained|professional|guarantee|personal|quality|stone[- ]?(milled|ground)/.test(t),
     positive: /\b(award|voted|best of|featured|rated|five[- ]star|5[- ]star|wins?|winner|praised)\b/.test(t),
   };
 }

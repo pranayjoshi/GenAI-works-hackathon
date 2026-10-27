@@ -92,8 +92,8 @@ export function toRunInput(b: RunBody): RunInput {
     imageA: va.image, imageB: vb.image, versionA: va.extra, versionB: vb.extra,
     crowdSize: b.crowd, rounds: b.rounds, seeds: b.seeds,
     events: b.events,
-    // the bundled customer list is the demo cafe's; other businesses start from Census and Pew only
-    useCustomers: b.business.use_customer_list ?? zip === '78704',
+    // the bundled customer list is the demo cafe's (synthetic): off unless the request asks for it with business.use_customer_list
+    useCustomers: b.business.use_customer_list ?? false,
   };
 }
 

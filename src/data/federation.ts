@@ -81,7 +81,7 @@ async function zAuth(): Promise<Record<string, string>> {
   if (!zToken) {
     if (z.apiKey) zToken = z.apiKey;
     else {
-      const res = await fetch(zUrl('/api/v1.0/auth/login'), { headers: zHeaders({ authorization: `Basic ${Buffer.from(`${z.user}:${z.password}`).toString('base64')}` }) });
+      const res = await fetch(zUrl('/api/v1.0/auth/login'), { headers: zHeaders({ authorization: `Basic ${Buffer.from(`${z.user}:${z.password}`).toString('base64')}` }), signal: AbortSignal.timeout(30_000) });
       if (!res.ok) throw new ZetarisDown(`login HTTP ${res.status}`);
       zToken = ((await res.json()) as { idToken: string }).idToken;
     }

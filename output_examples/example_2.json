@@ -1,429 +1,429 @@
 {
-    "run_id": "20261027-ironwood-strength-cl-5fb2",
-    "input_echo": {
-        "business": {
-            "name": "Ironwood Strength Club",
-            "type": "gym",
-            "address": "Short North, Columbus, OH 43201",
-            "zip": "43201",
-            "goal": "Sign up new members this month"
-        },
-        "platform": "instagram",
-        "version_a": {
-            "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday."
-        },
-        "version_b": {
-            "text": "Small-group coaching, never more than 8 people a class. Certified coaches who learn your name and build your plan. Book a free intro session at Ironwood."
-        },
-        "crowd": 50,
-        "rounds": 6,
-        "seeds": 1,
-        "events": []
+  "run_id": "20261027-ironwood-strength-cl-5453",
+  "input_echo": {
+    "business": {
+      "name": "Ironwood Strength Club",
+      "type": "gym",
+      "address": "Short North, Columbus, OH 43201",
+      "zip": "43201",
+      "goal": "Sign up new members this month"
     },
     "platform": "instagram",
-    "versions": [
-        {
-            "variant": "A",
-            "type": "post",
-            "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday.",
-            "image_id": null,
-            "image_description": null,
-            "campaign_posts": null
-        },
-        {
-            "variant": "B",
-            "type": "post",
-            "text": "Small-group coaching, never more than 8 people a class. Certified coaches who learn your name and build your plan. Book a free intro session at Ironwood.",
-            "image_id": null,
-            "image_description": null,
-            "campaign_posts": null
-        }
+    "version_a": {
+      "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday."
+    },
+    "version_b": {
+      "text": "Small-group coaching, never more than 8 people a class. Certified coaches who learn your name and build your plan. Book a free intro session at Ironwood."
+    },
+    "crowd": 50,
+    "rounds": 6,
+    "seeds": 1,
+    "events": []
+  },
+  "platform": "instagram",
+  "versions": [
+    {
+      "variant": "A",
+      "type": "post",
+      "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday.",
+      "image_id": null,
+      "image_description": null,
+      "campaign_posts": null
+    },
+    {
+      "variant": "B",
+      "type": "post",
+      "text": "Small-group coaching, never more than 8 people a class. Certified coaches who learn your name and build your plan. Book a free intro session at Ironwood.",
+      "image_id": null,
+      "image_description": null,
+      "campaign_posts": null
+    }
+  ],
+  "audience": {
+    "size": 50,
+    "place": "Short North, Columbus, OH 43201",
+    "core": {
+      "name": "Short North strength seekers 25-44",
+      "age_bands": [
+        "25-34",
+        "35-44"
+      ],
+      "why": "The limited-time membership discount and small-group coaching pitch targets working-age adults seeking structured strength training near home or work."
+    },
+    "spillover": {
+      "name": "Columbus-area wellness browsers 45-64",
+      "why": "Local geotags and fitness hashtags will expose the offer to older neighbors and general health-conscious users outside the primary target."
+    },
+    "interests": [
+      "strength training",
+      "small-group fitness classes",
+      "gym memberships",
+      "certified coaching",
+      "Columbus fitness"
     ],
-    "audience": {
-        "size": 50,
-        "place": "Short North, Columbus, OH 43201",
-        "core": {
-            "name": "Short North strength seekers 25-44",
-            "age_bands": [
-                "25-34",
-                "35-44"
-            ],
-            "why": "The limited-time membership discount and small-group coaching pitch targets working-age adults seeking structured strength training near home or work."
-        },
-        "spillover": {
-            "name": "Columbus-area wellness browsers 45-64",
-            "why": "Local geotags and fitness hashtags will expose the offer to older neighbors and general health-conscious users outside the primary target."
-        },
-        "interests": [
-            "strength training",
-            "small-group fitness classes",
-            "gym memberships",
-            "certified coaching",
-            "Columbus fitness"
-        ],
-        "segments": {
-            "role": {
-                "core": 25,
-                "spillover": 25
-            },
-            "age_band": {
-                "25-34": 19,
-                "18-24": 24,
-                "35-44": 6,
-                "45-54": 1
-            },
-            "customers": 0
-        },
-        "census_geo": "86000US43201",
-        "instagram_users_est": 23020
+    "segments": {
+      "role": {
+        "core": 25,
+        "spillover": 25
+      },
+      "age_band": {
+        "25-34": 19,
+        "18-24": 24,
+        "35-44": 6,
+        "45-54": 1
+      },
+      "customers": 0
     },
-    "verdict": {
-        "headline": "A wins on intent to visit: 70.2% vs 42.5% (+27.7 pts, 95% CI +8.4 to +46.9); A ahead in 1 of 1 seed; 100% likely to be the better version.",
-        "winner": "A",
-        "call": "winner",
-        "metric": "intent_rate",
-        "gap_pts": 27.7,
-        "ci_half_pts": 19.3,
-        "seeds_agree": 1,
-        "per_seed": [
-            {
-                "seed": 1,
-                "a": 0.7021,
-                "b": 0.4255,
-                "na": 47,
-                "nb": 47,
-                "leader": "A"
-            }
-        ],
-        "segments": [
-            {
-                "key": "age:18-24",
-                "a": 0.6818,
-                "b": 0.2727,
-                "na": 22,
-                "nb": 22,
-                "prefers": "A",
-                "clear": true
-            },
-            {
-                "key": "customer:no",
-                "a": 0.7021,
-                "b": 0.4255,
-                "na": 47,
-                "nb": 47,
-                "prefers": "A",
-                "clear": true
-            },
-            {
-                "key": "role:spillover",
-                "a": 0.6957,
-                "b": 0.2609,
-                "na": 23,
-                "nb": 23,
-                "prefers": "A",
-                "clear": true
-            }
+    "census_geo": "86000US43201",
+    "instagram_users_est": 23020
+  },
+  "verdict": {
+    "headline": "A wins on intent to visit: 70.2% vs 42.5% (+27.7 pts, 95% CI +8.4 to +46.9); A ahead in 1 of 1 seed; 100% likely to be the better version.",
+    "winner": "A",
+    "call": "winner",
+    "metric": "intent_rate",
+    "gap_pts": 27.7,
+    "ci_half_pts": 19.3,
+    "seeds_agree": 1,
+    "per_seed": [
+      {
+        "seed": 1,
+        "a": 0.7021,
+        "b": 0.4255,
+        "na": 47,
+        "nb": 47,
+        "leader": "A"
+      }
+    ],
+    "segments": [
+      {
+        "key": "age:18-24",
+        "a": 0.6818,
+        "b": 0.2727,
+        "na": 22,
+        "nb": 22,
+        "prefers": "A",
+        "clear": true
+      },
+      {
+        "key": "customer:no",
+        "a": 0.7021,
+        "b": 0.4255,
+        "na": 47,
+        "nb": 47,
+        "prefers": "A",
+        "clear": true
+      },
+      {
+        "key": "role:spillover",
+        "a": 0.6957,
+        "b": 0.2609,
+        "na": 23,
+        "nb": 23,
+        "prefers": "A",
+        "clear": true
+      }
+    ]
+  },
+  "metrics": {
+    "A": {
+      "variant": "A",
+      "intent_rate": 0.7020000000000001,
+      "rate_pct": 70.2,
+      "n_deciders": 47,
+      "margin_of_error_pts": 13.1,
+      "engagement_rate": 0.1489,
+      "mean_stance": 0.253,
+      "vocal_share": 0,
+      "silent_negative_share": 0,
+      "hide_rate": 0,
+      "tap_rate": 0.0851
+    },
+    "B": {
+      "variant": "B",
+      "intent_rate": 0.426,
+      "rate_pct": 42.6,
+      "n_deciders": 47,
+      "margin_of_error_pts": 14.1,
+      "engagement_rate": 0.1064,
+      "mean_stance": 0.178,
+      "vocal_share": 0,
+      "silent_negative_share": 0,
+      "hide_rate": 0,
+      "tap_rate": 0.0426
+    }
+  },
+  "report": {
+    "summary": "A wins on intent to visit: 70.2% vs 42.5% (+27.7 pts, 95% CI +8.4 to +46.9); A ahead in 1 of 1 seed; 100% likely to be the better version.",
+    "claims": [
+      {
+        "text": "core on A: intent 70.8% (24 people deciding).",
+        "query_ids": [
+          "q_d89bc3fe_p"
         ]
-    },
-    "metrics": {
-        "A": {
-            "variant": "A",
-            "intent_rate": 0.7020000000000001,
-            "rate_pct": 70.2,
-            "n_deciders": 47,
-            "margin_of_error_pts": 13.1,
-            "engagement_rate": 0.1489,
-            "mean_stance": 0.253,
-            "vocal_share": 0,
-            "silent_negative_share": 0,
-            "hide_rate": 0,
-            "tap_rate": 0.0851
+      },
+      {
+        "text": "core on B: intent 58.3% (24 people deciding).",
+        "query_ids": [
+          "q_d89bc3fe_p"
+        ]
+      },
+      {
+        "text": "spillover on A: intent 69.6% (23 people deciding).",
+        "query_ids": [
+          "q_d89bc3fe_p"
+        ]
+      },
+      {
+        "text": "spillover on B: intent 26.1% (23 people deciding).",
+        "query_ids": [
+          "q_d89bc3fe_p"
+        ]
+      }
+    ],
+    "themes": {
+      "objections": [],
+      "likes": [
+        {
+          "theme": "Drawn by the discount (2 of 14 sampled reasons)",
+          "variant": "B",
+          "action_ids": [
+            "s1:B:17",
+            "s1:B:11"
+          ]
         },
-        "B": {
-            "variant": "B",
-            "intent_rate": 0.426,
-            "rate_pct": 42.6,
-            "n_deciders": 47,
-            "margin_of_error_pts": 14.1,
-            "engagement_rate": 0.1064,
-            "mean_stance": 0.178,
-            "vocal_share": 0,
-            "silent_negative_share": 0,
-            "hide_rate": 0,
-            "tap_rate": 0.0426
+        {
+          "theme": "Drawn by the discount (11 of 14 sampled reasons)",
+          "variant": "A",
+          "action_ids": [
+            "s1:A:40",
+            "s1:A:15"
+          ]
         }
+      ]
     },
-    "report": {
-        "summary": "A wins on intent to visit: 70.2% vs 42.5% (+27.7 pts, 95% CI +8.4 to +46.9); A ahead in 1 of 1 seed; 100% likely to be the better version.",
-        "claims": [
-            {
-                "text": "core on A: intent 70.8% (24 people deciding).",
-                "query_ids": [
-                    "q_2b3392f0_v"
-                ]
-            },
-            {
-                "text": "core on B: intent 58.3% (24 people deciding).",
-                "query_ids": [
-                    "q_2b3392f0_v"
-                ]
-            },
-            {
-                "text": "spillover on A: intent 69.6% (23 people deciding).",
-                "query_ids": [
-                    "q_2b3392f0_v"
-                ]
-            },
-            {
-                "text": "spillover on B: intent 26.1% (23 people deciding).",
-                "query_ids": [
-                    "q_2b3392f0_v"
-                ]
-            }
-        ],
-        "themes": {
-            "objections": [],
-            "likes": [
-                {
-                    "theme": "Drawn by the discount (2 of 14 sampled reasons)",
-                    "variant": "B",
-                    "action_ids": [
-                        "s1:B:17",
-                        "s1:B:11"
-                    ]
-                },
-                {
-                    "theme": "Drawn by the discount (11 of 14 sampled reasons)",
-                    "variant": "A",
-                    "action_ids": [
-                        "s1:A:40",
-                        "s1:A:15"
-                    ]
-                }
-            ]
-        },
-        "tipping_note": "No one shared either version, so neither spread beyond the people it was served to.",
-        "recommendation": "Launch version A, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.",
-        "quotes": {
-            "s1:B:17": {
-                "agent_id": "p0013",
-                "world_id": "s1:B",
-                "hour": 2,
-                "action": "scroll_past",
-                "reason": "Good ingredients matter more to me than a discount, and anything free gets my attention right away.",
-                "text": "",
-                "unsaid": "",
-                "variant": "B",
-                "checks": []
-            },
-            "s1:B:11": {
-                "agent_id": "p0025",
-                "world_id": "s1:B",
-                "hour": 1,
-                "action": "scroll_past",
-                "reason": "A freebie is a low risk reason to try the place, and good ingredients matter more to me than a discount.",
-                "text": "",
-                "unsaid": "",
-                "variant": "B",
-                "checks": []
-            },
-            "s1:A:40": {
-                "agent_id": "p0045",
-                "world_id": "s1:A",
-                "hour": 3,
-                "action": "scroll_past",
-                "reason": "Money off is exactly what moves me on a weekday, and a freebie is a low risk reason to try the place.",
-                "text": "",
-                "unsaid": "",
-                "variant": "A",
-                "checks": []
-            },
-            "s1:A:15": {
-                "agent_id": "p0005",
-                "world_id": "s1:A",
-                "hour": 2,
-                "action": "tap_through",
-                "reason": "That discount makes the trip worth it for me, and anything free gets my attention right away.",
-                "text": "",
-                "unsaid": "",
-                "variant": "A",
-                "checks": []
-            }
-        },
-        "fallback": true,
-        "error": null
+    "tipping_note": "No one shared either version, so neither spread beyond the people it was served to.",
+    "recommendation": "Launch version A, then try a sharper version C on the same crowd aimed at the segments that preferred the other one.",
+    "quotes": {
+      "s1:B:17": {
+        "agent_id": "p0013",
+        "world_id": "s1:B",
+        "hour": 2,
+        "action": "scroll_past",
+        "reason": "Good ingredients matter more to me than a discount, and anything free gets my attention right away.",
+        "text": "",
+        "unsaid": "",
+        "variant": "B",
+        "checks": []
+      },
+      "s1:B:11": {
+        "agent_id": "p0025",
+        "world_id": "s1:B",
+        "hour": 1,
+        "action": "scroll_past",
+        "reason": "A freebie is a low risk reason to try the place, and good ingredients matter more to me than a discount.",
+        "text": "",
+        "unsaid": "",
+        "variant": "B",
+        "checks": []
+      },
+      "s1:A:40": {
+        "agent_id": "p0045",
+        "world_id": "s1:A",
+        "hour": 3,
+        "action": "scroll_past",
+        "reason": "Money off is exactly what moves me on a weekday, and a freebie is a low risk reason to try the place.",
+        "text": "",
+        "unsaid": "",
+        "variant": "A",
+        "checks": []
+      },
+      "s1:A:15": {
+        "agent_id": "p0005",
+        "world_id": "s1:A",
+        "hour": 2,
+        "action": "tap_through",
+        "reason": "That discount makes the trip worth it for me, and anything free gets my attention right away.",
+        "text": "",
+        "unsaid": "",
+        "variant": "A",
+        "checks": []
+      }
     },
-    "decision": {
-        "run_id": "20261027-ironwood-strength-cl-5fb2",
-        "created": "2026-10-27T21:56:27.120Z",
-        "call": "winner",
-        "headline": "Launch A: it wins by 27.7 points and is 100% likely to be the better version.",
-        "reasons": [
-            "A wins on intent to visit: 70.2% vs 42.5%, a 27.7-point gap with a 95% interval of \u00b119.3 points, and A is ahead in 1 of 1 seeds. A is 100% likely to be the better version.",
-            "A live split test would need about 50 people per version (0.4% of the local Instagram users) and paid impressions to detect this gap. Ripple ran it on the simulated crowd for $0 of ad spend.",
-            "There are about 23,020 Instagram users in Short North, Columbus, OH 43201 (Census x Pew join)."
-        ],
-        "verdict": {
-            "headline": "A wins on intent to visit: 70.2% vs 42.5% (+27.7 pts, 95% CI +8.4 to +46.9); A ahead in 1 of 1 seed; 100% likely to be the better version.",
-            "a": 0.7021,
-            "b": 0.4255,
-            "gap_pts": 27.659999999999997,
-            "ci_half_pts": 19.259999999999998,
-            "winner": "A",
-            "leader": "A",
-            "p_better": 0.9976
-        },
-        "audience": {
-            "local_instagram_users": 23020,
-            "place": "Short North, Columbus, OH 43201",
-            "query_id": "q_7b05a61a_u",
-            "source": "ACS adults by age in the ZIP x Pew Instagram use by age"
-        },
-        "sample_size": {
-            "metric": "intent to visit (simulated)",
-            "p_a": 0.7021,
-            "p_b": 0.4255,
-            "per_version": 50,
-            "total": 100,
-            "share_of_audience": 0.004344048653344918,
-            "alpha": 0.05,
-            "power": 0.8
-        },
-        "affordable": {
-            "max_share": 0.2,
-            "per_version": 2302,
-            "detectable_gap_pts": 3.704290593525278
-        },
-        "brief": {
-            "objections": [],
-            "likes": [
-                {
-                    "variant": "B",
-                    "theme": "Drawn by the discount (2 of 14 sampled reasons)",
-                    "quotes": [
-                        {
-                            "action_id": "s1:B:17",
-                            "reason": "Good ingredients matter more to me than a discount, and anything free gets my attention right away."
-                        },
-                        {
-                            "action_id": "s1:B:11",
-                            "reason": "A freebie is a low risk reason to try the place, and good ingredients matter more to me than a discount."
-                        }
-                    ]
-                },
-                {
-                    "variant": "A",
-                    "theme": "Drawn by the discount (11 of 14 sampled reasons)",
-                    "quotes": [
-                        {
-                            "action_id": "s1:A:40",
-                            "reason": "Money off is exactly what moves me on a weekday, and a freebie is a low risk reason to try the place."
-                        },
-                        {
-                            "action_id": "s1:A:15",
-                            "reason": "That discount makes the trip worth it for me, and anything free gets my attention right away."
-                        }
-                    ]
-                }
-            ],
-            "segments": [
-                "core on A: intent 70.8% (24 people deciding).",
-                "core on B: intent 58.3% (24 people deciding).",
-                "spillover on A: intent 69.6% (23 people deciding).",
-                "spillover on B: intent 26.1% (23 people deciding)."
-            ]
-        },
-        "variant": null,
-        "plan": {
-            "variants": [
-                {
-                    "label": "Version A",
-                    "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday."
-                }
-            ],
-            "targeting": {
-                "platform": "Instagram",
-                "place": "Short North, Columbus, OH 43201",
-                "zip": "43201",
-                "age_bands": [
-                    "25-34",
-                    "35-44"
-                ],
-                "note": "Core segment Short North strength seekers 25-44 first; the crowd sampled 50.0% core."
-            },
-            "per_version": 2302,
-            "total": 2302,
-            "success_metric": "Taps through to the post and store visits attributed to the post (the real-world counterpart of the simulated intent to visit).",
-            "decision_rule": "Keep version A running if its tap rate is not below the simulated range; otherwise pause it.",
-            "stop_rule": "Stop after 2,302 people have seen it, or after 7 days.",
-            "assumptions": [
-                "These are simulated people, not real customers; the backtest shows the crowd does not reliably predict real winners.",
-                "Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age."
-            ]
-        },
-        "actions": [
-            {
-                "id": "launch",
-                "kind": "publish",
-                "title": "Launch Version A in Meta Ads (paused)",
-                "detail": "One paused campaign, one ad set, one ad: Instagram, ZIP 43201. \"Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday.\"",
-                "policy": "needs_approval",
-                "why_policy": "It sets up ad spend and a public post in your ad account: you decide. Everything is created paused.",
-                "status": "proposed",
-                "evidence": [
-                    "q_7b05a61a_u"
-                ]
-            }
-        ],
-        "budget_input": null
+    "fallback": true,
+    "error": null
+  },
+  "decision": {
+    "run_id": "20261027-ironwood-strength-cl-5453",
+    "created": "2026-10-27T23:00:54.240Z",
+    "call": "winner",
+    "headline": "Launch A: it wins by 27.7 points and is 100% likely to be the better version.",
+    "reasons": [
+      "A wins on intent to visit: 70.2% vs 42.5%, a 27.7-point gap with a 95% interval of ±19.3 points, and A is ahead in 1 of 1 seeds. A is 100% likely to be the better version.",
+      "A live split test would need about 50 people per version (0.4% of the local Instagram users) and paid impressions to detect this gap. Ripple ran it on the simulated crowd for $0 of ad spend.",
+      "There are about 23,020 Instagram users in Short North, Columbus, OH 43201 (Census x Pew join)."
+    ],
+    "verdict": {
+      "headline": "A wins on intent to visit: 70.2% vs 42.5% (+27.7 pts, 95% CI +8.4 to +46.9); A ahead in 1 of 1 seed; 100% likely to be the better version.",
+      "a": 0.7021,
+      "b": 0.4255,
+      "gap_pts": 27.659999999999997,
+      "ci_half_pts": 19.259999999999998,
+      "winner": "A",
+      "leader": "A",
+      "p_better": 0.9976
     },
-    "validity": {
-        "decisions": 94,
-        "repaired_share": 0,
-        "distinct_reason_ratio": 0.37,
-        "top_reason_opener": {
-            "text": "a freebie is",
-            "share": 0.205
-        },
-        "scroll_past_share": 0.872,
-        "stance_sd_by_world": [
+    "audience": {
+      "local_instagram_users": 23020,
+      "place": "Short North, Columbus, OH 43201",
+      "query_id": "q_7b05a61a_o",
+      "source": "ACS adults by age in the ZIP x Pew Instagram use by age"
+    },
+    "sample_size": {
+      "metric": "intent to visit (simulated)",
+      "p_a": 0.7021,
+      "p_b": 0.4255,
+      "per_version": 50,
+      "total": 100,
+      "share_of_audience": 0.004344048653344918,
+      "alpha": 0.05,
+      "power": 0.8
+    },
+    "affordable": {
+      "max_share": 0.2,
+      "per_version": 2302,
+      "detectable_gap_pts": 3.704290593525278
+    },
+    "brief": {
+      "objections": [],
+      "likes": [
+        {
+          "variant": "B",
+          "theme": "Drawn by the discount (2 of 14 sampled reasons)",
+          "quotes": [
             {
-                "world": "s1:A",
-                "sd": 0.129
+              "action_id": "s1:B:17",
+              "reason": "Good ingredients matter more to me than a discount, and anything free gets my attention right away."
             },
             {
-                "world": "s1:B",
-                "sd": 0.121
+              "action_id": "s1:B:11",
+              "reason": "A freebie is a low risk reason to try the place, and good ingredients matter more to me than a discount."
             }
-        ],
-        "silenced": 0,
-        "guard": {
-            "decisions_with_a_check": 21,
-            "by_check": {
-                "reason:duplicate_in_batch": 21
+          ]
+        },
+        {
+          "variant": "A",
+          "theme": "Drawn by the discount (11 of 14 sampled reasons)",
+          "quotes": [
+            {
+              "action_id": "s1:A:40",
+              "reason": "Money off is exactly what moves me on a weekday, and a freebie is a low risk reason to try the place."
+            },
+            {
+              "action_id": "s1:A:15",
+              "reason": "That discount makes the trip worth it for me, and anything free gets my attention right away."
             }
+          ]
         }
+      ],
+      "segments": [
+        "core on A: intent 70.8% (24 people deciding).",
+        "core on B: intent 58.3% (24 people deciding).",
+        "spillover on A: intent 69.6% (23 people deciding).",
+        "spillover on B: intent 26.1% (23 people deciding)."
+      ]
     },
-    "trace": {
-        "log_file": "logs/20261027-ironwood-strength-cl-5fb2.jsonl",
-        "models_used": {
-            "replay(nvidia:private/nvidia/nemotron-3.5-super-120b-a12b)": 1,
-            "none": 23,
-            "offline-model": 20
-        },
-        "queries": {
-            "count": 17,
-            "by_engine": {
-                "local-duckdb": 17
-            }
-        },
-        "timing_ms": {
-            "total": 1094,
-            "crowd_ms": 85,
-            "sim_ms": 540,
-            "report_ms": 359,
-            "decision_ms": 15
+    "variant": null,
+    "plan": {
+      "variants": [
+        {
+          "label": "Version A",
+          "text": "Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday."
         }
+      ],
+      "targeting": {
+        "platform": "Instagram",
+        "place": "Short North, Columbus, OH 43201",
+        "zip": "43201",
+        "age_bands": [
+          "25-34",
+          "35-44"
+        ],
+        "note": "Core segment Short North strength seekers 25-44 first; the crowd sampled 50.0% core."
+      },
+      "per_version": 2302,
+      "total": 2302,
+      "success_metric": "Taps through to the post and store visits attributed to the post (the real-world counterpart of the simulated intent to visit).",
+      "decision_rule": "Keep version A running if its tap rate is not below the simulated range; otherwise pause it.",
+      "stop_rule": "Stop after 2,302 people have seen it, or after 7 days.",
+      "assumptions": [
+        "These are simulated people, not real customers; the backtest shows the crowd does not reliably predict real winners.",
+        "Audience size is an estimate: ACS adults in the ZIP times national Pew Instagram use by age."
+      ]
     },
-    "ui_url": "http://localhost:8000/#/run/20261027-ironwood-strength-cl-5fb2"
+    "actions": [
+      {
+        "id": "launch",
+        "kind": "publish",
+        "title": "Launch Version A in Meta Ads (paused)",
+        "detail": "One paused campaign, one ad set, one ad: Instagram, ZIP 43201. \"Join Ironwood this week: 50% off your first 3 months and no sign-up fee. Limited spots, offer ends Sunday.\"",
+        "policy": "needs_approval",
+        "why_policy": "It sets up ad spend and a public post in your ad account: you decide. Everything is created paused.",
+        "status": "proposed",
+        "evidence": [
+          "q_7b05a61a_o"
+        ]
+      }
+    ],
+    "budget_input": null
+  },
+  "validity": {
+    "decisions": 94,
+    "repaired_share": 0,
+    "distinct_reason_ratio": 0.37,
+    "top_reason_opener": {
+      "text": "a freebie is",
+      "share": 0.205
+    },
+    "scroll_past_share": 0.872,
+    "stance_sd_by_world": [
+      {
+        "world": "s1:A",
+        "sd": 0.129
+      },
+      {
+        "world": "s1:B",
+        "sd": 0.121
+      }
+    ],
+    "silenced": 0,
+    "guard": {
+      "decisions_with_a_check": 21,
+      "by_check": {
+        "reason:duplicate_in_batch": 21
+      }
+    }
+  },
+  "trace": {
+    "log_file": "logs/20261027-ironwood-strength-cl-5453.jsonl",
+    "models_used": {
+      "replay(nvidia:private/nvidia/nemotron-3.5-super-120b-a12b)": 1,
+      "none": 23,
+      "offline-model": 20
+    },
+    "queries": {
+      "count": 17,
+      "by_engine": {
+        "local-duckdb": 17
+      }
+    },
+    "timing_ms": {
+      "total": 31819,
+      "crowd_ms": 4543,
+      "sim_ms": 22622,
+      "report_ms": 4614,
+      "decision_ms": 5
+    }
+  },
+  "ui_url": "http://localhost:8787/#/run/20261027-ironwood-strength-cl-5453"
 }
