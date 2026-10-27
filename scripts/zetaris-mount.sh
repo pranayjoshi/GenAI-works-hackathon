@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Mount this project read-only into a local Zetaris bundle at /data/dryrun, so Zetaris can read
-# the Census, Pew, priors, customer and run CSVs as Lightning file-store tables (ZETARIS_FILE_ROOT=/data/dryrun).
+# Mount this project read-only into a local Zetaris bundle at /home/zetaris/customer-data/shared/dryrun (inside Zetaris's allowed file root), so Zetaris can read
+# the Census, Pew, priors, customer and run CSVs as Lightning file-store tables (ZETARIS_FILE_ROOT=/home/zetaris/customer-data/shared/dryrun).
 # Usage: scripts/zetaris-mount.sh <folder with the Zetaris docker-compose.yml>
 set -euo pipefail
 bundle="${1:?usage: scripts/zetaris-mount.sh <zetaris bundle folder>}"
@@ -22,7 +22,7 @@ for name, s in json.load(sys.stdin)["services"].items():
   for s in $services; do
     echo "  $s:"
     echo "    volumes:"
-    echo "      - \"$project:/data/dryrun:ro\""
+    echo "      - \"$project:/home/zetaris/customer-data/shared/dryrun:ro\""
   done
 } > docker-compose.override.yml
 

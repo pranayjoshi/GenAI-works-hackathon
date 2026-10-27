@@ -46,8 +46,8 @@ scripts/zetaris-mount.sh ~/Downloads/zetaris-platform
 cd ~/Downloads/zetaris-platform && docker compose up -d
 ```
 
-   The script writes a `docker-compose.override.yml` that mounts the project read-only at `/data/dryrun` in the Lightning server and API containers.
-4. Sign in to the Zetaris UI, create a token under Management > API Tokens, and put it in `.env` as `ZETARIS_API_KEY=...` (or set `ZETARIS_USER` / `ZETARIS_PASSWORD`). `.env` already has `ZETARIS_BASE_URL=http://localhost:8888` (8888, not 8889), `ZETARIS_ORG_ID=1` and `ZETARIS_FILE_ROOT=/data/dryrun`.
+   The script writes a `docker-compose.override.yml` that mounts the project read-only at `/home/zetaris/customer-data/shared/dryrun` in the Lightning server and API containers.
+4. Sign in to the Zetaris UI, create a token under Management > API Tokens, and put it in `.env` as `ZETARIS_API_KEY=...` (or set `ZETARIS_USER` / `ZETARIS_PASSWORD`). `.env` already has `ZETARIS_BASE_URL=http://localhost:8888` (8888, not 8889), `ZETARIS_ORG_ID=1` and `ZETARIS_FILE_ROOT=/home/zetaris/customer-data/shared/dryrun`.
 5. `npm run probe` reports the engine. Every query in `runs/queries.jsonl` records whether `zetaris` or `local-duckdb` answered it, and the UI shows the same label.
 
 The client follows the published OpenAPI spec (`/api/v1.0/auth/login`, `/api/v1.0/query/sql/start`, `/query/sql/page`, `/query/sql/close/{queryToken}`) and is checked against a fake server built from that spec in `tests/zetaris-contract.test.ts`. It has not yet run against a live Zetaris instance.

@@ -15,3 +15,8 @@ data/cache/census_all.json
 !runs/20261027-south-congress-coffe-1787/
 !runs/bt-261027045944-*/
 !runs/20261027-south-congress-coffe-e52a/
+
+# local Zetaris bundle state (scripts/zetaris-register.sh)
+data/cache/zetaris-register.*
+data/cache/zetaris-registered.json
+data/cache/census_all.csv

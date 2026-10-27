@@ -64,6 +64,7 @@ beforeAll(async () => {
   Object.assign(process.env, {
     ZETARIS_BASE_URL: `http://127.0.0.1:${port}/api/v1.0`, ZETARIS_USER: 'ana', ZETARIS_PASSWORD: 'pw', ZETARIS_API_KEY: '',
     ZETARIS_ORG_ID: '42', ZETARIS_FILE_ROOT: '/zdata/dryrun',
+    ZETARIS_REGISTRY: path.join(os.tmpdir(), 'dryrun-no-registry.json'), // ignore a local bundle's registry
     RUNS_DIR: fs.mkdtempSync(path.join(os.tmpdir(), 'dryrun-zetaris-')), // keep fake-server queries out of the real query log
   });
   fed = await import('../src/data/federation.js');

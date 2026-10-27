@@ -117,12 +117,26 @@ export async function zetarisQuery(sql: string): Promise<Row[]> {
   } finally {
     await zFetch(`${z.closePath}/${encodeURIComponent(first.queryToken)}`, { method: 'DELETE' }).catch(() => {});
   }
-  return rows;
+  return rows.map(numeric);
+}
+
+/** The REST API returns every value as text; give numbers back as numbers, the way DuckDB does. */
+const NUM = /^-?(0|[1-9]\d{0,14})(\.\d+)?([eE][-+]?\d+)?$/;
+function numeric(r: Row): Row {
+  return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, typeof v === 'string' && NUM.test(v) ? Number(v) : v]));
 }
 
 let zetarisDown = false;
-/** Tables registered on Zetaris. A query goes to Zetaris only when every table it names is one of these. */
-const zetarisTables = new Set<string>();
+/**
+ * Tables registered on Zetaris, local name -> name on Zetaris. A query goes to Zetaris only when every table
+ * it names is one of these, with the names rewritten. scripts/zetaris-register.sh writes the registry file.
+ */
+const zetarisTables = new Map<string, string>();
+type Registry = Record<string, { zetaris: string; path: string }>;
+function registry(): Registry {
+  try { return JSON.parse(fs.readFileSync(process.env.ZETARIS_REGISTRY ?? path.join(config.paths.data, 'cache', 'zetaris-registered.json'), 'utf8')) as Registry; } catch { return {}; }
+}
+const toZetaris = (sql: string) => sql.replace(/\b(census|pew|priors|biz|upworthy|sim)\.(\w+)/gi, (m) => zetarisTables.get(m.toLowerCase()) ?? m);
 export function engineName(): 'zetaris' | 'local-duckdb' {
   return zetarisConfigured() && !zetarisDown ? 'zetaris' : 'local-duckdb';
 }
@@ -138,7 +152,7 @@ export async function query(sql: string, label = 'query'): Promise<QueryResult> 
   let note: string | undefined;
   const names = tablesIn(sql);
   if (engineName() === 'zetaris' && names.length && names.every((t) => zetarisTables.has(t))) {
-    try { rows = await zetarisQuery(sql); engine = 'zetaris'; } catch (e) {
+    try { rows = await zetarisQuery(toZetaris(sql)); engine = 'zetaris'; } catch (e) {
       if (e instanceof ZetarisDown) zetarisDown = true;
       note = `zetaris failed (${(e as Error).message.slice(0, 160)}); answered by local DuckDB`;
       console.warn(`[federation] ${label}: ${note}`);
@@ -167,10 +181,14 @@ export async function registerCsv(table: string, file: string, opts: { lightning
     const [db, t] = table.split('.');
     const zdb = opts.lightningDb ?? db;
     const zpath = `${config.zetaris.fileRoot.replace(/\/+$/, '')}/${path.relative(process.cwd(), abs).split(path.sep).join('/')}`;
-    try {
+    const all = registry();
+    const reg = all[table.toLowerCase()];
+    if (reg && reg.path === zpath) zetarisTables.set(table.toLowerCase(), reg.zetaris); // registered by scripts/zetaris-register.sh
+    else if (Object.keys(all).length) { /* a local bundle takes DDL only through its CLI; this table stays on DuckDB */ }
+    else try {
       await zetarisQuery(`CREATE LIGHTNING DATABASE IF NOT EXISTS ${zdb} DESCRIBE BY "Dry Run ${db}" OPTIONS ()`).catch(() => [] as Row[]);
       await zetarisQuery(`CREATE LIGHTNING FILESTORE TABLE IF NOT EXISTS ${t} FROM ${zdb} FORMAT CSV OPTIONS (PATH "${zpath}", HEADER "true", INFERSCHEMA "true")`);
-      zetarisTables.add(table.toLowerCase());
+      zetarisTables.set(table.toLowerCase(), table.toLowerCase());
     } catch (e) {
       if (e instanceof ZetarisDown) zetarisDown = true;
       console.warn(`[federation] Zetaris register ${table} failed: ${(e as Error).message}`);
