@@ -4,10 +4,13 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
 
 ## 1. Remaining steps, in order
 
-1. **Get the video.** The draft render is attached to the GitHub release `demo-video-draft` (`ripple-demo.mp4`, about 3:47, rendered 21:01 UTC). The UI clips needed to re-render are in the same release as `media-rec.zip`.
-   - The draft does **not** yet have the final Decide and Act scenes on the new run. The rest of the story is recorded on the new copy-only run.
-   - If there's no time, the draft is submittable as is. Check it for anything showing keys first.
-   - If there is time, finish it (section 3).
+1. **Get the video: it is FINAL.** The GitHub release `demo-video` has `ripple-demo.mp4`: 3:54, 1920x1080, 30 fps, H.264/AAC, about 58 MB, rendered about 21:20 UTC. It covers all seven acts on the new copy-only run:
+   - an illustrated story intro;
+   - Create (live), Simulate, Analyse, Ask (live interview and focus group), Decide (with the Version C check), Act (Instagram ad previews and paused approval);
+   - Proof (the real trace);
+   - an impact and Nemotron cast card.
+
+   Automated checks passed: duration, A/V sync, no black frames, no credential strings, −14.8 LUFS. The voice is macOS Samantha. Watch it once before uploading. `media-rec.zip` in the same release holds the UI clips for re-rendering.
 2. **Make the repo public:** GitHub → Settings → General → Change visibility → Public. Then open the README in a private window to check.
 3. **Upload the video** (YouTube unlisted or Drive "anyone with link"). Test the link in a private browser window.
 4. **Slides:** turn `docs/pitch/DECK.md` (12 slides) into a deck. Use screenshots from `docs/images/` and `media/frames/`; the frames are in the release zip.
@@ -37,7 +40,7 @@ Submissions close **27 Oct 23:45 UTC** (hard). Plan to submit by **22:30 UTC**.
   - Live Nightshift + Zetaris trace in `output_examples/hosted/`.
 - **README:** the latest README rewrite (hero image, badges, screenshots in `docs/images/`) came from another session. I committed it as-is. Give it one read for accuracy against `docs/pitch/DEMO_PLAN.md`'s numbers sheet.
 
-## 3. Finishing the video (only if time allows; about 30 min)
+## 3. Re-rendering the video (only if you want changes, e.g. the ElevenLabs voice)
 
 Needs a Mac with Node 20, ffmpeg (`brew install ffmpeg`), Nightshift running, the Zetaris bundle up, and `.env` filled from `.env.example`.
 
@@ -52,10 +55,10 @@ cp -R runs media/runs-rec
 for v in $(grep -o '^META_[A-Z_]*' .env); do export $v=; done; RUNS_DIR=$PWD/media/runs-rec PORT=8790 npx tsx src/api.ts
 ```
 
-3. Record the Decide and Act scenes on run `20261027-south-congress-coffe-1458` in the **dark theme**. The recording scripts are in `scripts/video/` (see `rec-saved.mjs`).
+3. (Only if re-recording) Record the Decide and Act scenes on run `20261027-south-congress-coffe-1458` in the **dark theme**. The recording scripts are in `scripts/video/` (see `rec-saved.mjs`).
    - **Decide:** the Decision stage (29,274 needed vs 27,006 reachable), then Version C and the C result (+1.0 pt, keep A).
    - **Act:** the "How A vs C would look in people's feeds" Instagram mockups. Toggle Feed/Story, click to enlarge, then Approve → "Preview — nothing sent".
-4. Build with `node scripts/video/build.mjs` (see `scripts/video/` for the exact entry and timeline).
+4. Rebuild with `bash scripts/video/make.sh`, then check that the duration is still under 4:00.
 5. **ElevenLabs voice (optional).** The pipeline uses `ELEVENLABS_API_KEY` from `.env` when it works, and falls back to the macOS voice.
    - The key in the current `.env` was rejected (401 Invalid API key).
    - To use it: create a new key in ElevenLabs (Text to Speech + Voices read) and put it in `.env`. Never paste it anywhere else.
