@@ -246,9 +246,9 @@ function fallbackReport(st: RunState, tools: ToolResult[], samples: ToolResult[]
   return {
     summary: v.headline,
     claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% (${r.deciders} decisions across ${st.spec.seeds.length} seed${st.spec.seeds.length > 1 ? 's' : ''}).`, query_ids: [seg.query_id] })).slice(0, 4),
-    objections: [va, vb].map((variant, i) => ({ theme: `Negative reactions to ${variant}`, variant, action_ids: pick(samples[i * 2]) })),
-    likes: [va, vb].map((variant, i) => ({ theme: `Positive reactions to ${variant}`, variant, action_ids: pick(samples[i * 2 + 1]) })),
-    tipping_note: 'See the tipping-point panel.',
+    objections: [va, vb].map((variant, i) => themeFrom(samples[i * 2], variant, 'negative') ?? { theme: `Negative reactions to ${variant}`, variant, action_ids: pick(samples[i * 2]) }),
+    likes: [va, vb].map((variant, i) => themeFrom(samples[i * 2 + 1], variant, 'positive') ?? { theme: `Positive reactions to ${variant}`, variant, action_ids: pick(samples[i * 2 + 1]) }),
+    tipping_note: tippingNote(st),
     recommendation: v.winner ? `Run version ${v.winner}, and test a version C aimed at the losing segments.` : 'The versions are too close to call; test a sharper version C.',
   };
 }
