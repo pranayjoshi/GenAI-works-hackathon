@@ -150,7 +150,9 @@ export async function focusGroup(st: RunState, opts: { size?: number; turns?: nu
   }
   const [A, B] = st.spec.posts;
   const transcript: { speaker: string; text: string; agent_id?: string }[] = [];
-  const say = (t: { speaker: string; text: string; agent_id?: string }) => { transcript.push(t); onTurn?.(t); };
+  // models sometimes glue sentences ("shift it.I doubt"); put the space back
+  const tidy = (x: string) => x.replace(/([a-z][.!?])([A-Z])/g, '$1 $2').trim();
+  const say = (t: { speaker: string; text: string; agent_id?: string }) => { t = { ...t, text: tidy(t.text) }; transcript.push(t); onTurn?.(t); };
   const topic = opts.topic || `Which of these two posts from ${st.spec.business} would actually get you in the door, and why?`;
   say({ speaker: 'Moderator', text: `Thanks for coming. Here are two posts. A: "${A.text}" B: "${B.text}". ${topic}` });
   const label = (p: Persona) => `${p.id} (${p.age}, ${p.role})`;
