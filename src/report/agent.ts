@@ -6,6 +6,7 @@
  */
 import { z } from 'zod';
 import { chat } from '../llm.js';
+import { agentLog } from '../util/agentlog.js';
 import type { RunState } from '../sim/run.js';
 import { allRecords } from '../sim/run.js';
 import { crowdVsCensus, reactionCounts, reactionSample, segmentBreakdown, timeline, type ToolResult } from './tools.js';
@@ -44,6 +45,9 @@ function compactTool(t: ToolResult): string {
 export async function buildReport(st: RunState): Promise<ReportBundle> {
   const v = st.verdict!;
   const [va, vb] = v.variants;
+  const run_id = st.spec.run_id;
+  const tStart = Date.now();
+  agentLog({ run_id, agent_name: 'ReportWriter', action: 'run_tools', target_agent: 'DataAgent', status: 'started', input_summary: 'segment breakdowns, timeline, reaction counts/samples, crowd vs Census (SQL over the action log)' });
   const tools: ToolResult[] = [];
   for (const by of ['role', 'age', 'income', 'customer'] as const) tools.push(await segmentBreakdown(st, by));
   tools.push(await timeline(st));
@@ -78,14 +82,16 @@ Tool results:
 ${toolText}`;
 
   const served: string[] = [];
+  agentLog({ run_id, agent_name: 'DataAgent', action: 'tools_done', target_agent: 'ReportWriter', status: 'success', output_summary: `${tools.length} queries answered (${[...new Set(tools.map((t) => t.engine))].join(', ')})`, refs: { query_ids: tools.map((t) => t.query_id) } });
   let report: Report | null = null;
   let fallback = false;
   try {
     const r = await chat({ role: 'reason', system, user, schema: ReportSchema, schemaName: 'Report', tag: st.spec.run_id, maxTokens: 1400 });
     served.push(r.served_by);
     if (r.ok && r.data) report = unalias(r.data);
-  } catch { /* fallback below */ }
-  if (!report) { report = fallbackReport(st, tools, samples); fallback = true; }
+    agentLog({ run_id, agent_name: 'ReportWriter', action: 'draft_report', target_agent: 'ReportCritic', status: report ? (r.repaired ? 'fallback' : 'success') : 'error', served_by: r.served_by, model: r.model, retry_count: r.repaired ? 1 : 0, output_summary: report ? `draft with ${report.claims.length} claims, ${report.objections.length} objections, ${report.likes.length} likes` : 'model reply failed the Report schema after one repair retry', ms: Date.now() - tStart });
+  } catch (e) { agentLog({ run_id, agent_name: 'ReportWriter', action: 'draft_report', status: 'error', output_summary: (e as Error).message.slice(0, 160) }); }
+  if (!report) { report = fallbackReport(st, tools, samples); fallback = true; agentLog({ run_id, agent_name: 'ReportWriter', action: 'fallback_report', status: 'fallback', output_summary: 'no reasoning model answered; report built in code from the tool results' }); }
 
   // ---- critic: deterministic checks first
   const known = new Set(tools.map((t) => t.query_id));
@@ -137,6 +143,7 @@ ${toolText}`;
     return issues;
   };
   let issues = codeIssues(report);
+  agentLog({ run_id, agent_name: 'ReportCritic', action: 'code_checks', target_agent: 'ReportWriter', status: issues.length ? 'needs_revision' : 'success', output_summary: issues.length ? `${issues.length} code issues: ${issues.slice(0, 2).join(' | ').slice(0, 220)}` : 'citations, numbers, prices and direction all match the tool results', refs: { issues: issues.length } });
   let modelReview: { ok: boolean; issues: string[] } | null = null;
   let revised = false;
   if (!fallback) {
@@ -149,13 +156,16 @@ ${toolText}`;
       });
       served.push(rv.served_by);
       if (rv.ok && rv.data) modelReview = rv.data;
-    } catch { /* critic unavailable; code checks still apply */ }
+      agentLog({ run_id, agent_name: 'ReportCritic', action: 'critique', target_agent: 'ReportWriter', status: modelReview && !modelReview.ok ? 'needs_revision' : rv.ok ? 'success' : 'fallback', served_by: rv.served_by, model: rv.model, retry_count: rv.repaired ? 1 : 0, output_summary: modelReview ? (modelReview.ok ? 'approved by the review model' : `${modelReview.issues.length} model issues: ${modelReview.issues.slice(0, 2).join(' | ').slice(0, 200)}`) : 'critic reply invalid; code checks still apply' });
+    } catch { agentLog({ run_id, agent_name: 'ReportCritic', action: 'critique', status: 'fallback', output_summary: 'review model unavailable; code checks still apply' }); }
     if (issues.length || (modelReview && !modelReview.ok)) {
+      agentLog({ run_id, agent_name: 'ReportCritic', action: 'request_revision', target_agent: 'ReportWriter', status: 'needs_revision', retry_count: 1, output_summary: `${issues.length} code + ${modelReview?.issues.length ?? 0} model issues sent back` });
       try {
         const r2 = await chat({ role: 'reason', system, user: `${user}\n\nYour previous report:\n${JSON.stringify(report)}\n\nThe critic rejected it:\n- ${[...issues, ...(modelReview?.issues ?? [])].join('\n- ')}\nFix every issue and return the full corrected report.`.replace(/q_[0-9a-f]{8}_[0-9a-z]+/g, (id) => [...alias.entries()].find(([, v]) => v === id)?.[0] ?? id), schema: ReportSchema, schemaName: 'Report', tag: st.spec.run_id, maxTokens: 1400 });
         served.push(r2.served_by);
         if (r2.ok && r2.data) { report = unalias(r2.data); revised = true; issues = codeIssues(report); }
-      } catch { /* keep first report with notes */ }
+        agentLog({ run_id, agent_name: 'ReportWriter', action: 'revise_report', target_agent: 'ReportCritic', status: revised ? 'success' : 'fallback', served_by: r2.served_by, model: r2.model, retry_count: 1, output_summary: revised ? `revision accepted; ${issues.length} code issues remain` : 'revision invalid; kept the first draft with notes' });
+      } catch { agentLog({ run_id, agent_name: 'ReportWriter', action: 'revise_report', status: 'fallback', retry_count: 1, output_summary: 'revision call failed; kept the first draft with notes' }); }
     }
   }
   // quality floor: a summary or recommendation too thin to act on is replaced with text built from the verdict
@@ -252,6 +262,7 @@ ${toolText}`;
     const r = recById.get(id)!;
     quotes[id] = { agent_id: r.agent_id, world_id: r.world_id, hour: r.hour, action: r.action, reason: r.reason, text: r.text, unsaid: r.unsaid, variant: r.variant, checks: r.checks ?? [] };
   }
+  agentLog({ run_id, agent_name: 'ReportCritic', action: 'final_approve', target_agent: 'Orchestrator', status: issues.length || fallback ? 'needs_revision' : 'success', retry_count: revised ? 1 : 0, output_summary: `shipped ${report.claims.length} claims, ${Object.keys(quotes).length} quotes; ${issues.length} residual notes${revised ? '; after one revision' : ''}${fallback ? '; code-built fallback report' : ''}`, ms: Date.now() - tStart });
   return {
     report,
     tools: tools.map((t) => ({ tool: t.tool, query_id: t.query_id, engine: t.engine, args: t.args, row_count: t.rows.length })),

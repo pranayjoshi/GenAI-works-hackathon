@@ -9,6 +9,7 @@ import type { Persona } from '../schemas/persona.js';
 import { ENGAGED, VOCAL, type ActionRecord, type ActionType } from '../schemas/action.js';
 import { AgentMemory } from '../memory/hmem.js';
 import { clamp, round as rnd, sha } from '../util/core.js';
+import { agentLog } from '../util/agentlog.js';
 import { decideBatch, type AgentTurn } from './crowd.js';
 import { guardDecision } from './guard.js';
 import { hourLabel } from './schedule.js';
@@ -120,6 +121,7 @@ export class WorldRunner {
       if (ev.round !== r || this.events.some((e) => e.id === ev.id)) continue;
       this.events.push(ev);
       this.world.logEvent(ev, this.roundMs(r));
+      agentLog({ run_id: this.spec.run_id, agent_name: 'Orchestrator', action: 'event_delivered', target_agent: 'CrowdAgent', status: 'success', input_summary: `${this.worldId} round ${r}, target ${ev.target}`, output_summary: ev.text.slice(0, 120), refs: { event_id: ev.id, world: this.worldId } });
       for (const p of this.base.personas) {
         if (ev.target !== 'all' && p.role !== ev.target) continue;
         this.feeds.get(p.id)!.push({ item_id: ev.id, kind: 'event', delivered_round: r, via: null, text: ev.text });
@@ -143,6 +145,14 @@ export class WorldRunner {
       mode: this.spec.mode,
     }, `${this.spec.run_id}`)));
     this.calls += batches.length;
+    // per-batch CrowdAgent results go to the trace file only (many per round)
+    batches.forEach((b, bi) => agentLog({
+      run_id: this.spec.run_id, agent_name: 'CrowdAgent', action: 'decide_batch', target_agent: 'Guard', quiet: true, status: results[bi].repaired ? 'fallback' : 'success',
+      served_by: results[bi].served_by, input_summary: `${this.worldId} round ${r}: ${b.length} people`, output_summary: `${results[bi].decisions.size} decisions${results[bi].repaired ? ', schema repair or missing decisions' : ''}`,
+      refs: { world: this.worldId, round: r, batch: bi, repaired: results[bi].repaired },
+    }));
+    const guardHits: Record<string, number> = {};
+    let guardN = 0;
     // 4. apply decisions in a fixed order
     const deliveries: { from: string; to: string; item: FeedItem }[] = [];
     const otherPost = this.spec.posts.find((p) => p.variant !== this.post.variant)?.text ?? '';
@@ -160,6 +170,7 @@ export class WorldRunner {
             reason: (d?.reason ?? '').trim(), text: (d?.text ?? '').trim(), itemKind: it.kind,
             firstExposure: (this.seen.get(p.id) ?? 0) === 0, postText: this.post.text, otherPostText: otherPost, eventTexts, voice: p.voice, batchReasons,
           });
+          for (const c of g.checks) { guardHits[c] = (guardHits[c] ?? 0) + 1; guardN++; }
           let action: ActionType = g.action;
           const feeling = g.feeling;
           let text = g.text;
@@ -212,6 +223,9 @@ export class WorldRunner {
         this.feeds.set(p.id, this.feeds.get(p.id)!.filter((i) => !consumed.has(i.item_id)));
       }
     });
+    if (guardN) agentLog({ run_id: this.spec.run_id, agent_name: 'Guard', action: 'validate_decisions', target_agent: 'CrowdAgent', quiet: true, status: 'needs_revision', input_summary: `${this.worldId} round ${r}`, output_summary: `${guardN} checks fired: reasons or comments withheld, actions made coherent`, refs: { world: this.worldId, round: r, checks: guardHits } });
+    // MemoryAgent (H-MEM): what this round stored and recalled
+    agentLog({ run_id: this.spec.run_id, agent_name: 'MemoryAgent', action: 'hmem_round', quiet: true, status: 'success', input_summary: `${this.worldId} round ${r}`, output_summary: `${turns.reduce((n, t) => n + t.items.length, 0)} memories stored, ${turns.reduce((n, t) => n + t.memories.length, 0)} recalled for ${turns.length} people`, refs: { world: this.worldId, round: r } });
     // 5. spread
     for (const dl of deliveries) {
       this.feeds.get(dl.to)!.push(dl.item);

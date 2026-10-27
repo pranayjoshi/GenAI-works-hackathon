@@ -10,6 +10,7 @@ import Database from 'better-sqlite3';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { config, THINKING, type ProviderName, type Role } from './config.js';
+import { agentLog } from './util/agentlog.js';
 import { Bus, RpmLimiter, Semaphore, sha, sleep } from './util/core.js';
 
 export interface TraceEntry {
@@ -70,6 +71,14 @@ function trace(e: TraceEntry) {
   s.served_by[e.served_by] = (s.served_by[e.served_by] ?? 0) + 1;
   stats.set(key, s);
   traceBus.emit(e);
+  // ModelRouter: every request with the model asked for and who served it (file only; tag is "<run_id>[:part]")
+  const run_id = e.tag && e.tag !== 'misc' ? e.tag.split(':')[0] : undefined;
+  agentLog({
+    run_id, agent_name: 'ModelRouter', action: `request:${e.role}`, quiet: true, model: e.model, served_by: e.served_by,
+    status: !e.ok ? (e.error ? 'error' : 'needs_revision') : e.repaired ? 'fallback' : 'success', ms: e.ms, retry_count: e.repaired ? 1 : 0,
+    input_summary: `role ${e.role} tag ${e.tag}`,
+    output_summary: `${e.tokens_in} in / ${e.tokens_out} out tokens via ${e.provider}${e.repaired ? '; schema repair retry used' : ''}${!e.ok ? `; ${e.error ?? 'schema validation failed'}` : ''}`.slice(0, 300),
+  });
 }
 
 export function traceStats(tag?: string) {

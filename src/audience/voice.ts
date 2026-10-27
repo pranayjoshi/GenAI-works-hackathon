@@ -3,6 +3,7 @@
  * the voice. Gender is not shown to the model, and voices that lean on identity traits are rejected.
  */
 import { chat } from '../llm.js';
+import { agentLog } from '../util/agentlog.js';
 import { VoiceBatch, type Persona } from '../schemas/persona.js';
 
 const FORBIDDEN = /\b(white|black|asian|latin[oax]?|hispanic|african|indian|chinese|mexican|korean|japanese|arab|jewish|muslim|christian|immigrant|girl|guy|bro|dude|lady|gal|mom|dad|mother|father|wife|husband|boyfriend|girlfriend|feminine|masculine|nerd|basic)\b/i;
@@ -44,5 +45,6 @@ Make every voice different in rhythm and content.`;
     onBatch?.(done);
   }));
   for (const p of personas) if (!voices.has(p.id)) { voices.set(p.id, fallbackVoice(p)); fallbacks++; }
+  agentLog({ run_id: tag.split(':')[0], agent_name: 'VoiceWriter', action: 'write_voices', status: fallbacks ? 'fallback' : 'success', input_summary: `${personas.length} people in ${batches.length} batches`, output_summary: `${personas.length - fallbacks} model voices, ${fallbacks} rule-based fallbacks, ${rejected} rejected by the identity filter` });
   return { voices, fallbacks, rejected };
 }

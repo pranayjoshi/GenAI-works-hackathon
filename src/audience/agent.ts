@@ -1,5 +1,6 @@
 /** Audience agent (Super, thinking on): names the segments. It never emits a percentage (BUILD_PLAN §3.2). */
 import { chat } from '../llm.js';
+import { agentLog } from '../util/agentlog.js';
 import { SegmentProposal, AGE_BANDS } from '../schemas/persona.js';
 
 export interface AudienceInput { postA: string; postB: string; goal: string; place: string; business: string }
@@ -18,8 +19,12 @@ Version A: ${inp.postA}
 Version B: ${inp.postB}`;
   try {
     const r = await chat({ role: 'reason', system, user, schema: SegmentProposal, schemaName: 'SegmentProposal', tag, maxTokens: 500 });
-    if (r.ok && r.data) return { proposal: r.data, served_by: r.served_by, fallback: false };
+    if (r.ok && r.data) {
+      agentLog({ run_id: tag, agent_name: 'AudienceAgent', action: 'propose_segments', target_agent: 'DataAgent', status: 'success', served_by: r.served_by, input_summary: `${inp.business}, ${inp.place}`, output_summary: `core "${r.data.core.name}" (${r.data.core.age_bands.join(', ')}); spillover "${r.data.spillover.name}"; sizes come from Census/Pew via DataAgent` });
+      return { proposal: r.data, served_by: r.served_by, fallback: false };
+    }
   } catch { /* provider down: deterministic fallback below */ }
+  agentLog({ run_id: tag, agent_name: 'AudienceAgent', action: 'propose_segments', status: 'fallback', input_summary: `${inp.business}, ${inp.place}`, output_summary: 'model unavailable or invalid after one repair retry; default core 18-34' });
   return {
     proposal: {
       core: { name: 'daily Instagram users 18-34 nearby', age_bands: ['18-24', '25-34'], why: 'Default core for a local consumer post; edit to match your target.' },

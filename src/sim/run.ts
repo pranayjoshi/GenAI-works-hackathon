@@ -18,6 +18,7 @@ import { traceStats } from '../llm.js';
 import { buildReport } from '../report/agent.js';
 import { buildDecision, writeLaunchPlan } from '../report/decision.js';
 import { Bus, Rng, sha } from '../util/core.js';
+import { agentLog } from '../util/agentlog.js';
 import { buildGraph } from './graph.js';
 import { buildSchedule } from './schedule.js';
 import { buildBase, SimWorld } from './world.js';
@@ -134,6 +135,7 @@ export async function buildCrowd(spec: RunSpec, inp: { postA: string; postB: str
   await registerSources({ customers: spec.useCustomers ? undefined : null });
   await ensureCensus([spec.geoId]);
   onStatus('audience', 'Audience agent is naming the segments');
+  agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'build_crowd', target_agent: 'AudienceAgent', status: 'started', input_summary: `${spec.business}, ${spec.place}, ${spec.crowdSize} people` });
   let proposal: SegmentProposal & { served_by?: string; fallback?: boolean };
   if (presetProposal) proposal = presetProposal;
   else {
@@ -144,17 +146,23 @@ export async function buildCrowd(spec: RunSpec, inp: { postA: string; postB: str
   onStatus('sampling', 'Sampling people from Census and Pew rows');
   const { personas: raw, report } = await sampleCrowd({
     geoId: spec.geoId, zip: spec.zip, n: spec.crowdSize, seed: spec.crowd_seed ?? spec.run_id, coreAgeBands: proposal.core.age_bands,
-    coreName: proposal.core.name, spilloverName: proposal.spillover.name, coreShare: spec.coreShare, useCustomers: spec.useCustomers, platform: spec.platform,
+    run_id: spec.run_id, coreName: proposal.core.name, spilloverName: proposal.spillover.name, coreShare: spec.coreShare, useCustomers: spec.useCustomers, platform: spec.platform,
   });
   onStatus('voices', 'Writing one-line voices (numbers first, model second)', 0);
   const ctx = `${spec.business} in ${spec.place}. Core: ${proposal.core.name}. ${proposal.interests.length ? `Interests: ${proposal.interests.join(', ')}.` : ''}`;
   const { voices, fallbacks, rejected } = await writeVoices(raw, ctx, spec.run_id, (done) => onStatus('voices', `${done}/${raw.length} voices`, done / raw.length));
   const personas: Persona[] = raw.map((p) => ({ ...p, voice: voices.get(p.id)! }));
+  agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'crowd_ready', target_agent: 'CrowdAgent', status: 'success', output_summary: `${personas.length} people with voices; handing the crowd to the simulator`, ms: Date.now() - t0 });
   return { personas, proposal, report: { ...report, voice_fallbacks: fallbacks, voice_rejected: rejected } as SampleReport, ms: Date.now() - t0 };
 }
 
 async function execute(st: RunState, inp: RunInput, preset?: StartOpts['crowd']) {
   const spec = st.spec;
+  agentLog({
+    run_id: spec.run_id, agent_name: 'Orchestrator', action: 'run_started', status: 'started',
+    input_summary: `${spec.business} (${spec.place}); A: "${spec.posts[0].text.slice(0, 70)}" vs B: "${spec.posts[1].text.slice(0, 70)}"; crowd ${spec.crowdSize}, ${spec.rounds} rounds, seeds ${spec.seeds.join(',')}, ${spec.events.length} scripted events`,
+    refs: { crowd_seed: spec.crowd_seed, mode: spec.mode, parent_run: spec.parent_run, reused_crowd: Boolean(preset) },
+  });
   const timing: Record<string, number> = {};
   st.status = 'building';
   if (preset) {
@@ -199,6 +207,11 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
       for (const [aid, mem] of r.memories) m.set(aid, mem.all());
       st.memories.set(r.world_id, m);
     }
+    const recs = res.flatMap((r) => r.records);
+    const fired = recs.filter((x) => x.checks?.length).length;
+    agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'seed_done', status: 'success', output_summary: `seed ${seed}: ${recs.length} decisions in ${res.length} twin worlds (${res.map((r) => `${r.world_id} ${r.records.length}`).join(', ')}); base shapes identical: ${st.fairness[st.fairness.length - 1].identical}` });
+    agentLog({ run_id: spec.run_id, agent_name: 'Guard', action: 'validate_seed', target_agent: 'Orchestrator', status: fired ? 'needs_revision' : 'success', output_summary: `seed ${seed}: ${fired} of ${recs.length} decisions had a reason or comment withheld or an action made coherent`, refs: { seed, fired, total: recs.length } });
+    agentLog({ run_id: spec.run_id, agent_name: 'MemoryAgent', action: 'hmem_seed', status: 'success', output_summary: `seed ${seed}: ${res.reduce((n, r) => n + [...r.memories.values()].reduce((m, a) => m + a.size, 0), 0)} H-MEM records stored across ${res.reduce((n, r) => n + r.memories.size, 0)} agent memories; ${recs.reduce((n, x) => n + Math.max(0, x.memory_ids.length - 1), 0)} recalls fed into prompts` });
     // save each finished seed, so an interrupted run keeps the seeds it completed
     try { persist(st); } catch (e) { console.warn(`[run] could not save seed ${seed}: ${(e as Error).message}`); }
   }
@@ -215,22 +228,26 @@ export async function runWorlds(st: RunState, timing: Record<string, number> = {
   st.usage = traceStats(spec.run_id);
   st.timing = timing;
   push(st, { type: 'verdict', run_id: spec.run_id, verdict: st.verdict });
+  agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'verdict', target_agent: spec.mode === 'ab' ? 'ReportWriter' : undefined, status: 'success', output_summary: st.verdict.headline, ms: timing.sim_ms, refs: { winner: st.verdict.winner, pooled: st.verdict.pooled } });
   persist(st);
   if (spec.mode === 'ab') {
     await exportForFederation(st);
     phase(st, 'report', 'Report agent is querying the action log');
     const t2 = Date.now();
     try {
+      agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'handoff', target_agent: 'ReportWriter', status: 'started', input_summary: 'verdict and action log (queried through DataAgent)' });
       st.report = await buildReport(st);
       push(st, { type: 'report', run_id: spec.run_id, report: st.report });
     } catch (e) {
       st.report = { error: (e as Error).message };
+      agentLog({ run_id: spec.run_id, agent_name: 'ReportWriter', action: 'build_report', status: 'error', output_summary: (e as Error).message.slice(0, 200) });
     }
     timing.report_ms = Date.now() - t2;
     // spend decision and launch plan: is a real test worth paying for, and what to test instead
     phase(st, 'report', 'Deciding whether a real test is worth paying for');
     const t3 = Date.now();
     try {
+      agentLog({ run_id: spec.run_id, agent_name: 'Orchestrator', action: 'handoff', target_agent: 'DecisionAgent', status: 'started', input_summary: 'verdict, report and audience size' });
       st.decision = await buildDecision(st, { draft: true });
       writeLaunchPlan(runDir(spec.run_id), st.decision);
     } catch (e) { console.warn(`[run] decision skipped: ${(e as Error).message}`); }
@@ -255,6 +272,7 @@ export function injectEvent(st: RunState, ev: { round: number; text: string; tar
   const e: InjectedEvent = { id: `ev_${st.spec.events.length + 1}`, round, text: ev.text, target: ev.target ?? 'all', author: 'user' };
   st.spec.events.push(e);
   push(st, { type: 'event_injected', run_id: st.spec.run_id, event: e });
+  agentLog({ run_id: st.spec.run_id, agent_name: 'Orchestrator', action: 'event_injected', target_agent: 'CrowdAgent', status: 'success', input_summary: `round ${round} (${ev.round === round ? 'as asked' : `asked ${ev.round}, bumped for twin fairness`}), target ${e.target}`, output_summary: e.text.slice(0, 120), refs: { event_id: e.id } });
   return e;
 }
 

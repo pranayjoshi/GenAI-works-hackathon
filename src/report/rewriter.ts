@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 import { chat } from '../llm.js';
+import { agentLog } from '../util/agentlog.js';
 import type { RunState } from '../sim/run.js';
 
 const Draft = z.object({ text: z.string().describe('the new post, under 220 characters'), rationale: z.string(), targets: z.array(z.string()).describe('segments and objections it addresses') });
@@ -29,6 +30,8 @@ Top objections: ${objections.join('; ') || 'n/a'}
 Sample reasons from the crowd: ${quotes.join(' ')}`;
   let draft = await chat({ role: 'reason', system, user, schema: Draft, schemaName: 'VersionC', tag: `${st.spec.run_id}:rewriter`, maxTokens: 400 });
   let d = draft.data ?? { text: winner.text, rationale: 'Rewriter unavailable; kept the winner.', targets: [] };
+  const run_id = st.spec.run_id;
+  agentLog({ run_id, agent_name: 'VersionCWriter', action: 'draft_version_c', target_agent: 'HonestyCheck', status: draft.data ? 'success' : 'fallback', served_by: draft.served_by, model: draft.model, retry_count: draft.repaired ? 1 : 0, output_summary: draft.data ? `"${d.text.slice(0, 120)}"` : 'Rewriter reply invalid; kept the winner text' });
   let honesty = { ok: true, issues: [] as string[] };
   for (let attempt = 0; attempt < 2; attempt++) {
     const h = await chat({
@@ -38,9 +41,11 @@ Sample reasons from the crowd: ${quotes.join(' ')}`;
       schema: Honesty, schemaName: 'Honesty', tag: `${st.spec.run_id}:honesty`, maxTokens: 300,
     });
     honesty = h.data ?? honesty;
+    agentLog({ run_id, agent_name: 'HonestyCheck', action: 'check_rewrite', target_agent: 'VersionCWriter', status: honesty.ok ? 'success' : 'needs_revision', served_by: h.served_by, model: h.model, retry_count: attempt, output_summary: honesty.ok ? 'rewrite keeps the price and offer, no invented facts' : `rejected: ${honesty.issues.join('; ').slice(0, 200)}` });
     if (honesty.ok) break;
     draft = await chat({ role: 'reason', system, user: `${user}\n\nYour draft "${d.text}" was rejected by the honesty check: ${honesty.issues.join('; ')}. Fix it.`, schema: Draft, schemaName: 'VersionC', tag: `${st.spec.run_id}:rewriter`, maxTokens: 400 });
     if (draft.data) d = draft.data;
+    agentLog({ run_id, agent_name: 'VersionCWriter', action: 'revise_version_c', target_agent: 'HonestyCheck', status: draft.data ? 'success' : 'fallback', served_by: draft.served_by, model: draft.model, retry_count: attempt + 1, output_summary: `"${d.text.slice(0, 120)}"` });
   }
   return { winner: winner.variant, winner_text: winner.text, c: d, honesty };
 }

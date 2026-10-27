@@ -16,6 +16,7 @@ import crypto from 'node:crypto';
 import { DuckDBInstance, type DuckDBConnection } from '@duckdb/node-api';
 import { config, zetarisConfigured } from '../config.js';
 import { sha } from '../util/core.js';
+import { agentLog } from '../util/agentlog.js';
 
 export type Row = Record<string, unknown>;
 export interface QueryResult { query_id: string; engine: 'zetaris' | 'local-duckdb'; rows: Row[]; ms: number }
@@ -144,7 +145,7 @@ const tablesIn = (sql: string) => [...sql.matchAll(/\b(census|pew|priors|biz|upw
 
 // ------------------------------------------------------------------ public API
 let qCounter = 0;
-export async function query(sql: string, label = 'query'): Promise<QueryResult> {
+export async function query(sql: string, label = 'query', run_id?: string): Promise<QueryResult> {
   const t0 = Date.now();
   const query_id = `q_${sha(sql, 8)}_${(++qCounter).toString(36)}`;
   let rows: Row[] | null = null;
@@ -161,6 +162,10 @@ export async function query(sql: string, label = 'query'): Promise<QueryResult> 
   if (!rows) rows = await localQuery(sql);
   const ms = Date.now() - t0;
   logQuery({ query_id, label, sql: sql.trim(), engine, row_count: rows.length, ms, ts: new Date().toISOString(), sample: rows.slice(0, 20), ...(note ? { note } : {}) });
+  agentLog({
+    run_id, agent_name: 'DataAgent', action: 'sql_query', status: note ? 'fallback' : 'success', ms, input_summary: label,
+    output_summary: `${rows.length} rows from ${engine}${note ? ` (${note})` : ''}`, refs: { query_id, engine, row_count: rows.length, label },
+  });
   return { query_id, engine, rows, ms };
 }
 

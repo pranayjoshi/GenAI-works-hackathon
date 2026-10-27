@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { RunState } from '../sim/run.js';
 import { draftVersionC } from './rewriter.js';
+import { agentLog } from '../util/agentlog.js';
 
 /** A real test that needs more than this share of all local Instagram users is not worth running (assumption, stated in the plan). */
 export const MAX_TEST_SHARE = 0.2;
@@ -125,8 +126,10 @@ export async function buildDecision(st: RunState, opts: { draft?: boolean; keepV
   if (audienceN) reasons.push(`There are about ${audienceN.toLocaleString('en-US')} Instagram users in ${st.spec.place} (Census x Pew join), so that test would have to reach ${share !== null ? pct(share) : 'more than all'} of them.`);
   reasons.push(`A test using at most ${pct(MAX_TEST_SHARE)} of the local audience (${affordablePer.toLocaleString('en-US')} per version) can only detect a gap of about ${(mde * 100).toFixed(1)} points, so the next version must move intent by at least that much to be worth testing.`);
 
+  agentLog({ run_id: st.spec.run_id, agent_name: 'DecisionAgent', action: 'decide', status: 'success', input_summary: `gap ${gapPts.toFixed(1)} pts, ${audienceN.toLocaleString('en-US')} local Instagram users`, output_summary: `${call}: needs ${n ? n.toLocaleString('en-US') : 'n/a'} per version (${share !== null ? pct(share) : 'n/a'} of audience); affordable detectable gap ${(mde * 100).toFixed(1)} pts`, refs: { call, query_id: audienceQ?.query_id } });
   let variant: Decision['variant'] = opts.keepVariant ? st.decision?.variant ?? null : null;
   if (opts.draft && !variant && call !== 'launch_winner') {
+    agentLog({ run_id: st.spec.run_id, agent_name: 'DecisionAgent', action: 'request_rewrite', target_agent: 'VersionCWriter', status: 'started', input_summary: 'objections and losing segments from the report' });
     const c = await draftVersionC(st);
     variant = { text: c.c.text, rationale: c.c.rationale, targets: c.c.targets ?? [], honesty: c.honesty };
   }
@@ -194,8 +197,9 @@ export async function decideAction(d: Decision, actionId: string, choice: 'appro
   if (a.policy !== 'needs_approval') throw Object.assign(new Error('This action runs on its own and needs no approval'), { statusCode: 400 });
   if (a.status === 'approved' && (a.result as any)?.ok && (a.result as any)?.mode === 'live') throw Object.assign(new Error('Already created in Meta Ads'), { statusCode: 409 });
   a.decided_at = new Date().toISOString();
-  if (choice === 'reject') { a.status = 'rejected'; return a; }
+  if (choice === 'reject') { a.status = 'rejected'; agentLog({ run_id: d.run_id, agent_name: 'DecisionAgent', action: 'owner_decision', status: 'info', output_summary: `owner rejected ${a.id}` }); return a; }
   if (a.kind === 'launch_test' || a.kind === 'publish') {
+    agentLog({ run_id: d.run_id, agent_name: 'DecisionAgent', action: 'owner_approved', target_agent: 'LaunchAgent', status: 'success', output_summary: `owner approved ${a.id}; handing the plan over` });
     const { launchOnMeta, launchInputFromDecision } = await import('../actions/meta.js');
     const inp = launchInputFromDecision(d, business);
     if (a.kind === 'publish') inp.variants = inp.variants.slice(0, 1);

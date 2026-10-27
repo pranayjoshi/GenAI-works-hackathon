@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { chat } from '../llm.js';
+import { agentLog } from '../util/agentlog.js';
 import type { Persona } from '../schemas/persona.js';
 import type { MemoryLine } from '../memory/hmem.js';
 import { allRecords, memoryFor, type RunState } from '../sim/run.js';
@@ -53,6 +54,7 @@ Never invent conversations, visits or purchases that are not in memory. Talk lik
     try { mem.hmem.feedback(id, 'helpful'); } catch { /* id belongs to restored line */ }
   }
   const recs = allRecords(st).filter((x) => x.world_id === worldId && x.agent_id === agentId);
+  agentLog({ run_id: st.spec.run_id, agent_name: 'Interviewer', action: 'interview', target_agent: 'MemoryAgent', status: r.data ? (invalid.length ? 'needs_revision' : 'success') : 'fallback', served_by: r.served_by, model: r.model, retry_count: r.repaired ? 1 : 0, input_summary: `${agentId} in ${worldId}: ${question.slice(0, 80)}`, output_summary: `${valid.length} valid memory citations, ${invalid.length} invalid; saw_it ${data.saw_it}`, refs: { memory_ids: valid.map((c) => alias.get(c)!.id) } });
   return {
     agent_id: agentId, world_id: worldId, persona, answer: data.answer.replace(/\[m\d+\]/g, '').trim(), saw_it: data.saw_it,
     citations: valid.map((c) => {

@@ -4,6 +4,7 @@
  * Channel: Pew Instagram use by age and gender. Behaviour: labelled priors. Customer habits: Gaussian
  * copula fitted to the customer list. No model touches any of these fields.
  */
+import { agentLog } from '../util/agentlog.js';
 import { query, type Row } from '../data/federation.js';
 import { AGE_BANDS, EDUCATION, INCOME_BANDS, type Persona, type Receipt } from '../schemas/persona.js';
 import { Rng, clamp, round } from '../util/core.js';
@@ -20,6 +21,7 @@ export interface SampleSpec {
   coreShare?: number;     // user override; default = natural share clamped to [0.5, 0.7]
   useCustomers: boolean;
   idPrefix?: string;
+  run_id?: string;        // for the agent trace
   platform?: string;      // Pew platform used for channel weighting (default instagram)
 }
 
@@ -66,7 +68,8 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
   const rng = new Rng(`crowd:${spec.seed}`);
   const geo = spec.geoId.replace(/'/g, '');
   const queries: SampleReport['queries'] = [];
-  const q = async (label: string, sql: string) => { const r = await query(sql, label); queries.push({ label, query_id: r.query_id, engine: r.engine }); return r; };
+  agentLog({ run_id: spec.run_id, agent_name: 'AudienceAgent', action: 'request_data', target_agent: 'DataAgent', status: 'started', input_summary: `Census ACS + Pew + priors for ${spec.geoId}, ${spec.n} people, core ${spec.coreAgeBands.join('/')}` });
+  const q = async (label: string, sql: string) => { const r = await query(sql, label, spec.run_id); queries.push({ label, query_id: r.query_id, engine: r.engine }); return r; };
 
   const qAge = await q('ACS B01001 sex by age', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' ORDER BY column_id`);
   const qInc = await q('ACS B19037 householder age x income', `SELECT column_id, column_name, indent, estimate FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B19037' ORDER BY column_id`);
@@ -215,6 +218,7 @@ export async function sampleCrowd(spec: SampleSpec): Promise<{ personas: Omit<Pe
     for (const k of Object.keys(m)) m[k] = round(m[k] / personas.length, 3);
     return m;
   };
+  agentLog({ run_id: spec.run_id, agent_name: 'AudienceAgent', action: 'sample_crowd', status: 'success', output_summary: `${personas.length} people sampled from ${queries.length} DataAgent queries (${[...new Set(queries.map((x) => x.engine))].join(', ')}); demographics from data, not a model`, refs: { query_ids: queries.map((x) => x.query_id) } });
   return {
     personas,
     report: {

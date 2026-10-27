@@ -21,3 +21,7 @@ data/cache/zetaris-register.*
 data/cache/zetaris-registered.json
 data/cache/census_all.csv
 !runs/20261027-south-congress-coffe-344c/
+
+# agent trace (see logs/README.md)
+logs/*
+!logs/README.md

@@ -7,6 +7,7 @@
  * Without META_* settings this returns the exact payloads it would send (mode "preview") and sends nothing.
  */
 import { config } from '../config.js';
+import { agentLog } from '../util/agentlog.js';
 import type { Decision } from '../report/decision.js';
 
 export interface MetaVariant { label: string; text: string }
@@ -60,6 +61,8 @@ export function metaPayloads(inp: MetaLaunchInput): { path: string; body: Record
     ...ageRange(inp.age_bands),
     publisher_platforms: ['instagram'],
     instagram_positions: ['stream'],
+    // Advantage audience off: both versions must reach exactly the same people for a fair split test
+    targeting_automation: { advantage_audience: 0 },
   };
   const out: { path: string; body: Record<string, unknown> }[] = [];
   out.push({
@@ -107,6 +110,12 @@ async function graphPost(p: string, body: Record<string, unknown>): Promise<stri
 }
 
 export async function launchOnMeta(inp: MetaLaunchInput): Promise<MetaLaunchResult> {
+  const r = await launchOnMetaInner(inp);
+  agentLog({ run_id: inp.run_id, agent_name: 'LaunchAgent', action: 'create_split_test', target_agent: 'Meta Ads', status: r.ok ? 'success' : 'error', input_summary: `${inp.variants.length} variants, ZIP ${inp.zip}, all created paused`, output_summary: `${r.mode}${r.campaign_id ? ` campaign ${r.campaign_id}` : ''}${r.error ? `: ${r.error.slice(0, 160)}` : ''}`, refs: { mode: r.mode } });
+  return r;
+}
+
+async function launchOnMetaInner(inp: MetaLaunchInput): Promise<MetaLaunchResult> {
   const payloads = metaPayloads(inp);
   const ad_sets: MetaLaunchResult['ad_sets'] = inp.variants.map((v) => ({ label: v.label }));
   if (!metaConfigured()) {

@@ -28,7 +28,7 @@ export async function segmentBreakdown(st: RunState, by: keyof typeof SEG_COLS):
     JOIN final_intent f ON f.world_id = d.world_id AND f.agent_id = d.agent_id
     JOIN ${t.personas} p ON p.id = d.agent_id
     GROUP BY 1, 2 ORDER BY 1, 2`;
-  const r = await query(sql, `segment_breakdown(${by})`);
+  const r = await query(sql, `segment_breakdown(${by})`, st.spec.run_id);
   return { tool: 'segment_breakdown', query_id: r.query_id, engine: r.engine, args: { by }, rows: r.rows };
 }
 
@@ -40,7 +40,7 @@ export async function reactionSample(st: RunState, variant: string, sentiment: '
     FROM ${t.actions} a JOIN ${t.personas} p ON p.id = a.agent_id
     WHERE a.variant = '${variant.replace(/'/g, '')}' AND a.item_kind <> 'event' AND ${cond} AND a.reason IS NOT NULL AND a.reason <> ''
     ORDER BY hash(a.id) LIMIT ${limit}`;
-  const r = await query(sql, `reactions(${variant}, ${sentiment})`);
+  const r = await query(sql, `reactions(${variant}, ${sentiment})`, st.spec.run_id);
   return { tool: 'query_actions', query_id: r.query_id, engine: r.engine, args: { variant, sentiment }, rows: r.rows };
 }
 
@@ -51,7 +51,7 @@ export async function reactionCounts(st: RunState): Promise<ToolResult> {
            SUM(CASE WHEN feeling < 0 THEN 1 ELSE 0 END) AS negative, SUM(CASE WHEN feeling > 0 THEN 1 ELSE 0 END) AS positive,
            SUM(CASE WHEN unsaid IS NOT NULL AND unsaid <> '' THEN 1 ELSE 0 END) AS kept_private
     FROM ${t.actions} WHERE item_kind <> 'event' GROUP BY 1, 2 ORDER BY 1, 3 DESC, 2`;
-  const r = await query(sql, 'reaction_counts');
+  const r = await query(sql, 'reaction_counts', st.spec.run_id);
   return { tool: 'query_actions', query_id: r.query_id, engine: r.engine, args: {}, rows: r.rows };
 }
 
@@ -64,7 +64,7 @@ export async function timeline(st: RunState): Promise<ToolResult> {
            SUM(CASE WHEN item_kind = 'share' THEN 1 ELSE 0 END) AS via_shares,
            ROUND(AVG(stance), 3) AS mean_stance
     FROM ${t.actions} WHERE item_kind <> 'event' GROUP BY 1, 2 ORDER BY 1, 2`;
-  const r = await query(sql, 'timeline');
+  const r = await query(sql, 'timeline', st.spec.run_id);
   return { tool: 'timeline', query_id: r.query_id, engine: r.engine, args: {}, rows: r.rows };
 }
 
@@ -83,7 +83,7 @@ export async function crowdVsCensus(st: RunState): Promise<ToolResult> {
     SELECT c.age_band, c.people AS crowd_people, a.residents AS acs_residents,
            ROUND(c.people * 1.0 / SUM(c.people) OVER (), 3) AS crowd_share, ROUND(a.residents * 1.0 / SUM(a.residents) OVER (), 3) AS acs_share
     FROM crowd c JOIN acs a USING (age_band) ORDER BY 1`;
-  const r = await query(sql, 'crowd_vs_census');
+  const r = await query(sql, 'crowd_vs_census', st.spec.run_id);
   return { tool: 'query_actions', query_id: r.query_id, engine: r.engine, args: {}, rows: r.rows };
 }
 
@@ -94,6 +94,6 @@ export async function queryActions(st: RunState, sql: string): Promise<ToolResul
   // no file or environment access from the chat box: DuckDB table functions and path literals are refused
   if (/\b(read_\w+|glob|getenv|sniff_csv|parquet_\w+|duckdb_\w+|current_setting|httpfs)\b|'[^']*[\/\\.][^']*\.\w{1,5}'|'\/|'~/i.test(s)) throw new Error('File and environment access is not allowed in this box');
   const t = tableIds(st);
-  const r = await query(s.replace(/\bactions\b(?!_)/g, t.actions).replace(/\bpersonas\b(?!_)/g, t.personas) + (/\blimit\b/i.test(s) ? '' : ' LIMIT 200'), 'query_actions');
+  const r = await query(s.replace(/\bactions\b(?!_)/g, t.actions).replace(/\bpersonas\b(?!_)/g, t.personas) + (/\blimit\b/i.test(s) ? '' : ' LIMIT 200'), 'query_actions', st.spec.run_id);
   return { tool: 'query_actions', query_id: r.query_id, engine: r.engine, args: { sql: s }, rows: r.rows };
 }
