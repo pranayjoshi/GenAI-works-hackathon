@@ -258,7 +258,7 @@ export function persist(st: RunState) {
   const db = new Database(path.join(dir, 'actions.sqlite'));
   db.exec(`CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS personas (id TEXT PRIMARY KEY, json TEXT);
-    CREATE TABLE IF NOT EXISTS actions (id TEXT PRIMARY KEY, run_id TEXT, agent_id TEXT, world_id TEXT, variant TEXT, seed INT, hour INT, item_id TEXT, item_kind TEXT, via TEXT, action TEXT, stance REAL, feeling INT, would_visit INT, reason TEXT, text TEXT, unsaid TEXT, memory_ids TEXT, repaired INT);
+    CREATE TABLE IF NOT EXISTS actions (id TEXT PRIMARY KEY, run_id TEXT, agent_id TEXT, world_id TEXT, variant TEXT, seed INT, hour INT, item_id TEXT, item_kind TEXT, via TEXT, action TEXT, stance REAL, feeling INT, would_visit INT, reason TEXT, text TEXT, unsaid TEXT, memory_ids TEXT, repaired INT, checks TEXT);
     CREATE TABLE IF NOT EXISTS memories (world_id TEXT, agent_id TEXT, id TEXT, hour INT, text TEXT, tags TEXT, PRIMARY KEY (world_id, id));`);
   const meta = {
     spec: st.spec, status: st.status, phase: st.phase, error: st.error, created: st.created, proposal: st.proposal, sampleReport: st.sampleReport,
@@ -270,8 +270,8 @@ export function persist(st: RunState) {
     for (const [k, v] of Object.entries(meta)) up.run(k, JSON.stringify(v ?? null));
     const pp = db.prepare('INSERT OR REPLACE INTO personas VALUES (?, ?)');
     for (const p of st.personas) pp.run(p.id, JSON.stringify(p));
-    const ap = db.prepare('INSERT OR REPLACE INTO actions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-    for (const r of allRecords(st)) ap.run(r.id, r.run_id, r.agent_id, r.world_id, r.variant, r.seed, r.hour, r.item_id, r.item_kind, r.via, r.action, r.stance, r.feeling, r.would_visit ? 1 : 0, r.reason, r.text, r.unsaid, JSON.stringify(r.memory_ids), r.repaired ? 1 : 0);
+    const ap = db.prepare('INSERT OR REPLACE INTO actions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+    for (const r of allRecords(st)) ap.run(r.id, r.run_id, r.agent_id, r.world_id, r.variant, r.seed, r.hour, r.item_id, r.item_kind, r.via, r.action, r.stance, r.feeling, r.would_visit ? 1 : 0, r.reason, r.text, r.unsaid, JSON.stringify(r.memory_ids), r.repaired ? 1 : 0, JSON.stringify(r.checks ?? []));
     const mp = db.prepare('INSERT OR REPLACE INTO memories VALUES (?,?,?,?,?,?)');
     for (const [w, agents] of st.memories) for (const [a, lines] of agents) for (const l of lines) mp.run(w, a, l.id, l.hour, l.text, JSON.stringify(l.tags));
   });
@@ -307,7 +307,7 @@ export async function loadRun(id: string): Promise<RunState | undefined> {
   const db = new Database(file, { readonly: true });
   const meta = Object.fromEntries((db.prepare('SELECT key, value FROM meta').all() as any[]).map((r) => [r.key, JSON.parse(r.value)]));
   const personas = (db.prepare('SELECT json FROM personas ORDER BY id').all() as any[]).map((r) => JSON.parse(r.json));
-  const actions = (db.prepare('SELECT * FROM actions ORDER BY rowid').all() as any[]).map((r) => ({ ...r, would_visit: !!r.would_visit, repaired: !!r.repaired, memory_ids: JSON.parse(r.memory_ids) })) as ActionRecord[];
+  const actions = (db.prepare('SELECT * FROM actions ORDER BY rowid').all() as any[]).map((r) => ({ ...r, would_visit: !!r.would_visit, repaired: !!r.repaired, memory_ids: JSON.parse(r.memory_ids), checks: r.checks ? JSON.parse(r.checks) : [] })) as ActionRecord[];
   const memories = new Map<string, Map<string, MemoryLine[]>>();
   for (const r of db.prepare('SELECT * FROM memories ORDER BY hour, rowid').all() as any[]) {
     if (!memories.has(r.world_id)) memories.set(r.world_id, new Map());

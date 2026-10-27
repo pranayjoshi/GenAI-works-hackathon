@@ -10,6 +10,7 @@ import { ENGAGED, VOCAL, type ActionRecord, type ActionType } from '../schemas/a
 import { AgentMemory } from '../memory/hmem.js';
 import { clamp, round as rnd, sha } from '../util/core.js';
 import { decideBatch, type AgentTurn } from './crowd.js';
+import { guardDecision } from './guard.js';
 import { hourLabel } from './schedule.js';
 import type { BaseWorld, SimWorld } from './world.js';
 import type { FeedItem, InjectedEvent, Post, RunSpec, SimEvent, WorldCounters } from './types.js';
@@ -144,16 +145,24 @@ export class WorldRunner {
     this.calls += batches.length;
     // 4. apply decisions in a fixed order
     const deliveries: { from: string; to: string; item: FeedItem }[] = [];
+    const otherPost = this.spec.posts.find((p) => p.variant !== this.post.variant)?.text ?? '';
+    const eventTexts = this.events.filter((e) => e.round <= r).map((e) => e.text);
     batches.forEach((batch, bi) => {
       const res = results[bi];
+      const batchReasons = new Set<string>();
       for (const t of batch) {
         const p = t.persona;
         for (const it of t.items) {
           const d = res.decisions.get(`${p.id}/${it.item_id}`);
           const repaired = !d || res.repaired;
-          let action: ActionType = d?.action ?? 'scroll_past';
-          const feeling = clamp(Math.round(d?.feeling ?? 0), -2, 2);
-          let text = (d?.text ?? '').trim();
+          const g = guardDecision({
+            action: d?.action ?? 'scroll_past', feeling: clamp(Math.round(d?.feeling ?? 0), -2, 2), would_visit: Boolean(d?.would_visit),
+            reason: (d?.reason ?? '').trim(), text: (d?.text ?? '').trim(), itemKind: it.kind,
+            firstExposure: (this.seen.get(p.id) ?? 0) === 0, postText: this.post.text, otherPostText: otherPost, eventTexts, voice: p.voice, batchReasons,
+          });
+          let action: ActionType = g.action;
+          const feeling = g.feeling;
+          let text = g.text;
           let unsaid = '';
           // private stance vs public expression: the speak gate (same draw in both twin worlds)
           if (VOCAL.has(action)) {
@@ -168,20 +177,20 @@ export class WorldRunner {
           this.stance.set(p.id, next);
           // a defaulted (missing) decision keeps the person's earlier intent instead of resetting it to false
           const prevIntent = this.intent.get(p.id) ?? false;
-          const wouldVisit = this.spec.mode === 'backtest' ? false : d ? Boolean(d.would_visit) : prevIntent;
+          const wouldVisit = this.spec.mode === 'backtest' ? false : d ? g.would_visit : prevIntent;
           // event items may change the intent of people who already decided on the post (e.g. a competitor's deal)
           if (d && (it.kind !== 'event' || this.deciders.has(p.id))) this.intent.set(p.id, wouldVisit);
           if (it.kind !== 'event') { this.deciders.add(p.id); this.exposures++; this.seen.set(p.id, (this.seen.get(p.id) ?? 0) + 1); }
 
           const what = it.kind === 'event' ? `saw news: "${it.text}"` : it.kind === 'share' ? `saw @${it.via} share ${this.post.business}'s post` : `saw ${this.post.business}'s sponsored post "${this.post.text.slice(0, 80)}"`;
-          const memText = `${hl}: ${what}. I ${action.replace('_', ' ')}${text ? ` and wrote "${text}"` : ''}${unsaid ? ` (thought "${unsaid}" but kept it to myself)` : ''}. Felt ${feeling > 0 ? 'positive' : feeling < 0 ? 'negative' : 'neutral'}${d?.reason ? `: ${d.reason}` : ''}.`;
+          const memText = `${hl}: ${what}. I ${action.replace('_', ' ')}${text ? ` and wrote "${text}"` : ''}${unsaid ? ` (thought "${unsaid}" but kept it to myself)` : ''}. Felt ${feeling > 0 ? 'positive' : feeling < 0 ? 'negative' : 'neutral'}${g.reason ? `: ${g.reason}` : ''}.`;
           const mem = this.memories.get(p.id)!;
           const usedIds = t.memories.map((m) => m.id);
           const memId = mem.remember(r, memText, [it.item_id, action]);
           const rec: ActionRecord = {
             id: `${this.worldId}:${++this.seq}`, run_id: this.spec.run_id, agent_id: p.id, world_id: this.worldId, variant: this.post.variant,
             seed: this.base.seed, hour: r, item_id: it.item_id, item_kind: it.kind, via: it.via, action, stance: next, feeling,
-            would_visit: wouldVisit, reason: (d?.reason ?? '').slice(0, 200), text, memory_ids: [...usedIds, memId], repaired, unsaid,
+            would_visit: wouldVisit, reason: g.reason.slice(0, 200), text, memory_ids: [...usedIds, memId], repaired, unsaid, checks: g.checks,
           };
           this.records.push(rec);
           this.world.logAction(rec, this.roundMs(r));

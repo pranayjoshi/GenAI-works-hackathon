@@ -32,7 +32,14 @@ export interface ReportBundle {
   fallback: boolean;
 }
 
-function compact(rows: Record<string, unknown>[], n = 40) { return JSON.stringify(rows.slice(0, n)); }
+/** What the model sees of each tool result: only the columns it needs, so the prompt stays a few thousand tokens. */
+function compactTool(t: ToolResult): string {
+  if (t.tool === 'query_actions' && t.args.sentiment) {
+    return JSON.stringify(t.rows.slice(0, 14).map((r) => ({ action_id: r.action_id, reason: String(r.reason ?? '').slice(0, 90), role: r.role, age: r.age_band })));
+  }
+  if (t.tool === 'timeline') return JSON.stringify(t.rows.map((r) => ({ v: r.variant, round: r.hour, decisions: r.decisions, visit_yes: r.visit_yes, vocal: r.vocal })));
+  return JSON.stringify(t.rows.slice(0, 16));
+}
 
 export async function buildReport(st: RunState): Promise<ReportBundle> {
   const v = st.verdict!;
@@ -43,7 +50,7 @@ export async function buildReport(st: RunState): Promise<ReportBundle> {
   tools.push(await reactionCounts(st));
   tools.push(await crowdVsCensus(st));
   const samples: ToolResult[] = [];
-  for (const variant of [va, vb]) for (const s of ['negative', 'positive'] as const) samples.push(await reactionSample(st, variant, s, 30));
+  for (const variant of [va, vb]) for (const s of ['negative', 'positive'] as const) samples.push(await reactionSample(st, variant, s, 14));
   tools.push(...samples);
 
   const recById = new Map(allRecords(st).map((r) => [r.id, r]));
@@ -58,7 +65,7 @@ Rules:
 - Plain, specific language. No hype.`;
   // The model sees stable aliases (Q1..Qn), not run-specific query ids, so recorded calls replay; aliases map back below.
   const alias = new Map(tools.map((t, i) => [`Q${i + 1}`, t.query_id]));
-  const toolText = tools.map((t, i) => `### ${t.tool} ${JSON.stringify(t.args)} query_id=Q${i + 1}\n${compact(t.rows)}`).join('\n\n');
+  const toolText = tools.map((t, i) => `### ${t.tool} ${JSON.stringify(t.args)} query_id=Q${i + 1}\n${compactTool(t)}`).join('\n\n');
   const unalias = (rep: Report): Report => ({ ...rep, claims: rep.claims.map((c) => ({ ...c, query_ids: c.query_ids.map((q) => alias.get(q.trim()) ?? q) })) });
   const user = `Business: ${st.spec.business}. Goal: ${st.spec.goal}.
 Version ${va}: "${st.spec.posts[0].text}"
@@ -173,7 +180,7 @@ function fallbackReport(st: RunState, tools: ToolResult[], samples: ToolResult[]
   const [va, vb] = v.variants;
   return {
     summary: v.headline,
-    claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% across ${r.deciders} simulated deciders.`, query_ids: [seg.query_id] })).slice(0, 4),
+    claims: seg.rows.map((r) => ({ text: `${r.segment} on ${r.variant}: intent ${(Number(r.intent_rate) * 100).toFixed(1)}% (${r.deciders} decisions across ${st.spec.seeds.length} seed${st.spec.seeds.length > 1 ? 's' : ''}).`, query_ids: [seg.query_id] })).slice(0, 4),
     objections: [va, vb].map((variant, i) => ({ theme: `Negative reactions to ${variant}`, variant, action_ids: pick(samples[i * 2]) })),
     likes: [va, vb].map((variant, i) => ({ theme: `Positive reactions to ${variant}`, variant, action_ids: pick(samples[i * 2 + 1]) })),
     tipping_note: 'See the tipping-point panel.',

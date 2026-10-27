@@ -26,7 +26,7 @@ const logPath = path.join(config.paths.runs, 'queries.jsonl');
 
 function logQuery(e: QueryLogEntry) {
   queryLog.set(e.query_id, e);
-  fs.appendFile(logPath, JSON.stringify(e) + '\n', () => {});
+  try { fs.appendFileSync(logPath, JSON.stringify(e) + '\n'); } catch { /* log is best effort */ }
 }
 export function getQuery(id: string): QueryLogEntry | undefined {
   if (queryLog.has(id)) return queryLog.get(id);

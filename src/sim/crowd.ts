@@ -51,8 +51,12 @@ How to decide:
 - Memories are things this person already saw or did; stay consistent with them. Only mention seeing the post before if the person has actually seen it before (seeing the same ad again often annoys people).
 - feeling: -2 strongly negative, 0 indifferent, +2 strongly positive about ${business} after seeing the item.
 - would_visit: true only if this person would realistically go to or buy from ${business} this week.
-- reason: private, first person, about the post's actual wording, under 14 words. Never quote the person's numbers.
-- text: for comment or share, a short real Instagram comment or caption in this person's own style; otherwise "".
+- reason: private, first person, 5 to 14 words naming the specific thing in the item (a word, the price, the offer, the tone). Never quote the person's numbers.
+- Facts: only mention prices, discounts and details that are written in the item itself. Never invent a price or a menu item.
+- If the line says "first time seeing this post", the reason must not say seen, again, same, already or old.
+- Never mention the person's age, gender or a role like student unless it is in their voice line.
+- text: for comment or share only, what this person would actually type to friends: 3 to 12 casual words in their own voice, never the business's voice (no "Just posted", no "Try the"), never a copy of the reason; otherwise "".
+- feeling must match the action: like, save, share, comment and tap_through mean feeling 0 or above; hide means feeling 0 or below.
 - People differ: vary wording, length and tone. Do not reuse phrases across people.`;
 
 const SYSTEM_BT = `You simulate real people browsing a social feed in the United States. For every person and every item listed under them, decide what they do, in character.

@@ -61,7 +61,7 @@ fs.mkdirSync(config.paths.runs, { recursive: true });
 const stats = new Map<string, { calls: number; tokens_in: number; tokens_out: number; ms: number; errors: number; served_by: Record<string, number> }>();
 
 function trace(e: TraceEntry) {
-  fs.appendFile(tracePath, JSON.stringify(e) + '\n', () => {});
+  try { fs.appendFileSync(tracePath, JSON.stringify(e) + '\n'); } catch { /* trace is best effort */ }
   const key = `${e.tag}|${e.role}|${e.model}`;
   const s = stats.get(key) ?? { calls: 0, tokens_in: 0, tokens_out: 0, ms: 0, errors: 0, served_by: {} };
   s.calls++; s.tokens_in += e.tokens_in; s.tokens_out += e.tokens_out; s.ms += e.ms;
@@ -174,7 +174,7 @@ async function ollama(o: ChatOpts<unknown>, jsonSchema: unknown): Promise<RawRes
     options: {
       temperature: o.temperature ?? (o.role === 'crowd' || o.role === 'voice' ? 0.9 : 0.4),
       num_predict: (o.maxTokens ?? 1200) + (thinking ? 1500 : 0),
-      num_ctx: 8192,
+      num_ctx: o.role === 'reason' || o.role === 'review' ? 16384 : 8192,
     },
     messages: [{ role: 'system', content: o.system }, { role: 'user', content: o.user }],
   };

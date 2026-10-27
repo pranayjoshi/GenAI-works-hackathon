@@ -26,6 +26,7 @@ export interface ActionRecord {
   unsaid: string;       // what they would have said but kept private (speak gate)
   memory_ids: string[];
   repaired: boolean;
+  checks: string[];     // guard checks that fired (reason withheld, action resolved, ...)
 }
 
 /** What the crowd model returns for one batch. Kept small so a 4B model can fill it. */

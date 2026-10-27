@@ -141,5 +141,10 @@ export function validity(records: ActionRecord[], summaries: WorldSummary[]) {
     scroll_past_share: records.length ? round(records.filter((r) => r.action === 'scroll_past').length / records.length, 3) : 0,
     stance_sd_by_world: summaries.map((s) => ({ world: s.world_id, sd: s.overall.stance_sd })),
     silenced: records.filter((r) => r.unsaid).length,
+    guard: (() => {
+      const counts: Record<string, number> = {};
+      for (const r of records) for (const c of r.checks ?? []) counts[c] = (counts[c] ?? 0) + 1;
+      return { decisions_with_a_check: records.filter((r) => r.checks?.length).length, by_check: counts };
+    })(),
   };
 }
