@@ -6,6 +6,8 @@ import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { Readable } from 'node:stream';
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import { SEGMENTS, VOICE, RATE, ELEVEN } from './timeline.mjs';
 import { ROOT, MEDIA, probeDuration } from './lib/util.mjs';
 
@@ -24,24 +26,22 @@ function elevenKey() {
 }
 const KEY = elevenKey();
 
-async function eleven(urlPath, init = {}) {
-  return fetch(`https://api.elevenlabs.io${urlPath}`, { ...init, headers: { 'xi-api-key': KEY, ...(init.headers || {}) }, signal: AbortSignal.timeout(30000) });
-}
+// The SDK reads ELEVENLABS_API_KEY from the environment (make.sh runs this with node --env-file=.env).
+if (KEY && !process.env.ELEVENLABS_API_KEY) process.env.ELEVENLABS_API_KEY = KEY;
+const client = KEY ? new ElevenLabsClient({ timeoutInSeconds: 30 }) : null;
 
 /** ELEVEN.voiceId if set; otherwise the first preferred premade voice the account has. */
 async function resolveVoice() {
   if (!KEY) return null;
   if (ELEVEN.voiceId) return { id: ELEVEN.voiceId, name: ELEVEN.voiceName || ELEVEN.voiceId };
   try {
-    const r = await eleven('/v1/voices');
-    if (r.status !== 200) { console.log(`note: ElevenLabs voices returned ${r.status}; using macOS say`); return null; }
-    const { voices = [] } = await r.json();
+    const { voices = [] } = await client.voices.getAll();
     for (const want of ELEVEN.prefer) {
       const v = voices.find((x) => x.name?.toLowerCase().startsWith(want.toLowerCase()) && (x.category || 'premade') === 'premade');
-      if (v) return { id: v.voice_id, name: v.name };
+      if (v) return { id: v.voiceId, name: v.name };
     }
     console.log('note: none of the preferred ElevenLabs voices found; using macOS say'); return null;
-  } catch (e) { console.log(`note: ElevenLabs unreachable (${e.name}); using macOS say`); return null; }
+  } catch (e) { console.log(`note: ElevenLabs voices failed (${e.statusCode ?? e.name}); using macOS say`); return null; }
 }
 
 /** text for ElevenLabs: the spoken (`say`) text with say's pause commands turned into break tags */
@@ -53,14 +53,16 @@ async function elevenLine(s, voice) {
   const mp3 = path.join(cache, `${key}.mp3`);
   if (fs.existsSync(mp3)) return mp3;
   try {
-    const r = await eleven(`/v1/text-to-speech/${voice.id}?output_format=mp3_44100_128`, {
-      method: 'POST', headers: { 'content-type': 'application/json', accept: 'audio/mpeg' },
-      body: JSON.stringify({ text, model_id: ELEVEN.model, voice_settings: ELEVEN.settings }),
+    const st = ELEVEN.settings;
+    const audio = await client.textToSpeech.convert(voice.id, {
+      text, modelId: ELEVEN.model, outputFormat: 'mp3_44100_128',
+      voiceSettings: { stability: st.stability, similarityBoost: st.similarity_boost, style: st.style, useSpeakerBoost: st.use_speaker_boost, speed: st.speed },
     });
-    if (r.status !== 200) { console.log(`note: ElevenLabs ${r.status} for ${s.id}; using macOS say for this line`); return null; }
-    fs.writeFileSync(mp3, Buffer.from(await r.arrayBuffer()));
+    const chunks = [];
+    for await (const c of Readable.fromWeb(audio)) chunks.push(c);
+    fs.writeFileSync(mp3, Buffer.concat(chunks));
     return mp3;
-  } catch (e) { console.log(`note: ElevenLabs failed for ${s.id} (${e.name}); using macOS say for this line`); return null; }
+  } catch (e) { console.log(`note: ElevenLabs failed for ${s.id} (${e.statusCode ?? e.name}); using macOS say for this line`); return null; }
 }
 
 const chars = LIVE.reduce((a, s) => a + elText(s).length, 0);
