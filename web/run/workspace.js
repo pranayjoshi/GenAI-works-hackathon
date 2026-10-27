@@ -22,6 +22,7 @@ export const STAGES = [
   { id: 'signals', label: 'Signals', hint: 'Intent by round, events, momentum', icon: 'M3 3v18h18M7 15l4-4 3 3 6-7', load: () => import('./stages/signals.js') },
   { id: 'verdict', label: 'Verdict', hint: 'Winner, interval, segments', icon: 'M12 15l-3.5 2 1-4L6.5 10l4-.3L12 6l1.5 3.7 4 .3-3 3 1 4z M4 21h16', load: () => import('./stages/verdict.js') },
   { id: 'report', label: 'Report', hint: 'Claims with receipts', icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5', load: () => import('./stages/report.js') },
+  { id: 'decision', label: 'Decision', hint: 'Spend a real test or not, launch plan, approvals', icon: 'M12 2v20M5 8l7-6 7 6M4 22h16M7 12h10M9 17h6', load: () => import('./stages/decision.js') },
   { id: 'ask', label: 'Ask why', hint: 'Interview people, segments, focus group, Version C', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', load: () => import('./stages/ask.js') },
 ];
 export const PHASES = [['data', 'Data'], ['audience', 'Audience'], ['sampling', 'Sampling'], ['voices', 'Voices'], ['running', 'Running'], ['analyzing', 'Analyzing'], ['report', 'Report'], ['done', 'Done']];
