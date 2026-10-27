@@ -183,7 +183,7 @@ export async function openAgent(agentId, opts = {}) {
         const say = h('span.dz-say'), bubble = h('div.dz-msg.them', say);
         chatLog.append(bubble); bubble.scrollIntoView({ block: 'nearest' });
         await typeText(say, turn.a, 110);
-        bubble.append(bubbleMeta(turn.res));
+        bubble.append(...bubbleMeta(turn.res).filter(Boolean));
         anim(bubble.lastElementChild, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: EASE.expo });
         bubble.scrollIntoView({ block: 'nearest' });
       }

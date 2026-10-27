@@ -71,7 +71,7 @@ app.post('/api/audience', async (req) => {
   const geo = geoIdForZip(b.zip).replace(/'/g, '');
   const join = await query(`
     WITH ages AS (
-      SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '(\\d+)', 1) AS INTEGER) END AS age_lo, estimate
+      SELECT CASE WHEN column_name LIKE 'Under%' THEN 0 ELSE TRY_CAST(regexp_extract(column_name, '([0-9]+)', 1) AS INTEGER) END AS age_lo, estimate
       FROM census.acs WHERE geo_id = '${geo}' AND table_id = 'B01001' AND indent = 2),
     banded AS (SELECT CASE WHEN age_lo < 18 THEN NULL WHEN age_lo < 30 THEN '18-29' WHEN age_lo < 50 THEN '30-49' WHEN age_lo < 65 THEN '50-64' ELSE '65+' END AS band, SUM(estimate) AS adults FROM ages GROUP BY 1)
     SELECT b.band, b.adults, p.pct_us_adults_ever_use AS instagram_pct, ROUND(b.adults * p.pct_us_adults_ever_use / 100.0) AS instagram_users
@@ -199,7 +199,9 @@ app.get('/api/runs/:id/launch-plan.json', async (req, reply) => {
 });
 app.post('/api/runs/:id/version-c/run', async (req) => {
   const parent = await getRun((req.params as any).id);
-  const b = req.body as { text: string; seeds?: number };
+  const b = { ...(req.body as { text?: string; seeds?: number } ?? {}) };
+  b.text = b.text ?? (parent.decision as any)?.variant?.text; // default: the decision's own Version C draft
+  if (!b.text) throw Object.assign(new Error('No Version C text: pass {"text": ...} or draft one first'), { statusCode: 400 });
   const winner = parent.verdict?.winner ?? (parent.verdict && parent.verdict.pooled.a >= parent.verdict.pooled.b ? parent.verdict.variants[0] : parent.verdict?.variants[1]) ?? 'A';
   const wpost = parent.spec.posts.find((p) => p.variant === winner)!;
   const spec = specFromInput({ business: parent.spec.business, handle: parent.spec.handle, place: parent.spec.place, zip: parent.spec.zip, goal: parent.spec.goal, postA: wpost.text, postB: b.text, crowdSize: parent.spec.crowdSize, rounds: parent.spec.rounds, seeds: b.seeds ?? parent.spec.seeds.length, useCustomers: parent.spec.useCustomers });
