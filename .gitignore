@@ -40,3 +40,4 @@ media/
 # uploaded images and their VisionAgent descriptions
 data/cache/images/
 data/cache/vision/
+data/cache/census_fallback_*
